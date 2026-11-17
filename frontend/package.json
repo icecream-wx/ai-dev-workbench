@@ -1,0 +1,33 @@
+{
+  "name": "ai-dev-workbench-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "node --test src/requirements/doc-protocol.test.mjs src/requirements/doc-diff.test.mjs src/requirements/module-helpers.test.mjs src/requirements/module-plan-protocol.test.mjs src/requirements/module-plan-helpers.test.mjs src/requirements/module-replan-protocol.test.mjs src/requirements/module-replan-helpers.test.mjs src/requirements/module-intent.test.mjs src/requirements/prototype-helpers.test.mjs src/requirements/prototype-spec-helpers.test.mjs src/requirements/api-query.test.mjs src/shared/protocol-output.test.mjs src/design/design-protocol.test.mjs src/design/version-labels.test.mjs src/design/handoff-scale.test.mjs src/design/er-layout.test.mjs src/design/design-module-helpers.test.mjs src/design/design-epic-helpers.test.mjs src/changesets/labels.test.mjs src/changesets/module-scope.test.mjs src/changesets/change-set-prompt.test.mjs src/dev/session-labels.test.mjs src/dev/dev-health.test.mjs src/dev/phase-labels.test.mjs",
+    "preview": "vite preview",
+    "check:vue": "node check-vue-imports.cjs"
+  },
+  "dependencies": {
+    "@antv/x6": "^2.19.2",
+    "element-plus": "^2.14.1",
+    "html2canvas": "^1.4.1",
+    "markdown-it": "^14.1.0",
+    "pinia": "^2.3.1",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/tsconfig": "^0.7.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vue-tsc": "^2.2.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  }
+}

@@ -1,0 +1,577 @@
+/**
+ * 需求梳理工作台 · 全局设计令牌与 Element Plus 主题覆盖。
+ * 设计语言：墨色（--ink）承担主操作，紫色（--ai）只标识 AI 相关元素，
+ * 语义色只用于状态；正式感来自密度与分层，而非彩色渐变。
+ */
+
+/* border-box 全局重置：height:100% + padding 的面板（.rg-sp 等）在 content-box 下会溢出容器，
+   表现为滚动条出现后整页布局错位 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+
+  /* 色板：墨色主操作 + AI 紫标识 + 语义色（只用于状态） */
+  --rg-ink: #20242e;
+  --rg-ink-hover: #333846;
+  --rg-ink-active: #1a1d25;
+  --rg-ink-contrast: #ffffff;
+  --rg-ai: #5b5bd6;
+  --rg-ai-soft: #eeeefc;
+  --rg-ai-border: #d9d9f7;
+  /* 次要强调色：Story / 页面分类等标识（只做标识，不做主操作色） */
+  --rg-accent: #6b46c1;
+  --rg-accent-soft: #f3efff;
+  --rg-bg: #f4f5f7;
+  --rg-surface: #ffffff;
+  /* 弹窗内嵌面板/次级卡片：比 surface 略暗一档 */
+  --rg-surface-2: #fafbfc;
+  /* hover 底色（列表行、卡片操作） */
+  --rg-hover: #f6f7f9;
+  --rg-fill: #f4f5f7;
+  --rg-fill-2: #eef0f4;
+  --rg-border: #e4e7ec;
+  --rg-border-strong: #d4d9e2;
+  --rg-text: #1f2937;
+  --rg-text-2: #4b5563;
+  --rg-text-3: #7c8595;
+  --rg-link: #4a4fd0;
+  --rg-ok: #12855f;
+  --rg-ok-soft: #e8f5ef;
+  --rg-ok-border: #bfe6d5;
+  --rg-warn: #a05e03;
+  --rg-warn-soft: #fdf4e3;
+  --rg-warn-border: #f0dcae;
+  --rg-danger: #c23a45;
+  --rg-danger-soft: #fdeeef;
+  --rg-danger-border: #f3c9c6;
+  --rg-user-bubble: #20242e;
+  --rg-user-bubble-text: #ffffff;
+  --rg-canvas: #eef0f4;
+  --rg-canvas-dot: #d9dde5;
+  --rg-rail: #e8ebf1;
+  --rg-node: #c7cdd8;
+
+  /* 遮罩 / 代码 / 焦点 / 滚动条 */
+  --rg-overlay: rgba(20, 24, 31, 0.42);
+  --rg-code-bg: #f6f8fa;
+  --rg-code-text: #333a45;
+  --rg-code-border: #e8ecf0;
+  /* 终端/shell 输出：深浅色都保持“黑终端”语义，暗色再压暗一档 */
+  --rg-terminal-bg: #1d2129;
+  --rg-terminal-text: #d7dae2;
+  /* 工具卡 diff 行底色：浅色淡彩、深色半透明 */
+  --rg-diff-add-bg: rgba(18, 133, 95, 0.1);
+  --rg-diff-del-bg: rgba(194, 58, 69, 0.08);
+  --rg-focus-ring: rgba(91, 91, 214, 0.55);
+  --rg-scrollbar: #d0d5de;
+  --rg-scrollbar-hover: #b9c0cc;
+
+  /* 阴影与圆角 */
+  --rg-shadow-1: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --rg-shadow-2: 0 2px 6px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.08);
+  --rg-radius-lg: 14px;
+  --rg-radius: 10px;
+  --rg-radius-sm: 6px;
+
+  /* Element Plus 覆盖：主色=墨色；其余按语义 token 映射，深浅色共用 */
+  --el-color-primary: #20242e;
+  --el-color-primary-light-3: #565a63;
+  --el-color-primary-light-5: #898b92;
+  --el-color-primary-light-7: #bcbec2;
+  --el-color-primary-light-8: #d2d3d7;
+  --el-color-primary-light-9: #ebebed;
+  --el-color-primary-dark-2: #1a1d25;
+  --el-border-radius-base: 6px;
+  --el-border-radius-small: 4px;
+  --el-font-size-base: 13px;
+  --el-box-shadow-light: var(--rg-shadow-1);
+
+  --el-bg-color-page: var(--rg-bg);
+  --el-bg-color: var(--rg-surface);
+  --el-bg-color-overlay: var(--rg-surface);
+  --el-fill-color-blank: var(--rg-surface);
+  --el-fill-color: var(--rg-fill);
+  --el-fill-color-light: var(--rg-fill);
+  --el-fill-color-lighter: var(--rg-surface-2);
+  --el-fill-color-extra-light: var(--rg-surface-2);
+  --el-fill-color-dark: var(--rg-fill-2);
+  --el-fill-color-darker: var(--rg-border);
+  --el-border-color: var(--rg-border);
+  --el-border-color-light: var(--rg-border);
+  --el-border-color-lighter: var(--rg-fill-2);
+  --el-border-color-extra-light: var(--rg-fill);
+  --el-border-color-dark: var(--rg-border-strong);
+  --el-border-color-darker: var(--rg-border-strong);
+  --el-text-color-primary: var(--rg-text);
+  --el-text-color-regular: var(--rg-text-2);
+  --el-text-color-secondary: var(--rg-text-3);
+  --el-text-color-placeholder: var(--rg-text-3);
+  --el-text-color-disabled: var(--rg-text-3);
+  --el-disabled-bg-color: var(--rg-fill);
+  --el-mask-color: var(--rg-overlay);
+  --el-mask-color-extra-light: rgba(20, 24, 31, 0.2);
+  --el-dialog-bg-color: var(--rg-surface);
+  --el-input-bg-color: var(--rg-surface);
+  --el-input-border-color: var(--rg-border-strong);
+  --el-input-hover-border-color: var(--rg-text-3);
+  --el-input-focus-border-color: var(--rg-ai);
+  --el-input-text-color: var(--rg-text);
+  --el-input-placeholder-color: var(--rg-text-3);
+}
+
+/* ---- Dark 主题：主操作色反转为浅墨，表面分层压暗 ---- */
+html.dark {
+  color-scheme: dark;
+
+  --rg-ink: #e3e6ee;
+  --rg-ink-hover: #f2f4f9;
+  --rg-ink-active: #ffffff;
+  --rg-ink-contrast: #16181d;
+  --rg-ai: #9a9af5;
+  --rg-ai-soft: #26264a;
+  --rg-ai-border: #3a3a6a;
+  --rg-accent: #b79cf5;
+  --rg-accent-soft: #272142;
+  --rg-bg: #11141b;
+  --rg-surface: #1a1e28;
+  --rg-surface-2: #151a23;
+  --rg-hover: #20242f;
+  --rg-fill: #20242f;
+  --rg-fill-2: #262b38;
+  --rg-border: #2a303c;
+  --rg-border-strong: #3a4150;
+  --rg-text: #e6e9f0;
+  --rg-text-2: #aab2c0;
+  --rg-text-3: #8c95a6;
+  --rg-link: #a6a6ff;
+  --rg-ok: #4cc597;
+  --rg-ok-soft: #16302a;
+  --rg-ok-border: #245041;
+  --rg-warn: #d9a04a;
+  --rg-warn-soft: #332a18;
+  --rg-warn-border: #57411c;
+  --rg-danger: #e06a74;
+  --rg-danger-soft: #3a2023;
+  --rg-danger-border: #5a3034;
+  --rg-user-bubble: #3a4150;
+  --rg-user-bubble-text: #f2f4f9;
+  --rg-canvas: #141822;
+  --rg-canvas-dot: #262b38;
+  --rg-rail: #2a303c;
+  --rg-node: #4a5264;
+  --rg-overlay: rgba(0, 0, 0, 0.6);
+  --rg-code-bg: #12161e;
+  --rg-code-text: #cdd5e3;
+  --rg-code-border: #2a303c;
+  --rg-terminal-bg: #0d1017;
+  --rg-terminal-text: #cdd5e3;
+  --rg-diff-add-bg: rgba(76, 197, 151, 0.14);
+  --rg-diff-del-bg: rgba(224, 106, 116, 0.14);
+  --rg-focus-ring: rgba(154, 154, 245, 0.65);
+  --rg-scrollbar: #3a4150;
+  --rg-scrollbar-hover: #4a5264;
+  --rg-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --rg-shadow-2: 0 2px 6px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.4);
+
+  --el-color-primary: #e3e6ee;
+  --el-color-primary-light-3: #b9bdc7;
+  --el-color-primary-light-5: #8b909c;
+  --el-color-primary-light-7: #4d5361;
+  --el-color-primary-light-8: #3a4150;
+  --el-color-primary-light-9: #2a303c;
+  --el-color-primary-dark-2: #f2f4f9;
+  --el-bg-color-page: var(--rg-bg);
+  --el-bg-color: var(--rg-surface);
+  --el-bg-color-overlay: var(--rg-fill);
+  --el-dialog-bg-color: var(--rg-surface);
+
+  /* 弹层比页面亮一档，避免下拉/提示框“陷进”背景 */
+  --el-fill-color-blank: var(--rg-surface);
+  --el-fill-color: var(--rg-fill);
+  --el-fill-color-light: var(--rg-fill);
+  --el-fill-color-lighter: var(--rg-fill-2);
+  --el-fill-color-extra-light: var(--rg-surface-2);
+  --el-fill-color-dark: var(--rg-fill-2);
+  --el-fill-color-darker: var(--rg-border-strong);
+  --el-border-color: var(--rg-border);
+  --el-border-color-light: var(--rg-border);
+  --el-border-color-lighter: var(--rg-fill-2);
+  --el-border-color-extra-light: var(--rg-fill);
+  --el-border-color-dark: var(--rg-border-strong);
+  --el-border-color-darker: var(--rg-border-strong);
+  --el-disabled-bg-color: var(--rg-fill);
+  --el-input-bg-color: var(--rg-fill);
+  --el-input-border-color: var(--rg-border-strong);
+  --el-input-focus-border-color: var(--rg-ai);
+  --el-input-placeholder-color: var(--rg-text-3);
+  --el-box-shadow-light: var(--rg-shadow-1);
+}
+
+/* 浅墨主按钮在暗色下用深色文字；plain/text 变体保持浅色文字 */
+html.dark .el-button--primary {
+  --el-button-text-color: var(--rg-ink-contrast);
+  --el-button-hover-text-color: var(--rg-ink-contrast);
+  --el-button-active-text-color: var(--rg-ink-contrast);
+  --el-button-disabled-text-color: #4d5361;
+}
+html.dark .el-button--primary.is-plain,
+html.dark .el-button--primary.is-text,
+html.dark .el-button--primary.is-link {
+  --el-button-text-color: #e3e6ee;
+  --el-button-hover-text-color: #e3e6ee;
+}
+html.dark .el-button--primary.is-plain {
+  --el-button-hover-text-color: #16181d;
+  --el-button-active-text-color: #16181d;
+}
+
+/* 对话框标题不折行：单行展示，超长省略（右侧预留关闭按钮空间） */
+.el-dialog__title {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 32px;
+}
+
+body {
+  transition: background-color 0.2s, color 0.2s;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  color: var(--rg-text);
+  -webkit-font-smoothing: antialiased;
+  background: var(--rg-bg);
+}
+
+/* 数字 / 标识的等宽语义 */
+.rg-mono,
+.ma-td-mono {
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, Monaco, monospace;
+}
+
+/* ---- Element Plus 细节统一 ---- */
+.el-dialog {
+  border-radius: var(--rg-radius-lg);
+}
+.el-drawer {
+  --el-drawer-padding-primary: 18px;
+}
+.el-message-box {
+  border-radius: var(--rg-radius-lg);
+}
+.el-tabs__item {
+  font-size: 13px;
+  color: var(--rg-text-2);
+  transition: color 0.15s;
+}
+.el-tabs__item.is-active {
+  color: var(--rg-ink);
+  font-weight: 600;
+}
+.el-tabs__item:hover {
+  color: var(--rg-ink);
+}
+.el-tabs__active-bar {
+  background-color: var(--rg-ink);
+}
+.el-tabs__nav-wrap::after {
+  height: 1px;
+  background-color: var(--rg-border);
+}
+.el-button {
+  font-weight: 500;
+}
+/* hover 深一档的墨色只作用于实心按钮；plain/text/link 变体保持 EP 各自的悬停语义 */
+.el-button--primary:not(.is-disabled):not(.is-plain):not(.is-text):not(.is-link) {
+  --el-button-hover-bg-color: var(--rg-ink-hover);
+  --el-button-active-bg-color: var(--rg-ink-active);
+}
+.el-tag {
+  border-radius: 999px;
+  font-weight: 500;
+}
+.el-select .el-select__wrapper,
+.el-input .el-input__wrapper {
+  border-radius: var(--rg-radius-sm);
+}
+.el-empty__description p {
+  font-size: 12.5px;
+  color: var(--rg-text-3);
+}
+
+/* ---- 弹窗：统一最大高度 + 内部滚动（header/footer 固定，body 滚动） ---- */
+.el-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 96px);
+}
+.el-dialog__header,
+.el-dialog__footer {
+  flex-shrink: 0;
+}
+.el-dialog__body {
+  min-height: 0;
+  overflow-y: auto;
+}
+@media (max-width: 768px) {
+  /* 窄屏：宽度自适应，避免横向溢出（内联 --el-dialog-width 需 !important 覆盖） */
+  .el-dialog {
+    --el-dialog-width: calc(100vw - 24px) !important;
+    max-height: calc(100vh - 32px);
+    margin-top: 16px !important;
+    margin-bottom: 16px;
+  }
+  .el-dialog__body {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* ---- 深色下 Element Plus 弹层/表单/表格兜底（防止白底） ---- */
+html.dark .el-popper.is-light,
+html.dark .el-select-dropdown,
+html.dark .el-dropdown__popper,
+html.dark .el-message-box,
+html.dark .el-dialog,
+html.dark .el-drawer {
+  background-color: var(--rg-surface);
+  border-color: var(--rg-border);
+  color: var(--rg-text);
+}
+html.dark .el-select-dropdown__item.is-hovering,
+html.dark .el-dropdown-menu__item:not(.is-disabled):focus,
+html.dark .el-dropdown-menu__item:not(.is-disabled):hover {
+  background-color: var(--rg-fill);
+}
+html.dark .el-table {
+  --el-table-bg-color: var(--rg-surface);
+  --el-table-tr-bg-color: var(--rg-surface);
+  --el-table-header-bg-color: var(--rg-fill);
+  --el-table-border-color: var(--rg-border);
+  --el-table-row-hover-bg-color: var(--rg-fill);
+  --el-table-text-color: var(--rg-text-2);
+  --el-table-header-text-color: var(--rg-text);
+  color: var(--rg-text-2);
+}
+html.dark .el-table th.el-table__cell {
+  background-color: var(--rg-fill);
+  color: var(--rg-text);
+}
+html.dark .el-checkbox__inner,
+html.dark .el-radio__inner {
+  background-color: var(--rg-fill);
+  border-color: var(--rg-border-strong);
+}
+html.dark .el-checkbox__label,
+html.dark .el-radio__label {
+  color: var(--rg-text-2);
+}
+/* 开关圆点：深色下用墨色/反差色，避免纯白圆点（浅色仍用 Element Plus 默认） */
+html.dark .el-switch__action {
+  background-color: var(--rg-ink);
+}
+html.dark .el-switch.is-checked .el-switch__action {
+  background-color: var(--rg-ink-contrast);
+}
+html.dark .el-input__wrapper,
+html.dark .el-textarea__inner,
+html.dark .el-select__wrapper {
+  background-color: var(--rg-fill);
+  box-shadow: 0 0 0 1px var(--rg-border-strong) inset;
+  color: var(--rg-text);
+}
+html.dark .el-input__inner,
+html.dark .el-textarea__inner {
+  color: var(--rg-text);
+}
+html.dark .el-input__inner::placeholder,
+html.dark .el-textarea__inner::placeholder {
+  color: var(--rg-text-3);
+}
+html.dark .el-form-item__label {
+  color: var(--rg-text-2);
+}
+html.dark .el-empty__description p {
+  color: var(--rg-text-3);
+}
+html.dark .el-message {
+  background-color: var(--rg-surface);
+  border-color: var(--rg-border);
+  color: var(--rg-text);
+}
+html.dark .el-message-box__title {
+  color: var(--rg-text);
+}
+html.dark .el-message-box__message {
+  color: var(--rg-text-2);
+}
+
+/* 键盘可达性 */
+.ma-chat-chip:focus-visible,
+.ma-proto-device:focus-visible,
+.wf-btn:focus-visible,
+button:focus-visible,
+a:focus-visible,
+[role='button']:focus-visible,
+.el-tabs__item:focus-visible {
+  outline: 2px solid var(--rg-focus-ring);
+  outline-offset: 2px;
+}
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+/* 细滚动条：跟随主题 */
+html {
+  scrollbar-color: var(--rg-scrollbar) transparent;
+  scrollbar-width: thin;
+}
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--rg-scrollbar);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--rg-scrollbar-hover);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 动效尊重系统偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---- Dark 下的彩色软底组件微调（半透明化，避免刺眼粉彩） ---- */
+html.dark .ma-chat-diff-add,
+html.dark .ma-chat-diff-kind-added {
+  background: rgba(76, 197, 151, 0.14);
+  color: var(--rg-ok);
+}
+html.dark .ma-chat-diff-upd,
+html.dark .ma-chat-diff-kind-updated {
+  background: rgba(217, 160, 74, 0.14);
+  color: var(--rg-warn);
+}
+html.dark .ma-chat-diff-del,
+html.dark .ma-chat-diff-kind-removed {
+  background: rgba(224, 106, 116, 0.14);
+  color: var(--rg-danger);
+}
+html.dark .ma-chat-diff-before {
+  background: rgba(224, 106, 116, 0.14);
+  color: var(--rg-danger);
+}
+html.dark .ma-chat-diff-after {
+  background: rgba(76, 197, 151, 0.14);
+  color: var(--rg-ok);
+}
+html.dark .ma-priority-P0 {
+  background: rgba(224, 106, 116, 0.14);
+  color: var(--rg-danger);
+}
+html.dark .ma-priority-P1 {
+  background: rgba(217, 160, 74, 0.14);
+  color: var(--rg-warn);
+}
+html.dark .ma-priority-P2 {
+  background: rgba(133, 133, 240, 0.16);
+  color: var(--rg-ai);
+}
+html.dark .ma-priority-P3 {
+  background: var(--rg-fill);
+  color: var(--rg-text-2);
+}
+html.dark .ma-issues {
+  border-color: rgba(217, 160, 74, 0.35);
+  background: var(--rg-warn-soft);
+}
+html.dark .ma-issues-head {
+  background: transparent;
+}
+html.dark .ma-issues-title {
+  color: var(--rg-warn);
+}
+html.dark .ma-issue-row {
+  border-bottom-color: rgba(217, 160, 74, 0.2);
+}
+html.dark .ma-issue-row:hover {
+  background: rgba(217, 160, 74, 0.08);
+}
+html.dark .ma-issue-error .ma-issue-level {
+  background: rgba(224, 106, 116, 0.16);
+  color: var(--rg-danger);
+}
+html.dark .ma-issue-warning .ma-issue-level {
+  background: rgba(217, 160, 74, 0.16);
+  color: var(--rg-warn);
+}
+html.dark .ma-type-badge {
+  background: var(--rg-fill-2);
+  color: var(--rg-text-2);
+}
+html.dark .ma-history-ai {
+  background: rgba(133, 133, 240, 0.16);
+  color: var(--rg-ai);
+}
+html.dark .ma-history-manual {
+  background: var(--rg-fill);
+  color: var(--rg-text-2);
+}
+html.dark .ma-history-rollback {
+  background: rgba(217, 160, 74, 0.14);
+  color: var(--rg-warn);
+}
+html.dark .ma-history-reset {
+  background: rgba(224, 106, 116, 0.14);
+  color: var(--rg-danger);
+}
+html.dark .ma-highlight {
+  animation-name: ma-highlight-fade-dark;
+}
+@keyframes ma-highlight-fade-dark {
+  0% {
+    background: rgba(217, 160, 74, 0.28);
+    box-shadow: 0 0 0 2px var(--rg-warn);
+  }
+  100% {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+/* 线框原型保持白纸观感（评审文档），仅画布随主题变化 —— 见 wireframe.css 不做暗色 */
+
+/* Modified by AI on 2026-10-16 11:10:18 */
+
+/* 面板宽度拖拽中：全局列宽光标 + 禁止选中文本（body 元素，必须全局样式） */
+body.rg-resizing {
+  cursor: col-resize;
+  user-select: none;
+}

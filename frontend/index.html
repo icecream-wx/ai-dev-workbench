@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>智能开发工作台</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%231d2129'/%3E%3Ctext x='16' y='21' font-family='Segoe UI,Arial' font-size='12' font-weight='700' fill='white' text-anchor='middle'%3EAI%3C/text%3E%3C/svg%3E" />
+    <script>
+      /* 在首屏绘制前套用主题，避免深色模式闪白（逻辑与 settings/store 的初始值一致） */
+      (function () {
+        var mode = 'light';
+        try {
+          var stored = JSON.parse(localStorage.getItem('rg.theme') || 'null');
+          if (stored === 'light' || stored === 'dark') mode = stored;
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) mode = 'dark';
+        } catch (e) {}
+        if (mode === 'dark') document.documentElement.classList.add('dark');
+      })();
+    </script>
+    <style>
+      body { margin: 0; background: #f5f6fa; color-scheme: light; }
+      html.dark body { background: #11141b; color-scheme: dark; }
+      #boot {
+        height: 100vh; display: flex; flex-direction: column; align-items: center;
+        justify-content: center; gap: 14px; color: #8a8f9d; font-size: 12.5px;
+        font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      }
+      html.dark #boot { color: #8c95a6; }
+      #boot .spinner {
+        width: 26px; height: 26px; border-radius: 50%;
+        border: 3px solid #d8dbe4; border-top-color: #6a5cff;
+        animation: boot-spin 0.8s linear infinite;
+      }
+      html.dark #boot .spinner { border-color: #2a303c; border-top-color: #9a9af5; }
+      @keyframes boot-spin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <div id="app"><div id="boot"><span class="spinner"></span><span>正在加载工作台…</span></div></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

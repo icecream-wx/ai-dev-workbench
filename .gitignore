@@ -1,0 +1,62 @@
+# ===== 系统 / 编辑器 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+.vs/
+*.suo
+*.user
+*.sublime-workspace
+
+# ===== Node / 前端 =====
+node_modules/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.vite/
+*.tsbuildinfo
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# ===== 密钥 / 环境变量 =====
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+*.keystore
+
+# ===== 运行时数据（工作台自身） =====
+data/
+projects/
+run/
+logs/
+*.log
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.pid
+opencode-serve-*.json
+
+# ===== Java / Maven（EOS 模板与应用） =====
+target/
+*.class
+.gradle/
+.mvn/wrapper/maven-wrapper.jar
+
+# ===== 其它 =====
+nul
+*.tmp

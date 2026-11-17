@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Dev Workbench 业务说明（汇报 / 演示版）</title>
+<style>
+  :root{
+    --ink:#0f172a; --ink-2:#334155; --ink-3:#64748b; --line:#e2e8f0;
+    --bg:#ffffff; --bg-soft:#f8fafc; --bg-soft-2:#f1f5f9;
+    --blue:#2563eb; --blue-soft:#eff6ff; --violet:#7c3aed; --violet-soft:#f5f3ff;
+    --amber:#b45309; --amber-soft:#fffbeb; --green:#047857; --green-soft:#ecfdf5;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC","Hiragino Sans GB",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:15px; line-height:1.72;
+  }
+  .page{max-width:1040px; margin:0 auto; padding:40px 40px 72px}
+  h1,h2,h3,h4{line-height:1.32; margin:0}
+  h1{font-size:40px; letter-spacing:-.01em}
+  h2{font-size:24px; margin:0 0 6px; display:flex; align-items:baseline; gap:10px}
+  h2 .num{font-size:13px; font-weight:700; color:var(--blue); letter-spacing:.08em; transform:translateY(-2px)}
+  h3{font-size:17px; margin:26px 0 8px; padding-left:10px; border-left:4px solid var(--blue)}
+  h4{font-size:14.5px; margin:18px 0 6px; color:var(--ink-2)}
+  p{margin:8px 0}
+  ul,ol{margin:8px 0 8px; padding-left:22px}
+  li{margin:4px 0}
+  strong{font-weight:700}
+  code{
+    font-family:"Cascadia Mono",Consolas,"Liberation Mono",monospace;
+    font-size:12.5px; background:var(--bg-soft-2); border:1px solid var(--line);
+    border-radius:4px; padding:0 4px; white-space:nowrap;
+  }
+  .muted{color:var(--ink-3)}
+  .small{font-size:12.5px}
+
+  /* ---------- 封面 ---------- */
+  .cover{border-bottom:2px solid var(--ink); padding-bottom:26px; margin-bottom:8px}
+  .eyebrow{font-size:12px; letter-spacing:.14em; color:var(--blue); font-weight:700; text-transform:uppercase}
+  .cover h1{margin:12px 0 6px}
+  .cover .tagline{font-size:18px; color:var(--ink-2); font-weight:600}
+  .cover .meta{margin-top:14px; font-size:12.5px; color:var(--ink-3); display:flex; flex-wrap:wrap; gap:6px 18px}
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:22px 0 0}
+  .kpi{border:1px solid var(--line); border-radius:10px; padding:12px 14px; background:var(--bg-soft)}
+  .kpi b{display:block; font-size:21px; letter-spacing:-.01em}
+  .kpi span{font-size:12px; color:var(--ink-3)}
+
+  /* ---------- 目录 ---------- */
+  .toc{margin:26px 0 0; border:1px solid var(--line); border-radius:12px; padding:16px 20px; background:#fff}
+  .toc h4{margin:0 0 8px; color:var(--ink); font-size:13px; letter-spacing:.08em}
+  .toc ol{margin:0; padding-left:20px; columns:2; column-gap:32px}
+  .toc li{margin:3px 0; font-size:13px}
+  .toc a{color:var(--ink-2); text-decoration:none; border-bottom:1px dotted #cbd5e1}
+  .toc a:hover{color:var(--blue); border-color:var(--blue)}
+
+  /* ---------- 通用块 ---------- */
+  section{margin-top:46px}
+  .lead{font-size:15px; color:var(--ink-2)}
+  .callout{
+    border:1px solid var(--line); border-left:4px solid var(--blue);
+    background:var(--bg-soft); border-radius:8px; padding:12px 16px; margin:14px 0;
+  }
+  .callout.amber{border-left-color:var(--amber); background:var(--amber-soft)}
+  .callout.green{border-left-color:var(--green); background:var(--green-soft)}
+  .callout p{margin:4px 0}
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+  .card{border:1px solid var(--line); border-radius:10px; padding:14px 16px; background:#fff}
+  .card h4{margin:0 0 6px; font-size:14px; color:var(--ink)}
+  .card p{margin:4px 0; font-size:13px; color:var(--ink-2)}
+  .card ul{margin:6px 0 0; padding-left:18px}
+  .card li{font-size:13px; color:var(--ink-2)}
+  .badge{
+    display:inline-block; font-size:11px; font-weight:700; line-height:1.7; padding:0 8px; border-radius:999px;
+    border:1px solid var(--line); color:var(--ink-3); background:var(--bg-soft); margin:0 6px 8px 0;
+  }
+  td .badge{margin-bottom:0}
+  .badge-blue{background:var(--blue-soft); border-color:#bfdbfe; color:#1d4ed8}
+  .badge-violet{background:var(--violet-soft); border-color:#ddd6fe; color:#6d28d9}
+  .badge-green{background:var(--green-soft); border-color:#a7f3d0; color:#065f46}
+  .badge-amber{background:var(--amber-soft); border-color:#fde68a; color:#92400e}
+  .stage{border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff}
+  .stage header{padding:12px 16px; border-bottom:1px solid var(--line); background:var(--bg-soft)}
+  .stage header b{font-size:14.5px}
+  .stage header span{display:block; font-size:12px; color:var(--ink-3); margin-top:2px}
+  .stage .body{padding:12px 16px 14px}
+  .stage .row{display:flex; gap:8px; font-size:12.5px; margin:5px 0; color:var(--ink-2)}
+  .stage .row em{font-style:normal; color:var(--ink-3); min-width:38px; flex:0 0 38px}
+
+  /* ---------- 表格 ---------- */
+  table{width:100%; border-collapse:collapse; margin:12px 0 4px; font-size:13px}
+  th,td{border:1px solid var(--line); padding:7px 10px; vertical-align:top; text-align:left}
+  thead th{background:var(--bg-soft-2); font-weight:700; font-size:12.5px; color:var(--ink)}
+  tbody tr:nth-child(even){background:#fcfdff}
+  td:first-child{font-weight:600}
+  .table-compact th,.table-compact td{padding:5px 8px; font-size:12.5px}
+  .table-compact td:first-child{font-weight:600}
+
+  /* ---------- 图 ---------- */
+  .figure{margin:18px 0 8px; border:1px solid var(--line); border-radius:12px; padding:14px; background:#fff}
+  .figure .cap{font-size:12.5px; color:var(--ink-3); margin-top:10px}
+  .figure .cap b{color:var(--ink-2)}
+  .diagram svg{display:block; width:100%; height:auto}
+  .legend{display:flex; flex-wrap:wrap; gap:8px 18px; margin:10px 0 0; font-size:12.5px; color:var(--ink-2)}
+  .legend i{display:inline-block; width:16px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; border:1px solid}
+  .lg-user{background:var(--blue-soft); border-color:var(--blue)}
+  .lg-ai{background:var(--violet-soft); border-color:var(--violet)}
+  .lg-sys{background:var(--bg-soft-2); border-color:#475569}
+  .lg-gate{background:var(--amber-soft); border-color:var(--amber); transform:rotate(45deg); width:11px; height:11px; margin-right:9px}
+  .lg-out{background:var(--green-soft); border-color:var(--green)}
+
+  /* ---------- 脚本时间线 ---------- */
+  .script{counter-reset:step}
+  .script .s{display:grid; grid-template-columns:44px 1fr; gap:12px; padding:9px 0; border-bottom:1px dashed var(--line)}
+  .script .s:last-child{border-bottom:none}
+  .script .n{font-weight:700; color:var(--blue); font-size:13px}
+  .script .t{font-size:13px; color:var(--ink-2)}
+  .script .t b{color:var(--ink); display:block; margin-bottom:2px}
+
+  .foot{margin-top:48px; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--ink-3)}
+
+  /* ---------- 打印 ---------- */
+  @page{ size:A4; margin:14mm 14mm 16mm; }
+  @media print{
+    body{font-size:10.5pt; line-height:1.6; background:#fff}
+    .page{max-width:none; padding:0}
+    .no-print{display:none !important}
+    section{margin-top:22px}
+    h1{font-size:26pt}
+    h2{font-size:15pt}
+    h3{font-size:11.5pt; margin:14px 0 6px}
+    h4{font-size:10.5pt}
+    .kpi b{font-size:14pt}
+    .kpi span{font-size:8.5pt}
+    table{font-size:8.8pt}
+    th,td{padding:3px 6px}
+    .card p,.card li,.stage .row,.script .t{font-size:8.8pt}
+    .legend{font-size:8.5pt}
+    .page-break{break-before:page}
+    section{margin-top:14px}
+    table{margin:8px 0 2px}
+    p{margin:5px 0}
+    ul,ol{margin:5px 0}
+    li{margin:2px 0}
+    .figure{margin:10px 0 6px}
+    .card{padding:10px 12px}
+    .foot{margin-top:14px; padding-top:8px}
+    .avoid-break{break-inside:avoid}
+    h2,h3,h4{break-after:avoid}
+    tr,.card,.stage,.kpi,.callout{break-inside:avoid}
+    .figure{break-inside:avoid}
+    .diagram svg{width:auto; height:198mm; max-width:100%; margin:0 auto}
+    a{color:inherit; text-decoration:none; border:none}
+    code{white-space:normal; word-break:normal; overflow-wrap:anywhere}
+    *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ================= 封面 ================= -->
+  <header class="cover">
+    <div class="eyebrow">内部汇报材料 · 2026-11-17</div>
+    <h1>AI Dev Workbench</h1>
+    <div class="tagline">三阶段 AI 开发工作台：需求 → 设计 → 开发</div>
+    <p class="lead" style="max-width:760px;margin-top:10px">
+      前一阶段确认才进入下一阶段；设计完成时确定性生成开发交接包，开发交给 opencode 原生 agent；
+      需求或设计要改，就走变更单，只重开受影响的模块。本文说明业务怎么走通、门禁在哪、为什么可信。
+    </p>
+    <div class="meta">
+      <span>· 依据仓库当前实现与 <code>docs/STATUS.md</code></span>
+      <span>· 不含真实应用业务数据与凭据</span>
+      <span>· 离线单文件，可直接投屏</span>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><b>3 阶段</b><span>需求 / 设计 / 开发，逐阶段确认解锁</span></div>
+      <div class="kpi"><b>10 类</b><span>交接包文件：00—05 + schema + 模板 + manifest + 原型</span></div>
+      <div class="kpi"><b>310 / 167</b><span>后端 / 前端单元测试基线</span></div>
+      <div class="kpi"><b>191 秒</b><span>真实模型全链路 E2E（2 模块 / 30 页面 / 31 断言）</span></div>
+    </div>
+  </header>
+
+  <nav class="toc no-print">
+    <h4>目录</h4>
+    <ol>
+      <li><a href="#s0">一页摘要</a></li>
+      <li><a href="#s1">业务流程图</a></li>
+      <li><a href="#s2">三个阶段</a></li>
+      <li><a href="#s3">阶段间交接逻辑</a></li>
+      <li><a href="#s4">关键机制：为什么可信</a></li>
+      <li><a href="#s5">角色与演示脚本</a></li>
+      <li><a href="#s6">边界与未验证</a></li>
+      <li><a href="#s7">术语表</a></li>
+    </ol>
+  </nav>
+
+  <!-- ================= 0 摘要 ================= -->
+  <section id="s0">
+    <h2><span class="num">01</span>一页摘要</h2>
+    <p class="lead">把它当成一条“从想法到可运行应用”的流水线：<strong>需求变成可确认的文档</strong>，<strong>设计变成可执行的数据与页面</strong>，<strong>交接包变成开发 agent 的唯一输入</strong>，改动则通过变更单回到对应的模块。</p>
+
+    <h3>它解决什么问题</h3>
+    <div class="grid-2">
+      <div class="card"><h4>需求散、验收缺</h4><p>模板化 PRD + 章节必填校验 + 模块内 Scene/Epic/Story；AI 建议先预览、按章节勾选应用。</p></div>
+      <div class="card"><h4>大系统一份 PRD 写糊</h4><p>按业务域拆模块：一个模块 = 一份完整 PRD + 一套设计（实体/页面集/原型/版本/确认）。</p></div>
+      <div class="card"><h4>需求改了设计还旧</h4><p>设计输入绑定需求版本 + hash，需求一变按模块判定“过期”，同步与重新确认有明确入口。</p></div>
+      <div class="card"><h4>交接靠人讲</h4><p>确定性生成交接包（需求/数据模型/页面/计划/变更/schema/manifest/原型图），开发只读文档即可开工。</p></div>
+      <div class="card"><h4>改需求像推倒重来</h4><p>变更单选择受影响模块，未选模块逐行不动；<code>05-CHANGES.md</code> 给出真实增量 diff。</p></div>
+      <div class="card"><h4>开发过程黑盒</h4><p>原生 opencode 会话时间线：工具卡、diff、shell、权限/表单、上下文健康度、会话归档与恢复。</p></div>
+    </div>
+
+    <h3>关键卖点（汇报口径）</h3>
+    <table class="table-compact">
+      <thead><tr><th style="width:130px">卖点</th><th>用户看到什么</th><th>为什么可信</th></tr></thead>
+      <tbody>
+        <tr><td>模板化 PRD</td><td>章节树 + 必填提示 + 模板中心</td><td>模板/章节落库、版本可追溯；确认时服务端校验必填与 Story</td></tr>
+        <tr><td>模块化</td><td>需求大纲与设计大纲都以模块为根</td><td>模块独立版本 / 确认 / 变更范围；一模块一完整 PRD + 一套设计</td></tr>
+        <tr><td>按 Epic 生成</td><td>「按 Epic 生成 / 生成此 Epic」+ 进度与重试</td><td>实体合并进模块共享池，不覆盖其它 Epic；每 Epic 一个版本、结果为草稿</td></tr>
+        <tr><td>确定性交接包</td><td>交接包弹窗：文件清单、模块表、规模、校验问题</td><td>不调模型；校验模块已确认、输入未过期、引用完整、每页 PNG 齐全</td></tr>
+        <tr><td>原生 opencode 开发</td><td>时间线 + 工具卡 + 权限/表单 + 上下文 chip</td><td>原生 <code>build</code> agent 与原生会话；不做自定义 agent/批次/证据/Git 门禁</td></tr>
+        <tr><td>变更闭环</td><td>发起变更 → 模块勾选 → 重新确认 → 新交接包 → 新会话</td><td>未选模块只读；取消按模块恢复基线；<code>05-CHANGES</code> 只给增量</td></tr>
+        <tr><td>可追溯</td><td>版本弹窗带来源与变更单号；会话记录交接包版本/hash</td><td>交接包版本 + SHA-256；需求 bundle 记录模块版本/hash</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout green">
+      <p><strong>当前状态：</strong>D5、C1、R2a/b/c、I-10、I-09a、<strong>M2—M6</strong>、<strong>RMP-1/RMP-2</strong>、<strong>D-RMP</strong>、<strong>M7/M7-2/M7-2b</strong>、<strong>U7</strong>、视觉 V1—V3 均已实施并评审；真实模型全链路 E2E（2026-11-16）通过：2 模块 / 17 Story / 7 实体 / 30 页面 / large 交接包 / 2 模块阶段 + 6 Epic 阶段 / 单模块变更 v2，31/31 断言，约 191 秒（临时应用跑完已删除）。</p>
+    </div>
+
+    <h3>适用与不适用</h3>
+    <div class="grid-2">
+      <div class="card"><span class="badge badge-green">适合</span>
+        <p>中小型业务应用（EOS 后端 + Vue3 前端）、通常 1—6 个业务域、需求会反复调整、需要“评审 → 确认 → 交接 → 增量实现”可追溯链路、个人或小组快速交付。</p>
+      </div>
+      <div class="card"><span class="badge badge-amber">本期不适合</span>
+        <p>强合规与审批流、多租户/大团队并发协作（无登录与角色）、要求自动验收与交付证据链、与既有需求/项目管理平台双向同步。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 1 流程图 ================= -->
+  <section id="s1" class="page-break">
+    <h2><span class="num">02</span>业务流程图</h2>
+    <p class="lead">自上而下三段：需求 → 设计 → 开发；右侧一列是变更回流（Change Set #2 起）。颜色表示“谁在做”，菱形是门禁，绿色是阶段产物。</p>
+    <div class="legend">
+      <span><i class="lg-user"></i>用户动作</span>
+      <span><i class="lg-ai"></i>AI 动作（调用模型）</span>
+      <span><i class="lg-sys"></i>系统动作（确定性代码）</span>
+      <span><i class="lg-gate"></i>门禁</span>
+      <span><i class="lg-out"></i>阶段产物</span>
+    </div>
+
+
+
+    <div class="figure diagram">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 1840" role="img" aria-labelledby="flowTitle flowDesc">
+  <title id="flowTitle">AI Dev Workbench 业务流程图</title>
+  <desc id="flowDesc">三阶段（需求、设计、开发）主流程，右侧为变更回流（Change Set #2 起）；蓝色为用户动作，紫色为 AI 动作，灰色为系统动作，菱形为门禁，绿色为阶段产物。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrow-start" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M10,0 L0,5 L10,10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <style>
+    .bg { fill: #ffffff; }
+    .band { fill: #fcfdff; stroke: #e2e8f0; stroke-width: 1; }
+    .panel { fill: #ffffff; stroke: #e2e8f0; stroke-width: 1; }
+    .band-title { font-size: 15px; font-weight: 700; fill: #0f172a; }
+    .band-sub { font-size: 11.5px; fill: #64748b; }
+    .pill { fill: #ecfdf5; stroke: #a7f3d0; stroke-width: 1; }
+    .pill-text { font-size: 11.5px; font-weight: 600; fill: #065f46; }
+    .node { stroke-width: 1.2; }
+    .node-user { fill: #eff6ff; stroke: #2563eb; }
+    .node-ai { fill: #f5f3ff; stroke: #7c3aed; }
+    .node-sys { fill: #f1f5f9; stroke: #475569; }
+    .node-out { fill: #ecfdf5; stroke: #047857; }
+    .node-dash { fill: #fffdf5; stroke: #b45309; stroke-dasharray: 5 4; }
+    .nt { font-size: 12.5px; font-weight: 700; fill: #0f172a; }
+    .nb { font-size: 11.5px; fill: #334155; }
+    .nb-small { font-size: 10.5px; fill: #475569; }
+    .tag { font-size: 10px; font-weight: 700; }
+    .tag-user { fill: #1d4ed8; }
+    .tag-ai { fill: #6d28d9; }
+    .tag-sys { fill: #475569; }
+    .gate { fill: #fffbeb; stroke: #b45309; stroke-width: 1.6; }
+    .gate-text { font-size: 11.5px; font-weight: 700; fill: #7c2d12; }
+    .edge { fill: none; stroke: #94a3b8; stroke-width: 1.4; }
+    .edge-dash { fill: none; stroke: #94a3b8; stroke-width: 1.3; stroke-dasharray: 6 5; }
+    .block { fill: #f8fafc; stroke: #e2e8f0; stroke-width: 1; }
+    .block-ai { fill: #faf5ff; stroke: #e9d5ff; stroke-width: 1; }
+    .block-title { font-size: 12px; font-weight: 700; fill: #0f172a; }
+    .li { font-size: 11.5px; fill: #334155; }
+    .li-ai { font-size: 11px; fill: #6b21a8; }
+    .hint { font-size: 10.5px; fill: #64748b; }
+    .legend-text { font-size: 12px; fill: #0f172a; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="1180" height="1840"/>
+
+  <!-- 标题 -->
+  <text x="36" y="52" font-size="27" font-weight="700" fill="#0f172a">AI Dev Workbench · 业务流程图</text>
+  <text x="36" y="80" class="band-sub" font-size="13">三阶段 AI 开发工作台：需求 → 设计 → 开发　|　用户动作 / 系统动作 / AI 动作分色，菱形为门禁，绿色为阶段产物</text>
+
+  <!-- 图例 -->
+  <g>
+    <rect x="36" y="104" width="20" height="14" rx="4" fill="#eff6ff" stroke="#2563eb"/>
+    <text x="64" y="115" class="legend-text">用户动作</text>
+    <rect x="132" y="104" width="20" height="14" rx="4" fill="#f5f3ff" stroke="#7c3aed"/>
+    <text x="160" y="115" class="legend-text">AI 动作</text>
+    <rect x="228" y="104" width="20" height="14" rx="4" fill="#f1f5f9" stroke="#475569"/>
+    <text x="256" y="115" class="legend-text">系统动作</text>
+    <polygon points="324,104 334,111 324,118 314,111" fill="#fffbeb" stroke="#b45309"/>
+    <text x="342" y="115" class="legend-text">门禁</text>
+    <rect x="404" y="104" width="20" height="14" rx="4" fill="#ecfdf5" stroke="#047857"/>
+    <text x="432" y="115" class="legend-text">阶段产物</text>
+    <text x="1156" y="115" class="hint" text-anchor="end">矢量源：docs/report/assets/flow-overview.svg</text>
+  </g>
+
+  <!-- ================= 阶段一：需求 ================= -->
+  <rect class="band" x="24" y="150" width="716" height="480" rx="14"/>
+  <text x="40" y="176" class="band-title">阶段一 · 需求（Requirements）</text>
+  <text x="40" y="195" class="band-sub">对话 + 模板化 PRD + 模块规划 + Epics / Stories + 参考原型</text>
+  <rect class="pill" x="386" y="157" width="330" height="26" rx="13"/>
+  <text x="400" y="175" class="pill-text">产物：需求 bundle（模块版本 + 聚合 hash）</text>
+
+  <!-- row1 -->
+  <rect class="node node-user" x="40" y="202" width="330" height="68" rx="10"/>
+  <text x="56" y="226" class="nt">① 新建应用</text>
+  <text x="356" y="224" class="tag tag-user" text-anchor="end">用户</text>
+  <text x="56" y="246" class="nb">填 app-id / 名称 / 说明</text>
+  <text x="56" y="263" class="nb">选需求模板 + 原型模板</text>
+
+  <rect class="node node-sys" x="386" y="202" width="330" height="68" rx="10"/>
+  <text x="402" y="226" class="nt">创建应用空间</text>
+  <text x="702" y="224" class="tag tag-sys" text-anchor="end">系统</text>
+  <text x="402" y="246" class="nb">建 projects 目录 + 渲染 EOS 模板</text>
+  <text x="402" y="263" class="nb">初始化默认模块 MOD-001（空 PRD）</text>
+
+  <line class="edge" x1="370" y1="236" x2="386" y2="236" marker-end="url(#arrow)"/>
+
+  <!-- row2 -->
+  <rect class="node node-ai" x="40" y="286" width="330" height="68" rx="10"/>
+  <text x="56" y="310" class="nt">AI 需求对话</text>
+  <text x="356" y="308" class="tag tag-ai" text-anchor="end">AI</text>
+  <text x="56" y="330" class="nb">req agent + SSE，按模块注入上下文</text>
+  <text x="56" y="347" class="nb">只输出文本与建议，不改文件</text>
+
+  <rect class="node node-user" x="386" y="286" width="330" height="68" rx="10"/>
+  <text x="402" y="310" class="nt">模板化 PRD 章节</text>
+  <text x="702" y="308" class="tag tag-user" text-anchor="end">用户</text>
+  <text x="402" y="330" class="nb">章节自动保存（不产版本）</text>
+  <text x="402" y="347" class="nb">手动保存 / 模板切换 / AI 应用产版本</text>
+
+  <line class="edge" x1="370" y1="320" x2="386" y2="320" marker-end="url(#arrow)"/>
+
+  <!-- row3 -->
+  <rect class="node node-ai" x="40" y="370" width="676" height="72" rx="10"/>
+  <text x="56" y="394" class="nt">AI 模块规划：拆分建议卡</text>
+  <text x="700" y="392" class="tag tag-ai" text-anchor="end">AI</text>
+  <text x="56" y="414" class="nb">首次实质需求自动触发；随时可用「AI 规划模块」重新拆分（保留 / 改名 / 重新生成 / 新建 / 归档）</text>
+  <text x="56" y="431" class="nb">可编辑模块名 / 范围 / 建议 Epics / 依赖与覆盖；确认后「应用拆分并生成」或「保持单模块」</text>
+
+  <!-- row4 -->
+  <rect class="node node-ai" x="40" y="458" width="330" height="68" rx="10"/>
+  <text x="56" y="482" class="nt">逐模块生成完整 PRD</text>
+  <text x="356" y="480" class="tag tag-ai" text-anchor="end">AI</text>
+  <text x="56" y="502" class="nb">SSE 进度、失败重试、取消</text>
+  <text x="56" y="519" class="nb">旧模块归档保留，可恢复</text>
+
+  <rect class="node node-sys" x="386" y="458" width="330" height="68" rx="10"/>
+  <text x="402" y="482" class="nt">Scene / Epic / Story</text>
+  <text x="702" y="480" class="tag tag-sys" text-anchor="end">系统</text>
+  <text x="402" y="502" class="nb">稳定全局 ID（EPIC-001、STORY-001）</text>
+  <text x="402" y="519" class="nb">模块内拆分，跨模块依赖只提示</text>
+
+  <line class="edge" x1="370" y1="492" x2="386" y2="492" marker-end="url(#arrow)"/>
+
+  <!-- row5 -->
+  <rect class="node node-ai node-dash" x="40" y="542" width="676" height="54" rx="10"/>
+  <text x="56" y="564" class="nt" font-size="12">AI 参考原型（可选）：PRD → 实体 / 字段 / 页面 → 真实字段线框，仅用于需求评审</text>
+  <text x="56" y="583" class="nb">不写设计数据、不产 PNG、不进入设计阶段与交接包；显式生成、可重新生成、过期提示</text>
+
+  <!-- 阶段一内部连线 -->
+  <line class="edge" x1="551" y1="354" x2="551" y2="370" marker-end="url(#arrow)"/>
+  <line class="edge" x1="205" y1="442" x2="205" y2="458" marker-end="url(#arrow)"/>
+  <line class="edge" x1="382" y1="630" x2="382" y2="646" marker-end="url(#arrow)"/>
+
+  <!-- ================= 门禁 1 ================= -->
+  <polygon class="gate" points="382,646 532,684 382,722 232,684"/>
+  <text x="382" y="678" class="gate-text" text-anchor="middle">门禁 ①：全部必选模块需求已确认</text>
+  <text x="382" y="696" class="gate-text" text-anchor="middle">含必填章节 + 至少 1 个 Story</text>
+
+  <!-- ================= 阶段二：设计 ================= -->
+  <rect class="band" x="24" y="738" width="716" height="480" rx="14"/>
+  <text x="40" y="764" class="band-title">阶段二 · 设计（Design）</text>
+  <text x="40" y="783" class="band-sub">设计大纲树 + 按 Epic 生成实体/页面集 + 页面原型截图 + 覆盖度</text>
+  <rect class="pill" x="386" y="745" width="330" height="26" rx="13"/>
+  <text x="400" y="763" class="pill-text">产物：实体 / 页面集 / 页面 + PNG，逐模块设计版本</text>
+
+  <!-- row1 -->
+  <rect class="node node-sys" x="40" y="790" width="330" height="68" rx="10"/>
+  <text x="56" y="814" class="nt">设计大纲树</text>
+  <text x="356" y="812" class="tag tag-sys" text-anchor="end">系统</text>
+  <text x="56" y="834" class="nb">模块根 / 数据集（共享实体）</text>
+  <text x="56" y="851" class="nb">Epic / 页面集 / 未归属</text>
+
+  <rect class="node node-user" x="386" y="790" width="330" height="68" rx="10"/>
+  <text x="402" y="814" class="nt">设计对话 + 手工编辑</text>
+  <text x="702" y="812" class="tag tag-user" text-anchor="end">用户</text>
+  <text x="402" y="834" class="nb">实体 / 原型 / 覆盖度 三个 Tab</text>
+  <text x="402" y="851" class="nb">切模块前先落盘，避免丢输入</text>
+
+  <line class="edge" x1="370" y1="824" x2="386" y2="824" marker-end="url(#arrow)"/>
+
+  <!-- row2 -->
+  <rect class="node node-ai" x="40" y="874" width="676" height="72" rx="10"/>
+  <text x="56" y="898" class="nt">按 Epic 生成（AI，每个 Epic 一次）</text>
+  <text x="700" y="896" class="tag tag-ai" text-anchor="end">AI</text>
+  <text x="56" y="918" class="nb">实体合并进模块共享实体池（不删其它 Epic）；替换该 Epic 主页面集，页面按 Story 组织</text>
+  <text x="56" y="935" class="nb">每 Epic 一个设计版本、结果为草稿；批量 / 单 Epic 进度、失败重试、停止；已确认项需勾选重开</text>
+
+  <line class="edge" x1="551" y1="858" x2="551" y2="874" marker-end="url(#arrow)"/>
+
+  <!-- row3 -->
+  <rect class="node node-user" x="40" y="962" width="330" height="68" rx="10"/>
+  <text x="56" y="986" class="nt">页面原型 + 截图 PNG</text>
+  <text x="356" y="984" class="tag tag-user" text-anchor="end">用户</text>
+  <text x="56" y="1006" class="nb">线框原型、页面规格与动作</text>
+  <text x="56" y="1023" class="nb">每页 PNG 是生成交接包的硬条件</text>
+
+  <rect class="node node-sys" x="386" y="962" width="330" height="68" rx="10"/>
+  <text x="402" y="986" class="nt">覆盖度 / 设计输入</text>
+  <text x="702" y="984" class="tag tag-sys" text-anchor="end">系统</text>
+  <text x="402" y="1006" class="nb">Story 是否落到页面（未覆盖只提示）</text>
+  <text x="402" y="1023" class="nb">设计输入 = 版本 + hash；需求变更 → 过期</text>
+
+  <line class="edge" x1="370" y1="996" x2="386" y2="996" marker-end="url(#arrow)"/>
+
+  <!-- row4 -->
+  <rect class="node node-user" x="40" y="1046" width="676" height="68" rx="10"/>
+  <text x="56" y="1070" class="nt">逐模块「确认设计」</text>
+  <text x="700" y="1068" class="tag tag-user" text-anchor="end">用户</text>
+  <text x="56" y="1090" class="nb">设计总览显示各模块确认 / 缺图 / 过期状态</text>
+  <text x="56" y="1107" class="nb">全部必选模块确认后，才能生成应用级交接包</text>
+
+  <line class="edge" x1="551" y1="946" x2="551" y2="962" marker-end="url(#arrow)"/>
+  <line class="edge" x1="205" y1="1030" x2="205" y2="1046" marker-end="url(#arrow)"/>
+
+  <!-- row5 -->
+  <rect class="node node-sys node-dash" x="40" y="1130" width="676" height="54" rx="10"/>
+  <text x="56" y="1152" class="nt" font-size="12">设计边界：页面集只属于一个模块；跨模块实体关系允许，只提示不阻塞</text>
+  <text x="56" y="1171" class="nb">实体 / 页面集 / 页面 ID 全应用唯一；设计版本按模块独立，可回滚</text>
+
+  <line class="edge" x1="382" y1="1184" x2="382" y2="1234" marker-end="url(#arrow)"/>
+
+  <!-- ================= 门禁 2 ================= -->
+  <polygon class="gate" points="382,1234 532,1272 382,1310 232,1272"/>
+  <text x="382" y="1266" class="gate-text" text-anchor="middle">门禁 ②：全部必选模块设计已确认</text>
+  <text x="382" y="1284" class="gate-text" text-anchor="middle">无过期 · 每页原型 PNG 齐全</text>
+
+  <!-- ================= 阶段三：开发 ================= -->
+  <rect class="band" x="24" y="1326" width="716" height="480" rx="14"/>
+  <text x="40" y="1352" class="band-title">阶段三 · 开发（Development）</text>
+  <text x="40" y="1371" class="band-sub">确定性交接包 → Change Set #1 → 原生 opencode 会话分阶段实现</text>
+  <rect class="pill" x="386" y="1333" width="330" height="26" rx="13"/>
+  <text x="400" y="1351" class="pill-text">产物：可运行应用 + 会话记录（绑定交接包版本）</text>
+
+  <!-- row1 -->
+  <rect class="node node-sys" x="40" y="1378" width="330" height="68" rx="10"/>
+  <text x="56" y="1402" class="nt">确定性生成应用级交接包</text>
+  <text x="356" y="1400" class="tag tag-sys" text-anchor="end">系统</text>
+  <text x="56" y="1422" class="nb">00—05 + schema.sql + prototype-template.json</text>
+  <text x="56" y="1439" class="nb">+ manifest.json + prototypes 原型目录</text>
+
+  <rect class="node node-user" x="386" y="1378" width="330" height="68" rx="10"/>
+  <text x="402" y="1402" class="nt">校验 → Change Set #1 → 开发</text>
+  <text x="702" y="1400" class="tag tag-user" text-anchor="end">用户</text>
+  <text x="402" y="1422" class="nb">首包记为“初始开发”基线</text>
+  <text x="402" y="1439" class="nb">开发会话绑定交接包 版本 + hash</text>
+
+  <line class="edge" x1="370" y1="1412" x2="386" y2="1412" marker-end="url(#arrow)"/>
+
+  <!-- row2 -->
+  <rect class="node node-user" x="40" y="1462" width="330" height="68" rx="10"/>
+  <text x="56" y="1486" class="nt">按阶段开发（可选，U7）</text>
+  <text x="356" y="1484" class="tag tag-user" text-anchor="end">用户</text>
+  <text x="56" y="1506" class="nb">模块阶段 = 里程碑（不建会话）</text>
+  <text x="56" y="1523" class="nb">Epic 阶段 = 会话 + 阶段 brief</text>
+
+  <rect class="node node-sys" x="386" y="1462" width="330" height="68" rx="10"/>
+  <text x="402" y="1486" class="nt">每阶段一个原生会话</text>
+  <text x="702" y="1484" class="tag tag-sys" text-anchor="end">系统</text>
+  <text x="402" y="1506" class="nb">brief：目标 / 范围 / 上一阶段摘要</text>
+  <text x="402" y="1523" class="nb">完成不归档；跳过 / 重新打开</text>
+
+  <line class="edge" x1="370" y1="1496" x2="386" y2="1496" marker-end="url(#arrow)"/>
+  <line class="edge" x1="551" y1="1446" x2="551" y2="1462" marker-end="url(#arrow)"/>
+
+  <!-- row3 -->
+  <rect class="node node-ai" x="40" y="1546" width="676" height="72" rx="10"/>
+  <text x="56" y="1570" class="nt">opencode 原生 build agent + 原生会话</text>
+  <text x="700" y="1568" class="tag tag-ai" text-anchor="end">AI</text>
+  <text x="56" y="1590" class="nb">时间线 / 工具卡 / diff / shell / 权限与表单卡片 / 停止 / 追加消息；上下文健康度 60% 黄、85% 红 + 原生压缩</text>
+  <text x="56" y="1607" class="nb">会话列表按变更单分组：切换 / 重命名 / 归档只读 / 恢复；不做自定义 agent、批次、证据、Git 门禁</text>
+
+  <line class="edge" x1="551" y1="1530" x2="551" y2="1546" marker-end="url(#arrow)"/>
+
+  <!-- row4 -->
+  <rect class="node node-user" x="40" y="1634" width="330" height="68" rx="10"/>
+  <text x="56" y="1658" class="nt">用户确认完成开发</text>
+  <text x="356" y="1656" class="tag tag-user" text-anchor="end">用户</text>
+  <text x="56" y="1678" class="nb">只记录完成状态</text>
+  <text x="56" y="1695" class="nb">不检查 Git / 证据 / 测试门禁</text>
+
+  <rect class="node node-sys" x="386" y="1634" width="330" height="68" rx="10"/>
+  <text x="402" y="1658" class="nt">完成后继续发消息</text>
+  <text x="702" y="1656" class="tag tag-sys" text-anchor="end">系统</text>
+  <text x="402" y="1678" class="nb">应用自动回到“开发中”</text>
+  <text x="402" y="1695" class="nb">归档会话只读，可随时恢复</text>
+
+  <line class="edge" x1="370" y1="1668" x2="386" y2="1668" marker-end="url(#arrow)"/>
+  <line class="edge" x1="205" y1="1618" x2="205" y2="1634" marker-end="url(#arrow)"/>
+
+  <!-- row5 -->
+  <rect class="node node-dash" x="40" y="1718" width="676" height="54" rx="10"/>
+  <text x="56" y="1740" class="nt" font-size="12">诚实边界：EOS 构建/运行态需内部 Maven 仓库、EOS 制品、团队 license、Nacos/MySQL/Redis（未验证）</text>
+  <text x="56" y="1759" class="nb">本期无登录/角色（未验证 401/403）；768px 以下移动端未验证；不做旧应用数据兼容；工作台只读写 SQLite</text>
+
+  <!-- ================= 右侧：读图要点 ① ================= -->
+  <rect class="panel" x="764" y="150" width="392" height="480" rx="14"/>
+  <text x="780" y="180" font-size="14" font-weight="700" fill="#0f172a">读图要点 ①　谁在做？</text>
+  <text x="780" y="200" class="hint">AI 负责内容生成；工程约束、版本、门禁由代码保证</text>
+
+  <rect class="block-ai" x="780" y="214" width="360" height="176" rx="10"/>
+  <text x="794" y="236" class="block-title">AI 动作（调用模型）</text>
+  <text x="794" y="258" class="li">· 需求对话、模块拆分建议</text>
+  <text x="794" y="278" class="li">· 逐模块 PRD 生成、设计按 Epic 生成</text>
+  <text x="794" y="298" class="li">· 开发会话（原生 build agent）</text>
+  <text x="794" y="318" class="li">· 阶段完成摘要（失败回退到最后回复）</text>
+  <text x="794" y="338" class="li">· AI 参考原型（仅需求评审）</text>
+  <text x="794" y="362" class="li-ai">输出波动：自动重试一次 + 可展开诊断片段</text>
+
+  <rect class="block" x="780" y="402" width="360" height="190" rx="10"/>
+  <text x="794" y="424" class="block-title">确定性动作（不调模型）</text>
+  <text x="794" y="446" class="li">· 模板渲染、章节 / 版本 / 回滚、hash</text>
+  <text x="794" y="466" class="li">· 模块归属、全局唯一 ID、门禁判定</text>
+  <text x="794" y="486" class="li">· 交接包渲染与校验（含 05-CHANGES diff）</text>
+  <text x="794" y="506" class="li">· 原型 PNG 落盘、开发阶段派生</text>
+  <text x="794" y="526" class="li">· 访问控制：阶段 / 确认 / 变更范围只读</text>
+  <text x="794" y="546" class="li">· 一键启停、脱敏、路径穿越防护</text>
+  <text x="780" y="610" class="hint">本期未接入登录/角色：只读来自状态机，不是权限隔离。</text>
+
+  <!-- ================= 右侧：读图要点 ② ================= -->
+  <rect class="panel" x="764" y="738" width="392" height="480" rx="14"/>
+  <text x="780" y="768" font-size="14" font-weight="700" fill="#0f172a">读图要点 ②　门禁与只读</text>
+  <text x="780" y="788" class="hint">门禁 = 服务端校验 + 状态机，不由模型判断“做完了”</text>
+
+  <rect class="block" x="780" y="802" width="360" height="96" rx="10"/>
+  <text x="794" y="822" class="block-title">需求 → 设计</text>
+  <text x="794" y="844" class="li">· 每个模块单独确认（必填章节 + 至少 1 Story）</text>
+  <text x="794" y="864" class="li">· 全部必选模块确认后，点「完成需求阶段」</text>
+  <text x="794" y="884" class="li">· 生成需求 bundle 快照，应用进入设计</text>
+
+  <rect class="block" x="780" y="910" width="360" height="118" rx="10"/>
+  <text x="794" y="930" class="block-title">设计 → 开发</text>
+  <text x="794" y="952" class="li">· 每个模块单独确认设计</text>
+  <text x="794" y="972" class="li">· 全部必选模块已确认、设计输入未过期</text>
+  <text x="794" y="992" class="li">· 引用完整 + 每页原型 PNG 齐全</text>
+  <text x="794" y="1012" class="li">· 生成交接包 + Change Set #1 才进入开发</text>
+
+  <rect class="block" x="780" y="1040" width="360" height="150" rx="10"/>
+  <text x="794" y="1060" class="block-title">变更 / 归档 / 历史</text>
+  <text x="794" y="1082" class="li">· 变更只重开选中模块，其它模块只读</text>
+  <text x="794" y="1102" class="li">· 变更中禁止归档模块；取消按模块恢复基线</text>
+  <text x="794" y="1122" class="li">· 变更中新增模块：取消时自动归档、内容保留</text>
+  <text x="794" y="1142" class="li">· 已确认文档 / 设计、归档模块、历史会话只读</text>
+  <text x="794" y="1162" class="li">· 可「重新编辑需求 / 设计」或恢复会话继续</text>
+
+  <!-- ================= 右侧：变更回流 ================= -->
+  <rect class="panel" x="764" y="1326" width="392" height="480" rx="14"/>
+  <text x="780" y="1356" font-size="14" font-weight="700" fill="#0f172a">变更回流 · Change Set #2 起</text>
+  <text x="780" y="1376" class="hint">开发中或完成后随时发起；目标是不重写已完成部分</text>
+
+  <rect class="node node-user" x="780" y="1392" width="360" height="64" rx="10"/>
+  <text x="796" y="1416" class="nt">① 发起变更</text>
+  <text x="1124" y="1414" class="tag tag-user" text-anchor="end">用户</text>
+  <text x="796" y="1436" class="nb">选受影响模块（默认全选）；可先「仅设计」再升级</text>
+
+  <rect class="node node-sys" x="780" y="1470" width="360" height="64" rx="10"/>
+  <text x="796" y="1494" class="nt">② 只重开选中模块</text>
+  <text x="1124" y="1492" class="tag tag-sys" text-anchor="end">系统</text>
+  <text x="796" y="1514" class="nb">需求 + 设计回草稿；未选模块不动、写操作 409</text>
+
+  <rect class="node node-user" x="780" y="1548" width="360" height="64" rx="10"/>
+  <text x="796" y="1572" class="nt">③ 改需求并重新确认</text>
+  <text x="1124" y="1570" class="tag tag-user" text-anchor="end">用户</text>
+  <text x="796" y="1592" class="nb">同步设计输入解除过期 → 确认设计</text>
+
+  <rect class="node node-sys" x="780" y="1626" width="360" height="64" rx="10"/>
+  <text x="796" y="1650" class="nt">④ 重新生成交接包</text>
+  <text x="1124" y="1648" class="tag tag-sys" text-anchor="end">系统</text>
+  <text x="796" y="1670" class="nb">05-CHANGES 增量 diff；未选模块标“未变更”</text>
+
+  <rect class="node node-user" x="780" y="1704" width="360" height="64" rx="10"/>
+  <text x="796" y="1728" class="nt">⑤ 新开发会话增量实现</text>
+  <text x="1124" y="1726" class="tag tag-user" text-anchor="end">用户</text>
+  <text x="796" y="1748" class="nb">只改受影响部分；旧会话保留为历史</text>
+
+  <line class="edge" x1="960" y1="1456" x2="960" y2="1470" marker-end="url(#arrow)"/>
+  <line class="edge" x1="960" y1="1534" x2="960" y2="1548" marker-end="url(#arrow)"/>
+  <line class="edge" x1="960" y1="1612" x2="960" y2="1626" marker-end="url(#arrow)"/>
+  <line class="edge" x1="960" y1="1690" x2="960" y2="1704" marker-end="url(#arrow)"/>
+
+  <!-- 开发与变更回流的双向衔接 -->
+  <line class="edge" x1="740" y1="1424" x2="780" y2="1424" marker-end="url(#arrow)"/>
+  <line class="edge" x1="780" y1="1736" x2="740" y2="1736" marker-end="url(#arrow)"/>
+  <line class="edge-dash" x1="780" y1="1502" x2="740" y2="1502" marker-end="url(#arrow)"/>
+  <text x="760" y="1494" class="hint" text-anchor="middle" font-size="9.5">取消</text>
+
+  <text x="780" y="1792" class="hint">取消变更：按模块恢复基线（变更中新增模块自动归档、内容保留）</text>
+</svg>
+      <div class="cap"><b>图 1　端到端业务流程图。</b>可编辑矢量源：<code>docs/report/assets/flow-overview.svg</code>；位图：<code>assets/flow-overview.png</code>（便于贴 PPT）。</div>
+    </div>
+
+    <h3>AI 与确定性怎么分工</h3>
+    <table class="table-compact">
+      <thead><tr><th style="width:190px">环节</th><th style="width:170px">谁做</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>需求对话 / 模块拆分建议</td><td>AI（需求 agent + SSE）</td><td>每轮注入当前模块的模板与文档上下文；只输出文本与建议，不改文件</td></tr>
+        <tr><td>逐模块 PRD 生成</td><td>AI（需求 agent）</td><td>顺序生成 + SSE 进度；失败可重试/取消；旧模块归档保留</td></tr>
+        <tr><td>AI 参考原型</td><td>AI（需求 agent）</td><td>从 PRD 生成实体/字段/页面规格；仅需求评审，不写设计数据、不产 PNG、不进交接包</td></tr>
+        <tr><td>设计实体 / 页面集</td><td>AI（设计 agent）</td><td>按 Epic 生成，实体合并进模块共享池；每 Epic 一个设计版本，结果为草稿</td></tr>
+        <tr><td>开发实现</td><td>AI（原生 build agent）</td><td>原生会话 / 工具 / 权限；工作台只做 UI、转发与确认</td></tr>
+        <tr><td>阶段完成摘要</td><td>AI（只读 agent）</td><td>5—10 行中文摘要；失败回退到最后一条回复，阶段仍完成</td></tr>
+        <tr><td>模板渲染 / 章节 / 版本 / hash</td><td>系统</td><td>不调模型；版本来源可查（模板切换/AI 应用/确认/回滚/恢复/手动）</td></tr>
+        <tr><td>门禁判定 / 只读控制</td><td>系统</td><td>阶段 + 确认 + 变更范围 + 归档状态共同决定可写性，不由模型判断“做完了”</td></tr>
+        <tr><td>交接包渲染与校验</td><td>系统</td><td>确定性渲染 00—05 / schema / manifest / 模板 / 原型；校验失败不写盘、不切阶段</td></tr>
+        <tr><td>PNG 落盘 / 阶段派生 / 05-CHANGES</td><td>系统</td><td>纯代码；diff 只输出业务名称、表名、标题与稳定需求 ID</td></tr>
+      </tbody>
+    </table>
+    <p class="muted small">Markdown 版另附同构的 Mermaid 流程图（<code>flowchart TD</code>，含子图与图例说明），便于在支持 Mermaid 的文档系统里直接查看。</p>
+
+
+  </section>
+
+  <!-- ================= 2 三个阶段 ================= -->
+  <section id="s2">
+    <h2><span class="num">03</span>三个阶段</h2>
+
+    <div class="grid-3 avoid-break">
+      <div class="stage">
+        <header><b>阶段一 · 需求</b><span>对话 + 模板化 PRD + 模块规划</span></header>
+        <div class="body">
+          <div class="row"><em>目标</em><span>把想法收敛成可确认、可交付的需求</span></div>
+          <div class="row"><em>产物</em><span>逐模块 PRD + Epic/Story + 需求 bundle</span></div>
+          <div class="row"><em>门禁</em><span>模块确认 → 完成需求阶段</span></div>
+        </div>
+      </div>
+      <div class="stage">
+        <header><b>阶段二 · 设计</b><span>设计大纲树 + 按 Epic 生成</span></header>
+        <div class="body">
+          <div class="row"><em>目标</em><span>变成可实现的数据结构、页面与原型</span></div>
+          <div class="row"><em>产物</em><span>实体/页面集/页面 + 每页 PNG</span></div>
+          <div class="row"><em>门禁</em><span>模块确认 + 输入未过期 + PNG 齐全</span></div>
+        </div>
+      </div>
+      <div class="stage">
+        <header><b>阶段三 · 开发</b><span>交接包 + 原生 opencode 会话</span></header>
+        <div class="body">
+          <div class="row"><em>目标</em><span>按阶段把应用真正做出来</span></div>
+          <div class="row"><em>产物</em><span>代码/配置 + 会话记录 + 阶段摘要</span></div>
+          <div class="row"><em>门禁</em><span>无阶段门禁；完成由用户确认</span></div>
+        </div>
+      </div>
+    </div>
+
+    <h3>3.1 需求阶段</h3>
+    <p class="lead">左侧 AI 对话、右侧模板化 Markdown 文档；模块是需求大纲的根节点，Epics/Stories 是模块内拆分。</p>
+    <ul>
+      <li><strong>创建即定模板</strong>：新建应用时选需求模板与原型模板。需求阶段可选 <strong>标准 PRD（13 节）</strong>、<strong>精简 PRD（6 节）</strong>；<strong>业务策略</strong>同属需求阶段可选模板，但不直接进入设计；<strong>QA / 测试计划属测试阶段，需求阶段不可选</strong>（下拉只列需求阶段模板）。</li>
+      <li><strong>先规划再写</strong>：第一段实质需求进去，AI 先给「模块拆分建议」（名称/范围/建议 Epics/依赖/覆盖），可改名、增删、调顺序，再「应用拆分并生成」或「保持单模块」。</li>
+      <li><strong>逐模块生成</strong>：每个模块都覆盖模板全部章节；必需章节不可空；不适用处写明并说明；进度可见、失败可重试、可取消。</li>
+      <li><strong>随时重规划</strong>：用「AI 规划模块」按当前全部需求重新拆分（保留 / 改名 / 重新生成 / 新建 / 归档），先看 diff 再应用；未匹配旧模块归档，内容/版本/对话保留。</li>
+      <li><strong>AI 建议先预览</strong>：不写库、不产版本 → 章节勾选 + 行级 diff → 应用选中 / 忽略。</li>
+      <li><strong>版本有来源</strong>：自动保存不产版本；手动保存、模板切换、AI 应用、确认、回滚、取消恢复才产版本。</li>
+      <li><strong>逐模块确认</strong>：必填章节非空 + 至少 1 个 Epic/Story；确认后该模块只读，其它模块可继续。</li>
+      <li><strong>完成需求阶段</strong>：全部必选模块确认后，在需求总览点击，生成需求聚合 bundle 并进入设计。</li>
+      <li><strong>参考原型（可选）</strong>：每模块「原型预览」节点，显式生成 AI 参考原型，检查字段与页面是否够用——仅需求评审。</li>
+      <li><strong>导出</strong>：导出当前模块 PRD（<code>.md</code>），内容即该模块需求正文。</li>
+    </ul>
+
+    <h3>3.2 设计阶段</h3>
+    <p class="lead">左侧设计对话 + 中部设计大纲树（模块根 / 数据集 / Epic / 页面集 / 未归属）+ 右侧实体、原型、覆盖度三个 Tab。</p>
+    <ul>
+      <li><strong>模块一一对应</strong>：每个模块有自己的设计项目、版本、确认状态；切模块前先落盘，避免丢输入。</li>
+      <li><strong>按 Epic 生成</strong>：可批量勾选或单 Epic 生成；一次产出该 Epic 所需实体 + 一个页面集，实体合并进模块共享池，不删其它 Epic 的实体/字段/关系。</li>
+      <li><strong>草稿 + 每 Epic 一个版本</strong>：生成结果不自动确认；批量有进度、失败重试、停止剩余；整模块生成作为兜底。</li>
+      <li><strong>已确认项显式重开</strong>：目标含已确认实体/页面集时，需勾选「允许重新打开已确认项」，仅受影响项退回草稿。</li>
+      <li><strong>每页 PNG 是硬条件</strong>：页面原型截图齐全才能生成交接包（不是提示，是阻塞校验）。</li>
+      <li><strong>覆盖度与过期</strong>：Story 是否落到页面（未覆盖只提示）；需求变更 → 该模块设计输入过期 → 同步后才能确认。</li>
+      <li><strong>跨模块关系</strong>：允许实体关系引用其它模块实体（只 warning）；页面集只能属于一个模块。</li>
+      <li><strong>逐模块确认设计</strong>：全部必选模块确认后，才能在交接包弹窗生成应用级交接包。</li>
+    </ul>
+
+    <h3>3.3 开发阶段</h3>
+    <p class="lead">交接包（文档契约）+ Change Set #1（初始开发基线）+ opencode 原生 <code>build</code> agent 会话。</p>
+    <ul>
+      <li><strong>交接包即入口</strong>：生成成功后应用进入开发，首条提示只指向 <code>docs/handoff/00-README.md</code>；会话记录交接包版本 + hash。</li>
+      <li><strong>按需分阶段</strong>：大交接包（Story ≥10 / 页面 ≥12 / 文本 ≥100KB）提示「按阶段开发」，用户点击才生成阶段；普通包不生成。</li>
+      <li><strong>两层阶段</strong>：模块阶段只是分组/里程碑（不建会话、不调摘要）；Epic 阶段才是一个会话 + 一份阶段 brief。</li>
+      <li><strong>原生体验</strong>：时间线（用户/assistant/思考/工具卡/diff/shell/错误）、权限与表单内联卡片、可停止、可追加消息。</li>
+      <li><strong>上下文可控</strong>：chip 显示上下文占用（60% 黄 / 85% 红），可一键原生压缩，时间线出现压缩提示。</li>
+      <li><strong>会话管理</strong>：按变更单分组，可切换、重命名、备注、归档（只读）、恢复；切换/归档前先尽力中断运行。</li>
+      <li><strong>阶段完成</strong>：只改阶段状态、不归档会话，尽力生成摘要（失败回退最后回复）；跳过 / 重新打开都支持。</li>
+      <li><strong>完成确认</strong>：用户点「确认完成开发」记录完成；完成后在同一会话继续发消息，应用自动回到“开发中”（变更单保持已完成，纯开发修复不进变更单；若该会话属于已完成阶段，阶段自动回到进行中）。</li>
+      <li><strong>明确不做</strong>：自定义 dev agent/skill、固定骨架、批次、证据、Git 提交推送、测试门禁、自动验收。</li>
+    </ul>
+  </section>
+
+  <!-- ================= 3 交接逻辑 ================= -->
+  <section id="s3">
+    <h2><span class="num">04</span>阶段间交接逻辑</h2>
+
+    <h3>4.1 需求 → 设计</h3>
+    <table class="table-compact">
+      <thead><tr><th style="width:110px">机制</th><th>具体行为</th></tr></thead>
+      <tbody>
+        <tr><td>模块确认</td><td>每模块独立确认（必填章节非空 + 至少 1 个 Epic/Story），确认后只读；其它模块可继续编辑</td></tr>
+        <tr><td>应用级完成</td><td>「完成需求阶段」要求全部必选未归档模块已确认；生成需求聚合 bundle（模块版本 + hash + 聚合 hash），应用进入设计</td></tr>
+        <tr><td>设计输入</td><td>每个模块的设计项目绑定该模块需求版本 + hash；设计输入 v2 还记录 bundle 版本/hash</td></tr>
+        <tr><td>过期判定</td><td>需求变化 → 该模块设计输入 stale（按模块判定，不牵连其它模块）；应用级 bundle 漂移只提示</td></tr>
+        <tr><td>重新同步</td><td>同步弹窗可选重新绑定/仅预览/延后，并标记受影响项；历史版本不丢</td></tr>
+        <tr><td>回退</td><td>「重新编辑需求」退回草稿；应用回需求阶段、设计暂时锁定，已生成设计/原型保留但标记过期</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><p><strong>一句话：</strong>需求不是“写完就算”，而是“确认成快照 + 设计绑定这个快照”，所以“设计基于哪一版需求”永远说得清。</p></div>
+
+    <h3>4.2 设计 → 开发</h3>
+    <table class="table-compact">
+      <thead><tr><th style="width:230px">交接包文件</th><th>作用</th></tr></thead>
+      <tbody>
+        <tr><td><code>00-README.md</code></td><td>版本/来源/范围/技术栈/阅读顺序/完成定义/关键约束；变更 #N 时提示先读 <code>05-CHANGES</code></td></tr>
+        <tr><td><code>01-REQUIREMENTS.md</code></td><td>按模块的完整已确认 PRD + 开放问题 / 术语</td></tr>
+        <tr><td><code>02-DATA-MODEL.md</code></td><td>按模块的实体/字段/关系/ER/约束/类型映射</td></tr>
+        <tr><td><code>03-PAGES.md</code></td><td>按模块的页面集/页面/每页字段与动作/状态/验收/PNG 路径/导航</td></tr>
+        <tr><td><code>04-PLAN.md</code></td><td>实施顺序、按模块的 Epic 与页面集清单、Story→页面验收、风险、交付格式；大包附“建议分阶段”（可选、不门禁）</td></tr>
+        <tr><td><code>05-CHANGES.md</code></td><td>初始开发 = 无基线差异；变更 #N = 按模块的真实 diff（未选模块标“未变更”）</td></tr>
+        <tr><td><code>schema.sql</code></td><td>参考 DDL（无真实外键、无凭据）</td></tr>
+        <tr><td><code>prototype-template.json</code></td><td>原型模板 Token / Shell / 模式 + hash</td></tr>
+        <tr><td><code>manifest.json</code></td><td>版本/hash/文件清单/模块与统计/规模/阶段/变更单信息</td></tr>
+        <tr><td><code>prototypes/…/page-*.png</code></td><td>每页原型截图（视觉参考，也是硬校验项）</td></tr>
+      </tbody>
+    </table>
+
+    <h4>生成前校验（不过就 400 + 具体问题，不写盘、不切阶段）</h4>
+    <ul>
+      <li>全部<strong>必选</strong>未归档模块的需求已确认、设计已确认；</li>
+      <li>每个模块的设计输入已绑定且<strong>未过期</strong>（stale 阻塞）；</li>
+      <li>引用完整：<code>requirementRefs</code>、<code>epicId</code>、<code>storyIds</code> 必须存在；页面绑定实体必须存在；</li>
+      <li><strong>每一页都有原型 PNG</strong>（文件存在且是 PNG）；</li>
+      <li>跨模块实体关系、跨模块表名重复、模板不一致 → 只 warning，不阻塞。</li>
+    </ul>
+
+    <h4>生成时发生什么</h4>
+    <ol>
+      <li>预览只渲染、不写盘、不建变更单；</li>
+      <li>生成写盘 + 版本递增 + 整体/单文件 SHA-256 + 记录交接包；</li>
+      <li>首次生成创建 <strong>Change Set #1</strong>（初始开发）并写入全部未归档模块的基线行，应用状态 → 开发；</li>
+      <li>开发会话记录交接包<strong>版本 + hash + 变更单</strong>，开发页显示「交接包 vN · 初始开发」；</li>
+      <li>开发阶段且变更单仍在进行中时可重新生成：版本递增、复用同一变更单，并提示“应用目录可能已有代码，请增量修改”；变更单已完成或应用已完成后需先「发起变更」，否则生成返回 409。</li>
+    </ol>
+    <p class="muted small">说明：磁盘只保留<strong>最新版本</strong>的交接包文件；历史版本保留<strong>元数据/hash/manifest</strong>，但<strong>不再提供文件内容与图片 URL</strong>（避免指向当前版本的文件）；需要历史内容时重新生成。</p>
+
+    <h3>4.3 开发 → 变更（Change Set #2 起）</h3>
+    <table class="table-compact">
+      <thead><tr><th style="width:96px">环节</th><th>行为</th></tr></thead>
+      <tbody>
+        <tr><td>发起</td><td>应用头部「发起变更」：选受影响模块（默认全选）+ 范围（需求+设计 / 仅设计）；「仅设计」之后可升级为「需求+设计」</td></tr>
+        <tr><td>重开范围</td><td>只把选中模块的需求与设计退回草稿并重开确认；未选模块版本、确认、设计输入逐行不动</td></tr>
+        <tr><td>只读</td><td>未选模块在需求/设计页整块只读（写操作 409）；部分模块变更时应用级模板切换被禁用（改为模块级）</td></tr>
+        <tr><td>基线</td><td>变更单按模块记录需求/设计 baseline 版本与 hash；取消时按模块恢复</td></tr>
+        <tr><td>做变更</td><td>改需求 → 逐模块重新确认 → 同步设计输入（解除过期）→ 逐模块确认设计</td></tr>
+        <tr><td>重新生成</td><td>交接包 v(N+1)：<code>05-CHANGES</code> 按模块给真实 diff，未选模块写“未变更”，新模块写“新增模块”</td></tr>
+        <tr><td>新会话</td><td>建议新建开发会话做增量实现；旧会话按变更单分组保留，可回看</td></tr>
+        <tr><td>取消</td><td>只能在新交接包生成前取消；按模块恢复需求/设计/模板/设计输入，并在同一事务重生成需求 bundle；<strong>变更中新增模块自动归档</strong>（内容保留、可恢复）</td></tr>
+        <tr><td>禁止项</td><td>变更中不能归档模块；未选模块的任何写操作都返回 409（只读）</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><p><strong>一句话：</strong>变更不是“改一个字段全链路重来”，而是“选模块 → 重开这一块 → 增量 diff → 增量实现”。</p></div>
+
+    <h3>4.4 两层开发阶段</h3>
+    <table class="table-compact">
+      <thead><tr><th style="width:110px">维度</th><th>模块阶段（module）</th><th>Epic 阶段（epic）</th></tr></thead>
+      <tbody>
+        <tr><td>作用</td><td>分组 / 里程碑，展示模块整体进度</td><td>实际执行单元</td></tr>
+        <tr><td>会话</td><td>不建会话</td><td>一个阶段一个原生会话</td></tr>
+        <tr><td>摘要</td><td>不单独调模型，聚合展示子阶段摘要/进度</td><td>完成时生成摘要（失败回退最后回复）</td></tr>
+        <tr><td>操作</td><td>不可开始/完成/跳过/重新打开（409），只读展示</td><td>可开始/完成/跳过/重新打开；完成不归档</td></tr>
+        <tr><td>状态</td><td>由子阶段派生（有进度→进行中；全部完成/跳过→已完成）</td><td>自身状态机</td></tr>
+      </tbody>
+    </table>
+    <p class="muted small">单模块应用保持原有平铺阶段（基础 + 每个 Epic）；多模块应用才启用“模块 + Epic”两层，避免小项目被过度结构化。</p>
+  </section>
+
+  <!-- ================= 4 关键机制 ================= -->
+  <section id="s4">
+    <h2><span class="num">05</span>关键机制：为什么可信</h2>
+
+    <div class="grid-2">
+      <div class="card"><span class="badge badge-blue">模板与章节</span>
+        <p>模板决定“问什么、写什么、确认什么”。内置 4 个模板：<strong>标准 PRD（13 节）</strong>、<strong>精简 PRD（6 节）</strong>、<strong>业务策略</strong>（需求阶段可选，但不直接进入设计）、<strong>QA / 测试计划</strong>（测试阶段，需求阶段不可选）；另有 <strong>2 个原型模板</strong>。创建时选择，之后可切换（应用级切换有逐模块影响预览与二次确认）。模板只存 id/hash，正文不进版本历史。</p>
+      </div>
+      <div class="card"><span class="badge badge-blue">模块化</span>
+        <p>模块是业务域/协作边界，不按 CRUD、不按单实体拆。AI 规划建议通常 <strong>1—6</strong> 个模块：建议 <strong>&gt;8</strong> 个时给 warning（逐模块生成耗时长），<strong>&gt;50</strong> 个直接拒绝（<code>MAX_PLAN_MODULES=50</code>，仅约束 AI 规划/重规划）；<strong>手工新增模块不设硬上限</strong>。模块有独立文档、设计、版本、确认、变更范围、负责人标签，新增只在需求阶段。</p>
+      </div>
+      <div class="card"><span class="badge badge-blue">版本 checkpoint</span>
+        <p>自动保存不产版本，避免版本爆炸；模板切换、AI 应用、确认、回滚、取消恢复、手动保存才产版本并带来源标签。需求与设计版本都按模块独立，可回滚（回滚本身也产版本）。</p>
+      </div>
+      <div class="card"><span class="badge badge-blue">确认与只读</span>
+        <p>已确认的文档/设计只读；归档模块只读；变更范围外只读；历史会话与历史交接包只读。只读是状态机语义，不是权限系统——本期没有登录/角色。</p>
+      </div>
+      <div class="card"><span class="badge badge-blue">变更单与追溯</span>
+        <p>每次变更是 Change Set（#1 初始开发，#2 起真实变更），记录范围、模块基线、状态、时间。<code>05-CHANGES</code> + manifest 让 agent 明确“这次只改什么”；交接包、会话、阶段都绑定变更单与包版本。</p>
+      </div>
+      <div class="card"><span class="badge badge-blue">交接包确定性</span>
+        <p>完全由结构化数据渲染，导出时不调模型；同一份数据多次生成内容一致（除版本/时间戳）。文档不用内部 ID，按模块稳定编号（ENT-001 / PS-001 / PAGE-001）。</p>
+      </div>
+      <div class="card"><span class="badge badge-blue">规模识别</span>
+        <p>Story ≥10 / 页面 ≥12 / 文本 ≥100KB → 写入 <code>manifest.scale</code>，<code>04-PLAN</code> 插入“建议分阶段（可选）”，弹窗与开发页显示规模与入口；不强制、不门禁。</p>
+      </div>
+      <div class="card"><span class="badge badge-blue">原生 opencode</span>
+        <p>用原生 <code>build</code> agent、原生会话/SSE/权限/表单/取消/compact。工作台只提供目录、会话 UI、转发与完成确认；不做自定义 agent、批次、证据、Git 门禁。</p>
+      </div>
+      <div class="card"><span class="badge badge-violet">AI 参考原型边界</span>
+        <p>由需求 agent 从 PRD 生成预览规格，用设计阶段同一渲染器 + 示例数据展示真实字段。只写一个设置键：不写业务表、不产 PNG、不进设计/交接包；界面标注“仅用于需求评审”，需求变更提示重新生成。</p>
+      </div>
+      <div class="card"><span class="badge badge-violet">失败重试与容错</span>
+        <p>模型输出按协议分隔符解析且互不复用；原型规格解析容忍围栏/BOM/尾逗号/全角引号/裸换行，失败自动重试一次，仍失败给 502 + 可展开诊断片段且不覆盖旧规格。生成类操作“成功才写库/写盘”。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 5 角色与演示 ================= -->
+  <section id="s5">
+    <h2><span class="num">06</span>角色与演示脚本</h2>
+
+    <h3>6.1 角色分工</h3>
+    <table class="table-compact">
+      <thead><tr><th style="width:120px">角色</th><th>主要动作</th><th style="width:180px">交付给下一环</th></tr></thead>
+      <tbody>
+        <tr><td>需求 / 产品</td><td>对话澄清、改章节、规划模块、确认模块、完成需求阶段</td><td>已确认需求 bundle（模块版本 + hash）</td></tr>
+        <tr><td>设计 / 架构</td><td>按 Epic 生成、调实体与页面规格、截图、看覆盖度、确认设计</td><td>已确认设计 + 每页 PNG</td></tr>
+        <tr><td>开发</td><td>领交接包、按阶段实现、处理权限/表单、自测、确认完成</td><td>可运行应用 + 会话记录</td></tr>
+        <tr><td>变更发起人</td><td>发起变更、选模块、重走确认、生成新交接包</td><td>新交接包 v(N+1) + 05-CHANGES</td></tr>
+      </tbody>
+    </table>
+
+    <h3>6.2 三分钟演示（讲主干）</h3>
+    <div class="script">
+      <div class="s"><div class="n">01</div><div class="t"><b>首页 → 新建应用</b>填名称，选需求模板 + 原型模板　<span class="muted">一句话：模板决定需求问什么、原型长什么样</span></div></div>
+      <div class="s"><div class="n">02</div><div class="t"><b>需求页</b>左侧提问、右侧章节；展示 AI 建议卡（章节勾选 + 行级 diff）　<span class="muted">一句话：AI 只给建议，落库要人点</span></div></div>
+      <div class="s"><div class="n">03</div><div class="t"><b>需求大纲</b>模块根 / Epic / 状态与版本 + 需求总览　<span class="muted">一句话：一个模块一份完整 PRD</span></div></div>
+      <div class="s"><div class="n">04</div><div class="t"><b>设计页</b>设计大纲树：模块 / 数据集 / Epic / 页面集　<span class="muted">一句话：设计按 Epic 生成，实体共享不重复</span></div></div>
+      <div class="s"><div class="n">05</div><div class="t"><b>按 Epic 生成</b>跑一个 Epic，看进度、草稿标记、版本 +1　<span class="muted">一句话：生成是草稿，确认是人做的</span></div></div>
+      <div class="s"><div class="n">06</div><div class="t"><b>原型与覆盖度</b>页面线框、PNG、Story 覆盖　<span class="muted">一句话：每页 PNG 是交接包的硬条件</span></div></div>
+      <div class="s"><div class="n">07</div><div class="t"><b>交接包弹窗</b>文件清单、模块表、规模与校验　<span class="muted">一句话：交接包确定性渲染，不靠模型写文档</span></div></div>
+      <div class="s"><div class="n">08</div><div class="t"><b>开发页</b>阶段条、时间线、工具卡、上下文 chip　<span class="muted">一句话：开发用原生 agent，过程全可见</span></div></div>
+      <div class="s"><div class="n">09</div><div class="t"><b>发起变更</b>只勾一个模块，看范围条与未选模块只读　<span class="muted">一句话：改哪块重开哪块</span></div></div>
+    </div>
+
+    <h3>6.3 十分钟演示（加深度）</h3>
+    <p>在 3 分钟版基础上补 4 段：</p>
+    <ol>
+      <li><strong>模块规划</strong>：输入一段业务描述 → 建议卡出现 2 个模块 → 改名/调顺序 → 「应用拆分并生成」→ 看逐模块进度与两份文档。讲：模块数由内容决定，确认前不写库。</li>
+      <li><strong>版本与确认</strong>：打开版本弹窗，指出“自动保存不产版本”，再指出确认/模板切换/AI 应用产版本且带来源；点「确认需求」看只读横幅与「重新编辑需求」。</li>
+      <li><strong>过期与同步</strong>：改需求后回设计页，看“需求已更新”提示与同步入口；讲“设计绑定需求版本 + hash”。</li>
+      <li><strong>变更闭环</strong>：发起变更（只选一个模块）→ 改需求 → 确认 → 同步 → 确认设计 → 生成 v2 交接包 → 打开 <code>05-CHANGES.md</code> 看 diff（另一模块标“未变更”）→ 新会话增量实现；再演示「取消变更」恢复基线。</li>
+    </ol>
+
+    <h3>6.4 演示注意事项</h3>
+    <ul>
+      <li>真实模型有耗时与波动：单模块需求约 30—60 秒、设计实体/页面集约 15—35 秒（2026-11-16 实测）；重要演示前先试跑。</li>
+      <li>界面信息量与数据准备相关：优先演示已确认模块、已生成的交接包与已有会话。</li>
+      <li>不要填写真实 DB / Nacos / 邮件凭据：这些字段只用于渲染应用目录中的配置文件，未填写即写 <code>CHANGE_ME</code>。</li>
+    </ul>
+  </section>
+
+  <!-- ================= 6 边界 ================= -->
+  <section id="s6">
+    <h2><span class="num">07</span>边界与未验证（诚实版）</h2>
+    <table class="table-compact">
+      <thead><tr><th style="width:150px">项</th><th style="width:250px">现状</th><th>影响 / 说明</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-amber">未验证</span>EOS 运行态</td><td>模板离线依赖解析 + 编译通过；运行态未验证</td><td>真实构建/启动依赖内部 Maven 仓库、EOS 制品、团队 license、Nacos/MySQL/Redis</td></tr>
+        <tr><td><span class="badge">边界</span>数据库</td><td>工作台只读写 SQLite，不连接、不启动 MySQL</td><td>应用自身数据库由应用/团队环境负责；工作台不执行 DDL、不清理远端数据</td></tr>
+        <tr><td><span class="badge badge-amber">未验证</span>登录与权限</td><td>无登录/角色；负责人只是标签</td><td>未验证 401/403；只读来自状态机，不是权限隔离</td></tr>
+        <tr><td><span class="badge badge-amber">未验证</span>移动端</td><td>已验证 1440 / 1280 / 1024 / 768</td><td>768 以下未验证；演示与评审请用桌面分辨率</td></tr>
+        <tr><td><span class="badge">波动</span>真实模型</td><td>曾出现一次原型规格解析失败，重试成功</td><td>已加自动重试与诊断片段；关键生成前建议先试跑</td></tr>
+        <tr><td><span class="badge">政策</span>旧应用数据</td><td>不做旧应用数据兼容</td><td>大框架调整默认删除旧应用/重置；有数据旧库升级会 fail-closed 提示</td></tr>
+        <tr><td><span class="badge">限制</span>交接包历史文件</td><td>磁盘只保留<strong>最新版本</strong>的文件；历史版本保留元数据/hash/manifest</td><td>历史版本不提供文件内容与图片 URL（避免指向当前版本）；需要历史内容时重新生成</td></tr>
+        <tr><td><span class="badge">限制</span>页面截图时效</td><td>改页面规格不会自动重截图</td><td>交接包使用最后一次存档的 PNG</td></tr>
+        <tr><td><span class="badge">限制</span>OpenAPI / 外键</td><td>不生成 OpenAPI；<code>schema.sql</code> 不含真实外键</td><td>缺少确定性 HTTP 契约与库级约束，由开发判断</td></tr>
+        <tr><td><span class="badge">非目标</span>流程平台</td><td>无审批流 / Word 导出 / Git 门禁</td><td>定位是个人/小组 vibe coding 工作台，不是流程与合规平台</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ================= 7 术语 ================= -->
+  <section id="s7">
+    <h2><span class="num">08</span>术语表</h2>
+    <table class="table-compact">
+      <thead><tr><th style="width:170px">术语</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td>模块（Module）</td><td>业务域/协作边界；拥有一份完整 PRD、一套设计、独立版本与确认状态</td></tr>
+        <tr><td>Scene / Epic / Story</td><td>模块内的场景 / 史诗 / 用户故事；稳定全局 ID（EPIC-001、STORY-001）</td></tr>
+        <tr><td>模板与章节</td><td>需求模板定义章节结构与必填规则；原型模板定义页面模式与视觉 Token</td></tr>
+        <tr><td>checkpoint（版本）</td><td>一次有来源的文档/设计快照；自动保存不产版本</td></tr>
+        <tr><td>bundle（需求聚合）</td><td>应用下全部模块需求文档的聚合快照：模块版本/hash + 聚合 hash</td></tr>
+        <tr><td>设计输入</td><td>设计项目绑定的需求快照（模块版本 + docHash + bundle 版本/hash）</td></tr>
+        <tr><td>stale（过期）</td><td>需求变了但设计输入未同步；按模块判定，阻塞设计确认与交接包</td></tr>
+        <tr><td>交接包（Handoff）</td><td>设计确认后确定性生成的开发材料（00—05 + schema + 模板 + manifest + 原型 PNG）</td></tr>
+        <tr><td>Change Set（变更单）</td><td>一次需求/设计变更的范围与基线记录；#1 为初始开发，#2 起为真实变更</td></tr>
+        <tr><td>U7 阶段</td><td>开发阶段的两层结构：模块阶段（里程碑）+ Epic 阶段（会话）</td></tr>
+        <tr><td>phase brief</td><td>开始阶段时给 agent 的首条提示：目标/范围/交接包入口/上一阶段摘要</td></tr>
+        <tr><td>上下文健康度</td><td>按模型上下文窗口算占用率（60% 黄 / 85% 红），可触发原生压缩</td></tr>
+        <tr><td>确定性渲染</td><td>不调模型，由结构化数据直接生成文档/清单/校验结果</td></tr>
+        <tr><td>必选模块</td><td>必须确认后才能进入下一阶段的模块；当前所有未归档模块默认必选</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer class="foot">
+    <p><strong>依据：</strong><code>AGENTS.md</code>、<code>README.md</code>、<code>docs/STATUS.md</code>（M2—M6、RMP-1/2、D-RMP、M7/M7-2/M7-2b、U7、D5/C1、视觉 V1—V3）、
+      <code>docs/plans/2026-11-09-workbench-v2-design.md</code>、<code>2026-11-13-module-requirements-design.md</code>、
+      <code>2026-11-16-requirements-module-planning-design.md</code>、<code>2026-11-16-design-stage-module-epic-alignment-design.md</code>、
+      <code>2026-11-17-m7-2-ai-prototype-spec-design.md</code>、<code>2026-11-12-u7-phased-development-design.md</code>、<code>templates/eos-app/README.md</code>。</p>
+    <p>主动省略（当前实现不存在或未验证）：导出 Word/PDF 需求文档、审批流、多人协同/权限矩阵、Git 提交与证据门禁、自动验收通过率、多租户/容器调度。</p>
+    <p class="muted">AI Dev Workbench · 业务说明（汇报 / 演示版）· 2026-11-17</p>
+  </footer>
+</div>
+</body>
+</html>

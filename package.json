@@ -1,0 +1,16 @@
+{
+  "name": "ai-dev-workbench",
+  "version": "0.1.0",
+  "private": true,
+  "description": "三阶段智能开发工作台：需求、设计、开发；需求/设计沉淀交接文档，开发阶段直接驱动 opencode 原生开发。",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "test": "npm test --prefix backend",
+    "start": "npm run start --prefix backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

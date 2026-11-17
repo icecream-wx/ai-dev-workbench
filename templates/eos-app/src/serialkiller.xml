@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+  <blacklist>
+    <regexps>
+        <!-- ysoserial's BeanShell1 payload  -->
+        <regexp>bsh\.XThis$</regexp>
+        <regexp>bsh\.Interpreter$</regexp>
+        <!-- ysoserial's C3P0 payload  -->
+        <regexp>com\.mchange\.v2\.c3p0\.impl\.PoolBackedDataSourceBase$</regexp>
+        <regexp>com\.mchange\.v2\.c3p0\.JndiRefForwardingDataSource$</regexp>
+		<regexp>com\.mchange\.v2\.c3p0\.WrapperConnectionPoolDataSource$</regexp>
+		<regexp>com\.mchange\.v2\.c3p0\.ComboPooledDataSource$</regexp>
+		<regexp>com\.mchange\.v2\.c3p0\.debug\.AfterCloseLoggingComboPooledDataSource$</regexp>
+        <!-- ysoserial's CommonsBeanutils1 payload  -->
+        <regexp>org\.apache\.commons\.beanutils\.BeanComparator$</regexp>
+        <!-- ysoserial's CommonsCollections1,3,5,6 payload  -->
+        <regexp>org\.apache\.commons\.collections\.Transformer$</regexp>
+        <regexp>org\.apache\.commons\.collections\.functors\.InvokerTransformer$</regexp>
+        <regexp>org\.apache\.commons\.collections\.functors\.ChainedTransformer$</regexp>
+        <regexp>org\.apache\.commons\.collections\.functors\.ConstantTransformer$</regexp>
+        <regexp>org\.apache\.commons\.collections\.functors\.InstantiateTransformer$</regexp>
+        <!-- ysoserial's CommonsCollections2,4 payload  -->
+        <regexp>org\.apache\.commons\.collections4\.functors\.InvokerTransformer$</regexp>
+        <regexp>org\.apache\.commons\.collections4\.functors\.ChainedTransformer$</regexp>
+        <regexp>org\.apache\.commons\.collections4\.functors\.ConstantTransformer$</regexp>
+        <regexp>org\.apache\.commons\.collections4\.functors\.InstantiateTransformer$</regexp>
+        <regexp>org\.apache\.commons\.collections4\.comparators\.TransformingComparator$</regexp>
+        <!-- ysoserial's FileUpload1,Wicket1 payload  -->
+        <regexp>org\.apache\.commons\.fileupload\.disk\.DiskFileItem$</regexp>
+        <regexp>org\.apache\.wicket\.util\.upload\.DiskFileItem$</regexp>
+        <!-- ysoserial's Groovy payload  -->
+        <regexp>org\.codehaus\.groovy\.runtime\.ConvertedClosure$</regexp>
+        <regexp>org\.codehaus\.groovy\.runtime\.MethodClosure$</regexp>
+        <!-- ysoserial's Hibernate1,2 payload  -->
+        <regexp>org\.hibernate\.engine\.spi\.TypedValue$</regexp>
+        <regexp>org\.hibernate\.tuple\.component\.AbstractComponentTuplizer$</regexp>
+        <regexp>org\.hibernate\.tuple\.component\.PojoComponentTuplizer$</regexp>
+        <regexp>org\.hibernate\.type\.AbstractType$</regexp>
+        <regexp>org\.hibernate\.type\.ComponentType$</regexp>
+        <regexp>org\.hibernate\.type\.Type$</regexp>
+        <regexp>com\.sun\.rowset\.JdbcRowSetImpl$</regexp>
+        <!-- ysoserial's JBossInterceptors1, JavassistWeld1 payload -->
+        <regexp>org\.jboss\.(weld\.)?interceptor\.builder\.InterceptionModelBuilder$</regexp>
+        <regexp>org\.jboss\.(weld\.)?interceptor\.builder\.MethodReference$</regexp>
+        <regexp>org\.jboss\.(weld\.)?interceptor\.proxy\.DefaultInvocationContextFactory$</regexp>
+        <regexp>org\.jboss\.(weld\.)?interceptor\.proxy\.InterceptorMethodHandler$</regexp>
+        <regexp>org\.jboss\.(weld\.)?interceptor\.reader\.ClassMetadataInterceptorReference$</regexp>
+        <regexp>org\.jboss\.(weld\.)?interceptor\.reader\.DefaultMethodMetadata$</regexp>
+        <regexp>org\.jboss\.(weld\.)?interceptor\.reader\.ReflectiveClassMetadata$</regexp>
+        <regexp>org\.jboss\.(weld\.)?interceptor\.reader\.SimpleInterceptorMetadata$</regexp>
+        <regexp>org\.jboss\.(weld\.)?interceptor\.spi\.instance\.InterceptorInstantiator$</regexp>
+        <regexp>org\.jboss\.(weld\.)?interceptor\.spi\.metadata\.InterceptorReference$</regexp>
+        <regexp>org\.jboss\.(weld\.)?interceptor\.spi\.metadata\.MethodMetadata$</regexp>
+        <regexp>org\.jboss\.(weld\.)?interceptor\.spi\.model\.InterceptionModel$</regexp>
+        <regexp>org\.jboss\.(weld\.)?interceptor\.spi\.model\.InterceptionType$</regexp>
+        <!-- ysoserial's JRMPClient payload  -->
+        <regexp>java\.rmi\.registry\.Registry$</regexp>
+        <regexp>java\.rmi\.server\.ObjID$</regexp>
+        <regexp>java\.rmi\.server\.RemoteObjectInvocationHandler$</regexp>
+        <!-- ysoserial's JSON1 payload  -->
+        <regexp>net\.sf\.json\.JSONObject$</regexp>
+        <!-- ysoserial's Jdk7u21 payload -->
+        <regexp>javax\.xml\.transform\.Templates$</regexp>
+        <!-- ysoserial's Jython1 payload -->
+        <regexp>org\.python\.core\.PyObject$</regexp>
+        <regexp>org\.python\.core\.PyBytecode$</regexp>
+        <regexp>org\.python\.core\.PyFunction$</regexp>
+        <!-- ysoserial's MozillaRhino1 payload -->
+        <regexp>org\.mozilla\.javascript\.\.*$</regexp>
+        <!-- ysoserial's Myfaces1,2 payload  -->
+        <regexp>org\.apache\.myfaces\.context\.servlet\.FacesContextImpl$</regexp>
+        <regexp>org\.apache\.myfaces\.context\.servlet\.FacesContextImplBase$</regexp>
+        <regexp>org\.apache\.myfaces\.el\.CompositeELResolver$</regexp>
+        <regexp>org\.apache\.myfaces\.el\.unified\.FacesELContext$</regexp>
+        <regexp>org\.apache\.myfaces\.view\.facelets\.el\.ValueExpressionMethodExpression$</regexp>
+        <!-- ysoserial's ROME payload  -->
+        <regexp>com\.sun\.syndication\.feed\.impl\.ObjectBean$</regexp>
+        <!-- ysoserial's Spring1,2 payload  -->
+        <regexp>org\.springframework\.beans\.factory\.ObjectFactory$</regexp>
+        <regexp>org\.springframework\.core\.SerializableTypeWrapper\$MethodInvokeTypeProvider$</regexp>
+        <regexp>org\.springframework\.aop\.framework\.AdvisedSupport$</regexp>
+        <regexp>org\.springframework\.aop\.target\.SingletonTargetSource$</regexp>
+        <regexp>org\.springframework\.aop\.framework\.JdkDynamicAopProxy$</regexp>
+        <regexp>org\.springframework\.core\.SerializableTypeWrapper\$TypeProvider$</regexp>
+        <regexp>org\.springframework\.beans\.factory\.config\.PropertyPathFactoryBean$</regexp>
+		<regexp>org\.springframework\.aop\.config\.MethodLocatingFactoryBean$</regexp>
+		<regexp>org\.springframework\.beans\.factory\.config\.BeanReferenceFactoryBean$</regexp>
+        <!-- other trigger gadgets or payloads -->
+        <regexp>java\.util\.PriorityQueue$</regexp>
+        <regexp>java\.lang\.reflect\.Proxy$</regexp>
+        <regexp>javax\.management\.MBeanServerInvocationHandler$</regexp>
+        <regexp>javax\.management\.openmbean\.CompositeDataInvocationHandler$</regexp>
+        <regexp>org\.springframework\.aop\.framework\.JdkDynamicAopProxy$</regexp>
+        <regexp>java\.beans\.EventHandler$</regexp>
+        <regexp>java\.util\.Comparator$</regexp>
+        <regexp>org\.reflections\.Reflections$</regexp>
+        
+        
+        <regexp>com\.sun\.org\.apache\.xalan\.internal\.xsltc\.trax\.TemplatesImpl$</regexp>
+		<regexp>org\.apache\.xalan\.xsltc\.trax\.TemplatesImpl$</regexp>
+		<!-- JDK provided -->
+		<regexp>java\.util\.logging\.FileHandler$</regexp>
+		<regexp>java\.rmi\.server\.UnicastRemoteObject$</regexp>
+		
+		<regexp>org\.apache\.tomcat\.dbcp\.dbcp2\.BasicDataSource$</regexp>
+		<regexp>com\.sun\.org\.apache\.bcel\.internal\.util\.ClassLoader$</regexp>
+		
+		<regexp>org\.hibernate\.jmx\.StatisticsService$</regexp>
+		<regexp>org\.apache\.ibatis\.datasource\.jndi\.JndiDataSourceFactory$</regexp>
+		<regexp>org\.apache\.ibatis\.parsing\.XPathParser$</regexp>
+		<!-- Jodd-db, with jndi/ldap lookup -->
+		<regexp>jodd\.db\.connection\.DataSourceConnectionProvider$</regexp>
+		<!-- Oracle JDBC driver, with jndi/ldap lookup -->
+		<regexp>oracle\.jdbc\.connector\.OracleManagedConnectionFactory$</regexp>
+		<regexp>oracle\.jdbc\.rowset\.OracleJDBCRowSet$</regexp>
+		
+		<regexp>org\.slf4j\.ext\.EventData$</regexp>
+		<regexp>flex\.messaging\.util\.concurrent\.AsynchBeansWorkManagerExecutor$</regexp>
+		<regexp>com\.sun\.deploy\.security\.ruleset\.DRSHelper$</regexp>
+		<regexp>org\.apache\.axis2\.jaxws\.spi\.handler\.HandlerResolverImpl$</regexp>
+		
+		<regexp>org\.jboss\.util\.propertyeditor\.DocumentEditor$</regexp>
+		<regexp>org\.apache\.openjpa\.ee\.RegistryManagedRuntime$</regexp>
+		<regexp>org\.apache\.openjpa\.ee\.JNDIManagedRuntime$</regexp>
+		<regexp>org\.apache\.openjpa\.ee\.WASRegistryManagedRuntime$</regexp>
+		<regexp>org\.apache\.axis2\.transport\.jms\.JMSOutTransportInfo$</regexp>
+		
+		<regexp>com\.mysql\.cj\.jdbc\.admin\.MiniAdmin$</regexp>
+
+		<regexp>com\.newrelic\.agent\.deps\.ch\.qos\.logback\.core\.db\.DriverManagerConnectionSource$</regexp>
+		<regexp>com\.newrelic\.agent\.deps\.ch\.qos\.logback\.core\.db\.JNDIConnectionSource$</regexp>
+		<regexp>com\.nqadmin\.rowset\.JdbcRowSetImpl$</regexp>
+		<regexp>com\.oracle\.wls\.shaded\.org\.apache\.xalan\.lib\.sql\.JNDIConnectionPool$</regexp>
+		<regexp>com\.pastdev\.httpcomponents\.configuration\.JndiConfiguration$</regexp>
+
+		<regexp>ch\.qos\.logback\.core\.db\.DriverManagerConnectionSource$</regexp>
+		
+		<regexp>org\.jdom\.transform\.XSLTransformer$</regexp>
+		<regexp>org\.jdom2\.transform\.XSLTransformer$</regexp>
+		
+		<regexp>net\.sf\.ehcache\.transaction\.manager\.DefaultTransactionManagerLookup$</regexp>
+		<regexp>net\.sf\.ehcache\.hibernate\.EhcacheJtaTransactionManagerLookup$</regexp>
+
+		<regexp>ch\.qos\.logback\.core\.db\.JNDIConnectionSource$</regexp>
+		
+		<regexp>com\.zaxxer\.hikari\.HikariConfig$</regexp>
+		<regexp>com\.zaxxer\.hikari\.HikariDataSource$</regexp>
+		<!-- CXF/JAX-RS provider/XSLT -->
+		<regexp>org\.apache\.cxf\.jaxrs\.provider\.XSLTJaxbProvider$</regexp>
+		<!-- commons-configuration / -2 -->
+		<regexp>org\.apache\.commons\.configuration\.JNDIConfiguration$</regexp>
+		<regexp>org\.apache\.commons\.configuration2\.JNDIConfiguration$</regexp>
+		<!-- xalan -->
+		<regexp>org\.apache\.xalan\.lib\.sql\.JNDIConnectionPool$</regexp>
+		<!-- xalan2 -->
+		<regexp>com\.sun\.org\.apache\.xalan\.internal\.lib\.sql\.JNDIConnectionPool$</regexp>
+		<!-- comons-dbcp, p6spy -->
+		<regexp>org\.apache\.commons\.dbcp\.datasources\.PerUserPoolDataSource$</regexp>
+		<regexp>org\.apache\.commons\.dbcp\.datasources\.SharedPoolDataSource$</regexp>
+		<regexp>com\.p6spy\.engine\.spy\.P6DataSource$</regexp>
+		<!-- log4j-extras (1\.2) -->
+		<regexp>org\.apache\.log4j\.receivers\.db\.DriverManagerConnectionSource$</regexp>
+		<regexp>org\.apache\.log4j\.receivers\.db\.JNDIConnectionSource$</regexp>
+		<!-- some more ehcache -->
+		<regexp>net\.sf\.ehcache\.transaction\.manager\.selector\.GenericJndiSelector$</regexp>
+		<regexp>net\.sf\.ehcache\.transaction\.manager\.selector\.GlassfishSelector$</regexp>
+		<!-- xbean-reflect -->
+		<regexp>org\.apache\.xbean\.propertyeditor\.JndiConverter$</regexp>
+		<!-- shaded hikari-config -->
+		<regexp>org\.apache\.hadoop\.shaded\.com\.zaxxer\.hikari\.HikariConfig$</regexp>
+		<!-- ibatis-sqlmap, anteros-core -->
+		<regexp>com\.ibatis\.sqlmap\.engine\.transaction\.jta\.JtaTransactionConfig$</regexp>
+		<regexp>br\.com\.anteros\.dbcp\.AnterosDBCPConfig$</regexp>
+		<regexp>br\.com\.anteros\.dbcp\.AnterosDBCPDataSource$</regexp>
+		<!-- javax\.swing (jdk) -->
+		<regexp>javax\.swing\.JEditorPane$</regexp>
+		<regexp>javax\.swing\.JTextPane$</regexp>
+		<!-- shiro-core -->
+		<regexp>org\.apache\.shiro\.realm\.jndi\.JndiRealmFactory$</regexp>
+		<regexp>org\.apache\.shiro\.jndi\.JndiObjectFactory$</regexp>
+		<!-- quartz-core -->
+		<regexp>org\.apache\.ignite\.cache\.jta\.jndi\.CacheJndiTmLookup$</regexp>
+		<regexp>org\.apache\.ignite\.cache\.jta\.jndi\.CacheJndiTmFactory$</regexp>
+		<regexp>org\.quartz\.utils\.JNDIConnectionProvider$</regexp>
+		<!-- aries\.transaction\.jms -->
+		<regexp>org\.apache\.aries\.transaction\.jms\.internal\.XaPooledConnectionFactory$</regexp>
+		<regexp>org\.apache\.aries\.transaction\.jms\.RecoverablePooledConnectionFactory$</regexp>
+		<!-- caucho-quercus -->
+		<regexp>com\.caucho\.config\.types\.ResourceRef$</regexp>
+		<!-- aoju/bus-proxy -->
+		<regexp>org\.aoju\.bus\.proxy\.provider\.RmiProvider$</regexp>
+		<regexp>org\.aoju\.bus\.proxy\.provider\.remoting\.RmiProvider$</regexp>
+		<!-- activemq-core, activemq-pool, activemq-pool-jms -->
+		<regexp>org\.apache\.activemq\.ActiveMQConnectionFactory$</regexp>
+		<regexp>org\.apache\.activemq\.ActiveMQXAConnectionFactory$</regexp>
+		<regexp>org\.apache\.activemq\.spring\.ActiveMQConnectionFactory$</regexp>
+		<regexp>org\.apache\.activemq\.spring\.ActiveMQXAConnectionFactory$</regexp>
+		<regexp>org\.apache\.activemq\.pool\.JcaPooledConnectionFactory$</regexp>
+		<regexp>org\.apache\.activemq\.pool\.PooledConnectionFactory$</regexp>
+		<regexp>org\.apache\.activemq\.pool\.XaPooledConnectionFactory$</regexp>
+		<regexp>org\.apache\.activemq\.jms\.pool\.XaPooledConnectionFactory$</regexp>
+		<regexp>org\.apache\.activemq\.jms\.pool\.JcaPooledConnectionFactory$</regexp>
+		<!-- apache/commons-jms -->
+		<regexp>org\.apache\.commons\.proxy\.provider\.remoting\.RmiProvider$</regexp>
+		<!-- commons-jelly -->
+		<regexp>org\.apache\.commons\.jelly\.impl\.Embedded$</regexp>
+
+		<regexp>oadd\.org\.apache\.commons\.dbcp\.cpdsadapter\.DriverAdapterCPDS$</regexp>
+		<regexp>oadd\.org\.apache\.commons\.dbcp\.datasources\.PerUserPoolDataSource$</regexp>
+		<regexp>oadd\.org\.apache\.commons\.dbcp\.datasources\.SharedPoolDataSource$</regexp>
+
+		<regexp>org\.apache\.commons\.dbcp\.cpdsadapter\.DriverAdapterCPDS$</regexp>
+		<regexp>org\.apache\.commons\.dbcp2\.cpdsadapter\.DriverAdapterCPDS$</regexp>
+		<regexp>org\.apache\.commons\.dbcp2\.datasources\.PerUserPoolDataSource$</regexp>
+		<regexp>org\.apache\.commons\.dbcp2\.datasources\.SharedPoolDataSource$</regexp>
+
+		<!-- apache/drill -->
+		<regexp>oadd\.org\.apache\.xalan\.lib\.sql\.JNDIConnectionPool$</regexp>
+		<!-- weblogic installation, possibly fairly old version(s)) -->
+		<regexp>oracle\.jms\.AQjmsQueueConnectionFactory$</regexp>
+		<regexp>oracle\.jms\.AQjmsXATopicConnectionFactory$</regexp>
+		<regexp>oracle\.jms\.AQjmsTopicConnectionFactory$</regexp>
+		<regexp>oracle\.jms\.AQjmsXAQueueConnectionFactory$</regexp>
+		<regexp>oracle\.jms\.AQjmsXAConnectionFactory$</regexp>
+		<!-- org\.jsecurity -->
+		<regexp>org\.jsecurity\.realm\.jndi\.JndiRealmFactory$</regexp>
+
+		<regexp>org\.apache\.tomcat\.dbcp\.dbcp\.cpdsadapter\.DriverAdapterCPDS$</regexp>
+		<regexp>org\.apache\.tomcat\.dbcp\.dbcp\.datasources\.PerUserPoolDataSource$</regexp>
+		<regexp>org\.apache\.tomcat\.dbcp\.dbcp\.datasources\.SharedPoolDataSource$</regexp>
+		<regexp>org\.apache\.tomcat\.dbcp\.dbcp2\.cpdsadapter\.DriverAdapterCPDS$</regexp>
+		<regexp>org\.apache\.tomcat\.dbcp\.dbcp2\.datasources\.PerUserPoolDataSource$</regexp>
+		<regexp>org\.apache\.tomcat\.dbcp\.dbcp2\.datasources\.SharedPoolDataSource$</regexp>
+		<regexp>org\.arrah\.framework\.rdbms\.UpdatableJdbcRowsetImpl$</regexp>
+		<regexp>org\.docx4j\.org\.apache\.xalan\.lib\.sql\.JNDIConnectionPool$</regexp>
+		
+    </regexps>
+  </blacklist>
+  <whitelist>
+    <regexps>
+        <regexp>.*</regexp>
+    </regexps>
+  </whitelist>
+</config>

@@ -1,0 +1,113 @@
+{
+  "groups": [
+    {
+      "name": "eos.script",
+      "type": "com.primeton.ptp.script.core.ScriptSettings",
+      "sourceType": "com.primeton.eos.springboot.autoconfig.EOS8ScriptConfiguration",
+      "sourceMethod": "scriptSettings()"
+    },
+    {
+      "name": "eos.script.sandbox",
+      "type": "com.primeton.ptp.script.core.ScriptSettings$Sandbox",
+      "sourceType": "com.primeton.ptp.script.core.ScriptSettings",
+      "sourceMethod": "getSandbox()"
+    },
+    {
+      "name": "management.endpoint.eos",
+      "type": "com.primeton.eos.springboot.actuate.EOS8Endpoint",
+      "sourceType": "com.primeton.eos.springboot.actuate.EOS8Endpoint"
+    }
+  ],
+  "properties": [
+    {
+      "name": "eos.admin.port",
+      "type": "java.lang.Integer",
+      "description": "eos应用的管理端口(MBean的端口)",
+      "defaultValue": "6200"
+    },
+    {
+      "name": "eos.beans-definition-mode",
+      "type": "java.lang.String",
+      "description": "SpringBean定义的方式",
+      "defaultValue": "annotation"
+    },
+    {
+      "name": "eos.bizflow.support-http-headers",
+      "type": "java.lang.Boolean",
+      "description": "是否在逻辑流里可以操作http headers. 如果为true, 则在逻辑流上下文里可以通过变量(_httpServerReqHeaderMap, _httpServerRspHeaderMap, _httpClientReqHeaderMap, _httpClientRspHeaderMap)来操作http headers",
+      "defaultValue": "false"
+    },
+    {
+      "name": "eos.cache.$CACHE_NAME.mode",
+      "type": "com.primeton.eos.springboot.cache.EOS8CacheMode",
+      "description": "EOS的某个指定缓存的实现方式",
+      "defaultValue": "${eos.cache.mode}"
+    },
+    {
+      "name": "eos.cache.mode",
+      "type": "com.primeton.eos.springboot.cache.EOS8CacheMode",
+      "description": "EOS的所有缓存的默认实现方式",
+      "defaultValue": "map"
+    },
+    {
+      "name": "eos.export.depend-api-contributions",
+      "type": "java.lang.String",
+      "description": "指定需要暴露依赖的API构件包名称, 多个名称之间用','分隔, 名称支持带'*'",
+      "defaultValue": "null"
+    },
+    {
+      "name": "eos.load.xsd.async",
+      "type": "java.lang.Boolean",
+      "description": "是否异步加载xsd",
+      "defaultValue": "false"
+    },
+    {
+      "name": "eos.override.eos-external-config",
+      "type": "java.lang.Boolean",
+      "description": "启动时是否强制将内部的eos-server目录复制到外部目录",
+      "defaultValue": "false"
+    },
+    {
+      "name": "eos.script.sandbox.enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.primeton.ptp.script.core.ScriptSettings$Sandbox"
+    },
+    {
+      "name": "management.endpoint.eos.access",
+      "type": "org.springframework.boot.actuate.endpoint.Access",
+      "description": "Permitted level of access for the eos endpoint.",
+      "sourceType": "com.primeton.eos.springboot.actuate.EOS8Endpoint",
+      "defaultValue": "unrestricted"
+    },
+    {
+      "name": "management.endpoint.eos.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable the eos endpoint.",
+      "sourceType": "com.primeton.eos.springboot.actuate.EOS8Endpoint",
+      "defaultValue": true,
+      "deprecated": true,
+      "deprecation": {
+        "replacement": "management.endpoint.eos.access",
+        "since": "3.4.0"
+      }
+    }
+  ],
+  "hints": [
+    {
+      "name": "eos.beans-definition-mode",
+      "values": [
+        {
+          "value": "xml",
+          "description": "使用XML文件定义"
+        },
+        {
+          "value": "annotation",
+          "description": "使用注解定义"
+        }
+      ]
+    }
+  ],
+  "ignored": {
+    "properties": []
+  }
+}

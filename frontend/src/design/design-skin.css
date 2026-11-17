@@ -1,0 +1,238 @@
+/**
+ * 设计 Studio 原型皮肤（D3/D4）
+ *
+ * 复用 design/prototype 的线框组件，只通过 CSS 变量/覆盖把模板 Token 注入线框，
+ * 不改动线框组件的结构。两套内置皮肤：enterprise（企业级）/ minimal（简洁后台）。
+ */
+
+.proto-skin {
+  --proto-primary: #2563eb;
+  --proto-accent: #0f766e;
+  --proto-neutral: #475569;
+  --proto-bg: #f8fafc;
+  --proto-font: -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  --proto-radius: 6px;
+  --proto-spacing: 12px;
+  font-family: var(--proto-font);
+  color: #334155;
+}
+
+.proto-skin .wf-page {
+  border-radius: calc(var(--proto-radius) + 2px);
+  font-family: var(--proto-font);
+  min-height: 560px;
+  padding: calc(var(--proto-spacing) + 6px) calc(var(--proto-spacing) + 10px);
+}
+
+.proto-skin .wf-btn-primary {
+  background: var(--proto-primary);
+  border-color: var(--proto-primary);
+  color: #fff;
+}
+.proto-skin .wf-btn-primary:hover {
+  filter: brightness(0.94);
+}
+.proto-skin .wf-pager .pg.on {
+  background: var(--proto-primary);
+  border-color: var(--proto-primary);
+  color: #fff;
+}
+.proto-skin .wf-form-section-title {
+  border-left-color: var(--proto-primary);
+  color: #1e293b;
+}
+.proto-skin .wf-tab.on {
+  color: var(--proto-primary);
+  border-bottom-color: var(--proto-primary);
+}
+.proto-skin .wf-table th {
+  background: #f1f5f9;
+  color: #334155;
+}
+.proto-skin .wf-check.on,
+.proto-skin .wf-radio.on::after {
+  background: var(--proto-primary);
+  border-color: var(--proto-primary);
+}
+.proto-skin .wf-radio.on {
+  border-color: var(--proto-primary);
+}
+.proto-skin .wf-input:focus-within,
+.proto-skin .wf-select {
+  border-color: #cbd5e1;
+}
+.proto-skin .wf-tag.ok {
+  background: #e7f7ef;
+  color: #15803d;
+}
+.proto-skin .wf-tag.warn {
+  background: #fff4e5;
+  color: #b45309;
+}
+.proto-skin .wf-note-pin {
+  background: var(--proto-primary);
+}
+
+/* 企业级：紧凑、深色侧栏、蓝色主色 */
+.proto-skin.skin-enterprise .wf-page {
+  border-color: #dbe3ec;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+.proto-skin.skin-enterprise .wf-table th,
+.proto-skin.skin-enterprise .wf-table td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.proto-skin.skin-enterprise .wf-header-title {
+  font-size: 14px;
+}
+
+/* 简洁后台：浅色、留白多、轻边框 */
+.proto-skin.skin-minimal .wf-page {
+  border-color: #eef1f5;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  padding: calc(var(--proto-spacing) + 10px) calc(var(--proto-spacing) + 14px);
+}
+.proto-skin.skin-minimal .wf-header {
+  border-bottom-color: #f1f5f9;
+  margin-bottom: 20px;
+}
+.proto-skin.skin-minimal .wf-table th {
+  background: #fafbfc;
+  color: #64748b;
+  font-weight: 600;
+}
+.proto-skin.skin-minimal .wf-table th,
+.proto-skin.skin-minimal .wf-table td {
+  border-color: #f1f5f9;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+.proto-skin.skin-minimal .wf-btn {
+  border-radius: calc(var(--proto-radius) + 2px);
+}
+.proto-skin.skin-minimal .wf-search {
+  border-style: solid;
+  border-color: #f1f5f9;
+  background: #fbfcfd;
+}
+
+/* ---- App Shell（模板决定侧栏/顶栏） ---- */
+.proto-shell {
+  display: flex;
+  min-height: 600px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+.proto-shell.is-topbar {
+  flex-direction: column;
+}
+.proto-sidebar {
+  width: 188px;
+  flex-shrink: 0;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #0f172a;
+  color: #cbd5e1;
+}
+.proto-sidebar.is-light {
+  background: #f8fafc;
+  color: #475569;
+  border-right: 1px solid #eef1f5;
+}
+.proto-brand {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  padding: 4px 8px 12px;
+  letter-spacing: 0.2px;
+}
+.proto-sidebar.is-light .proto-brand {
+  color: #0f172a;
+}
+.proto-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 7px;
+  font-size: 12px;
+  color: inherit;
+  opacity: 0.76;
+}
+.proto-nav-item.is-active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  opacity: 1;
+}
+.proto-sidebar.is-light .proto-nav-item.is-active {
+  background: #fff;
+  color: var(--proto-primary);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+.proto-nav-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+}
+.proto-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--proto-bg);
+}
+.proto-topbar {
+  height: 46px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  background: #fff;
+  border-bottom: 1px solid #eef1f5;
+}
+.proto-topbar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+.proto-topbar-sub {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.proto-topbar-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  font-size: 11.5px;
+  color: #64748b;
+}
+.proto-canvas-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px;
+}
+.proto-paper {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+.proto-paper .wf-page {
+  border: none;
+  box-shadow: none;
+  border-radius: inherit;
+}
+.proto-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12.5px;
+}

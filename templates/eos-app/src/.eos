@@ -1,0 +1,7 @@
+#
+#Thu Feb 24 10:51:36 CST 2022
+contributionName=com.primeton.gocom.lowcode.boot
+componentType=com.primeton.component.contribution
+contributionKind=boot
+componentVersion=7.0.0.0
+autoDeploy=true

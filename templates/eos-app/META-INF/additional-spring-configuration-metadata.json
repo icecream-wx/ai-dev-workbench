@@ -1,0 +1,68 @@
+{
+    "groups": [],
+    "properties": [
+        {
+            "name": "eos.admin.port",
+            "type": "java.lang.Integer",
+            "defaultValue": "6200",
+            "description": "eos应用的管理端口(MBean的端口)"
+        },
+        {
+            "name": "eos.load.xsd.async",
+            "type": "java.lang.Boolean",
+            "defaultValue": "false",
+            "description": "是否异步加载xsd"
+        },
+        {
+            "name": "eos.cache.mode",
+            "type": "com.primeton.eos.springboot.cache.EOS8CacheMode",
+            "defaultValue": "map",
+            "description": "EOS的所有缓存的默认实现方式"
+        },
+        {
+            "name": "eos.cache.$CACHE_NAME.mode",
+            "type": "com.primeton.eos.springboot.cache.EOS8CacheMode",
+            "defaultValue": "${eos.cache.mode}",
+            "description": "EOS的某个指定缓存的实现方式"
+        },
+        {
+            "name": "eos.beans-definition-mode",
+            "type": "java.lang.String",
+            "defaultValue": "annotation",
+            "description": "SpringBean定义的方式"
+        },
+        {
+            "name": "eos.override.eos-external-config",
+            "type": "java.lang.Boolean",
+            "defaultValue": "false",
+            "description": "启动时是否强制将内部的eos-server目录复制到外部目录"
+        },
+        {
+            "name": "eos.export.depend-api-contributions",
+            "type": "java.lang.String",
+            "defaultValue": "null",
+            "description": "指定需要暴露依赖的API构件包名称, 多个名称之间用','分隔, 名称支持带'*'"
+        },
+        {
+            "name": "eos.bizflow.support-http-headers",
+            "type": "java.lang.Boolean",
+            "defaultValue": "false",
+            "description": "是否在逻辑流里可以操作http headers. 如果为true, 则在逻辑流上下文里可以通过变量(_httpServerReqHeaderMap, _httpServerRspHeaderMap, _httpClientReqHeaderMap, _httpClientRspHeaderMap)来操作http headers"
+        }
+    ],
+    "hints": [
+        {
+            "name": "eos.beans-definition-mode",
+            "values": [
+                {
+                    "value": "xml",
+                    "description": "使用XML文件定义"
+                },
+                {
+                    "value": "annotation",
+                    "description": "使用注解定义"
+                }
+            ]
+        }
+    ]
+}

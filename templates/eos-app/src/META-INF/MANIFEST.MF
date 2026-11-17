@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-Description: 
+Bundle-SymbolicName: {{APP_ID}}
+Bundle-Name: {{APP_ID}}
+Bundle-Version: 1.0.0
+Require-Bundle: 
+Bundle-Vendor: wuyh
+eos-webCtxPath: {{APP_ID}}
+

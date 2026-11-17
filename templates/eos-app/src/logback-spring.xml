@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration packagingData="true">
+    <property name="EOS_SYS_LOG_LEVEL" value="INFO" />
+	<property name="LOG_FOLDER" value="${LOG_FOLDER:-./logs}" />
+	<include resource="com/primeton/eos/springboot/logging/logback/logback-spring.xml" />
+</configuration>

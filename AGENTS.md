@@ -2,13 +2,23 @@
 
 本项目是三阶段智能开发工作台：**需求 → 设计 → 开发**。开始工作前先读：
 
-1. `docs/STATUS.md`（当前状态与接续）
-2. `docs/plans/2026-11-09-workbench-v2-design.md`（当前唯一有效设计）
-3. `docs/plans/2026-11-09-implementation-tasks.md`（P0—P5 任务拆分）
+1. `docs/plans/2026-11-18-agent-first-workbench-design.md`（**当前唯一有效设计**）
+2. `docs/STATUS.md`（当前状态与接续）
+3. `docs/plans/2026-11-18-agent-first-workbench-p1-brief.md`（当前实施交接单）
 4. `README.md`
 5. `templates/eos-app/README.md`
 
 `docs/plans/2026-11-04-*` 是 requirements-grooming 的历史计划，不代表新方向。
+
+## 2026-11-18 方向变更（Agent-First，进行中）
+
+- **工作台 = 共享工作区 + 模板 + 会话 + 产物视图 + 执行过程**；agent 根据用户目标自主检索材料、判断范围、修改产物并检查结果。需求/设计/开发只是**视图**，不是门禁。
+- 产物是**文件**（单一事实源）：`docs/requirements/*.md`、`docs/design/<MOD>/design.json`、代码、截图；工作台只做解析、渲染、校验、变化通知。
+- 扩展能力：2 个 skill（`adw-requirements-document`、`adw-design-artifacts`）+ 4 个 command + 应用级 `AGENTS.md`；模板库全局、应用内副本自动分发。
+- **不做**：确认状态、版本、Change Set、交接包、覆盖度、stale、模块管理状态、U7 阶段、M7-2、`<<<DOC_JSON>>>`/`<<<DESIGN_JSON>>>` 协议。
+- **不做任何 git 操作**；不做文件丢失/回滚/并发等兜底（前期开发）。
+- 本版 P1 会**一次性删除**旧后端模块/旧路由/旧表/旧测试/旧前端组件/旧冒烟，避免误导新规则。
+- 本文以下 2026-11-09 ~ 11-17 的所有描述（模块确认/版本/变更单/交接包/U7/M7-2/视觉 V1—V3）**已被取代，仅作历史记录**。
 
 ## 当前首项（2026-11-09）
 
@@ -97,7 +107,9 @@
 
 旧项目 `E:\work_space_primeton\primeton-agent-capabilities` 已冻结，只读参考；新成果只落本目录。
 
-## 已明确方向
+## 已明确方向（2026-11-09，**已被 2026-11-18 Agent-First 取代，仅作历史**）
+
+> 以下条目描述的是旧方向；当前实现以 `docs/plans/2026-11-18-agent-first-workbench-design.md` 为准。
 
 - 需求阶段是“对话 + 模板化 Markdown 文档 + Scene/Epic/Story”；设计阶段是“实体设计 + 页面原型（线框）”；requirements-grooming 只作为代码来源，其旧 structured UI（R4b-1）与后端 structured 兼容（R4b-2）均已删除。开发阶段重新写。
 - 用户先创建应用；一个应用一个独立目录；顶部三段渐进：需求 → 设计 → 开发；前一阶段用户确认后才能进入下一阶段。

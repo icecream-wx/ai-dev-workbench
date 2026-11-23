@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UI-3a 样式对比：现在 vs 建议</title>
+<style>
+  :root {
+    --ink: #20242e;
+    --ink-hover: #333846;
+    --bg: #f4f5f7;
+    --surface: #fff;
+    --surface-2: #fafbfc;
+    --border: #e4e7ec;
+    --border-strong: #d4d9e2;
+    --text: #1f2937;
+    --text-2: #4b5563;
+    --text-3: #7c8595;
+    --ai: #5b5bd6;
+    --ai-soft: #eeeefc;
+    --ok: #12855f;
+    --ok-soft: #e8f5ef;
+    --warn: #a05e03;
+    --warn-soft: #fdf4e3;
+    --danger: #c23a45;
+    --danger-soft: #fdeeef;
+    --focus: rgba(91,91,214,.38);
+    --radius: 8px;
+    --shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+    font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 36px 56px; background: var(--bg); }
+  h1 { margin: 0 0 6px; font-size: 24px; letter-spacing: -0.2px; }
+  .sub { margin: 0 0 28px; color: var(--text-2); font-size: 13px; line-height: 1.6; }
+  .sheet { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); padding: 22px 24px 26px; max-width: 1180px; margin: 0 auto; }
+  .section { padding: 18px 0 22px; border-top: 1px solid var(--border); }
+  .section:first-of-type { border-top: 0; padding-top: 4px; }
+  .section h2 { margin: 0 0 4px; font-size: 15px; }
+  .section p.note { margin: 0 0 16px; font-size: 12px; color: var(--text-3); line-height: 1.6; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .col-title { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+  .badge { font-size: 10.5px; font-weight: 500; padding: 2px 7px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-3); }
+  .row { display: flex; align-items: center; gap: 10px; padding: 9px 0; flex-wrap: wrap; }
+  .row + .row { border-top: 1px dashed #eef0f4; }
+  .label { width: 112px; flex-shrink: 0; font-size: 11.5px; color: var(--text-3); }
+  .hint { font-size: 10.5px; color: var(--text-3); margin-left: 2px; }
+  button { font-family: inherit; }
+
+  /* 现在 */
+  .cur-primary { height: 30px; padding: 0 12px; border: 0; border-radius: 7px; background: var(--ink); color: #fff; font-size: 12.5px; font-weight: 500; cursor: pointer; }
+  .cur-secondary { height: 30px; padding: 0 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text-2); font-size: 11.5px; cursor: pointer; }
+  .cur-ghost { height: 26px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--text-2); font-size: 11px; cursor: pointer; }
+  .cur-danger { height: 30px; padding: 0 10px; border: 1px solid var(--danger-soft); border-radius: 7px; background: var(--surface); color: var(--danger); font-size: 11.5px; cursor: pointer; }
+  .cur-icon { width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text-2); font-size: 14px; line-height: 1; cursor: pointer; }
+  .cur-chip { display: inline-flex; align-items: center; gap: 4px; height: 21px; padding: 0 8px; border-radius: 999px; background: #eef0f4; color: var(--text-2); font-size: 10.5px; }
+  .cur-chip.ai { background: var(--ai-soft); color: var(--ai); }
+  .cur-chip.ok { background: var(--ok-soft); color: var(--ok); }
+  .cur-chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .cur-chip.danger { background: var(--danger-soft); color: var(--danger); }
+  .cur-context { display: inline-flex; align-items: center; height: 21px; padding: 0 7px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-3); font-size: 10px; }
+  .cur-glyph { font-size: 14px; color: var(--text-2); }
+
+  /* 建议 */
+  .prop-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 14px; border-radius: 8px; border: 1px solid transparent; font-size: 13px; font-weight: 500; line-height: 1; cursor: pointer; transition: background-color .12s, border-color .12s, box-shadow .12s; }
+  .prop-btn:focus-visible, .prop-icon:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus); }
+  .prop-btn.primary { background: var(--ink); color: #fff; }
+  .prop-btn.primary:hover { background: var(--ink-hover); }
+  .prop-btn.secondary { background: var(--surface); border-color: var(--border-strong); color: var(--text-2); }
+  .prop-btn.secondary:hover { background: #f6f7f9; border-color: #c7cdd8; }
+  .prop-btn.ghost { background: transparent; color: var(--text-2); }
+  .prop-btn.ghost:hover { background: #f6f7f9; }
+  .prop-btn.danger { background: var(--danger-soft); color: var(--danger); }
+  .prop-btn.danger:hover { background: #fbe1e3; }
+  .prop-btn.sm { height: 28px; padding: 0 10px; font-size: 12px; }
+  .prop-btn.lg { height: 36px; padding: 0 16px; font-size: 13px; }
+  .prop-btn:disabled { opacity: .48; cursor: not-allowed; }
+  .prop-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text-2); cursor: pointer; transition: background-color .12s, border-color .12s, box-shadow .12s; }
+  .prop-icon:hover { background: #f6f7f9; border-color: #c7cdd8; }
+  .prop-icon svg, .prop-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .prop-chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 999px; background: #f0f2f5; color: var(--text-2); font-size: 11.5px; font-weight: 500; }
+  .prop-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .9; }
+  .prop-chip.ai { background: var(--ai-soft); color: var(--ai); }
+  .prop-chip.ok { background: var(--ok-soft); color: var(--ok); }
+  .prop-chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .prop-chip.danger { background: var(--danger-soft); color: var(--danger); }
+  .prop-chip.ink { background: #eef0f4; color: var(--text); }
+  .prop-context { display: inline-flex; align-items: center; gap: 5px; height: 23px; padding: 0 8px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-3); font-size: 11px; }
+  .prop-context svg { width: 12px; height: 12px; }
+
+  .dark { margin-top: 18px; padding: 18px; border-radius: 12px; background: #151a23; border: 1px solid #2a303c; color: #e6e9f0; }
+  .dark .label { color: #8c95a6; }
+  .dark .badge { background: #20242f; border-color: #2a303c; color: #8c95a6; }
+  .dark .cur-secondary, .dark .cur-icon { background: #1a1e28; border-color: #3a4150; color: #aab2c0; }
+  .dark .cur-ghost { color: #aab2c0; }
+  .dark .cur-chip { background: #262b38; color: #aab2c0; }
+  .dark .cur-context { background: #20242f; border-color: #2a303c; color: #8c95a6; }
+  .dark .prop-btn.secondary, .dark .prop-icon { background: #1a1e28; border-color: #3a4150; color: #aab2c0; }
+  .dark .prop-btn.ghost { color: #aab2c0; }
+  .dark .prop-btn.primary { background: #e3e6ee; color: #16181d; }
+  .dark .prop-chip { background: #262b38; color: #aab2c0; }
+  .dark .prop-chip.ai { background: #26264a; color: #9a9af5; }
+  .dark .prop-chip.ok { background: #16302a; color: #4cc597; }
+  .dark .prop-chip.warn { background: #332a18; color: #d9a04a; }
+  .dark .prop-chip.danger { background: #3a2023; color: #e06a74; }
+  .dark .prop-context { background: #20242f; border-color: #2a303c; color: #8c95a6; }
+
+  .footer { max-width: 1180px; margin: 18px auto 0; color: var(--text-3); font-size: 11.5px; line-height: 1.7; }
+  .kbd { font-family: ui-monospace, Consolas, monospace; font-size: 11px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; }
+</style>
+</head>
+<body>
+  <div class="sheet">
+    <h1>UI-3a 样式对比：现在 vs 建议</h1>
+    <p class="sub">只对比按钮 / 图标 / 状态 chip；用于确认方向，不改真实代码。左侧是当前实现的大致样式，右侧是 3a 建议的统一原语。</p>
+
+    <div class="section">
+      <h2>1. 按钮层级</h2>
+      <p class="note">现在各组件自己写 <code>.btn</code>（高度 26–30、圆角 6–7、字号 11–12.5 混用）；建议统一 28/32/36 三档、圆角 8、图标+文字间距 6、focus ring。</p>
+      <div class="cols">
+        <div>
+          <div class="col-title">现在 <span class="badge">分散定义</span></div>
+          <div class="row"><span class="label">主按钮</span><button class="cur-primary">新建应用</button><span class="hint">30 / 7 / 12.5</span></div>
+          <div class="row"><span class="label">次按钮</span><button class="cur-secondary">模板库</button><button class="cur-secondary">刷新</button><span class="hint">30 / 7 / 11.5</span></div>
+          <div class="row"><span class="label">Ghost</span><button class="cur-ghost">检查一致性</button><span class="hint">26 / 6 / 11</span></div>
+          <div class="row"><span class="label">危险</span><button class="cur-danger">删除应用</button><span class="hint">30 / 7 / 11.5</span></div>
+          <div class="row"><span class="label">图标</span><button class="cur-icon">⋯</button><button class="cur-icon">☾</button><span class="hint">30×30 文本符号</span></div>
+        </div>
+        <div>
+          <div class="col-title">建议 <span class="badge">RgButton</span></div>
+          <div class="row"><span class="label">主按钮</span><button class="prop-btn primary">新建应用</button><span class="hint">32 / 8 / 13 + focus</span></div>
+          <div class="row"><span class="label">次按钮</span><button class="prop-btn secondary">模板库</button><button class="prop-btn secondary">刷新</button><span class="hint">32 / 8 / 13</span></div>
+          <div class="row"><span class="label">Ghost</span><button class="prop-btn ghost">检查一致性</button><span class="hint">32 / 8 / 13</span></div>
+          <div class="row"><span class="label">危险</span><button class="prop-btn danger">删除应用</button><span class="hint">soft danger + 32</span></div>
+          <div class="row"><span class="label">图标</span>
+            <button class="prop-icon" aria-label="更多"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button>
+            <button class="prop-icon" aria-label="深色主题"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 14.5A8 8 0 0 1 9.5 4a8.2 8.2 0 1 0 10.5 10.5Z"/></svg></button>
+            <span class="hint">32×32 图标 + aria</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>2. 状态 chip</h2>
+      <p class="note">现在 <code>.pill/.status/.run-status/.view-chip/.context-chip</code> 各写一套；建议统一 <code>RgChip</code>：24 高、11.5 字、圆点 + 文案，tone 由语义决定。</p>
+      <div class="cols">
+        <div>
+          <div class="col-title">现在 <span class="badge">多套样式</span></div>
+          <div class="row"><span class="label">应用状态</span><span class="cur-chip ai">需求视图</span><span class="cur-chip warn">设计视图</span><span class="cur-chip ok">开发视图</span></div>
+          <div class="row"><span class="label">运行状态</span><span class="cur-chip ok">已连接</span><span class="cur-chip danger">失败</span><span class="cur-chip">未启动</span></div>
+          <div class="row"><span class="label">上下文</span><span class="cur-context">上下文 1% · 120 / 10k</span><span class="cur-context">模型 stub-model</span></div>
+          <div class="row"><span class="label">设计模板</span><span class="cur-context">企业级应用管理平台 · 平台蓝白</span></div>
+        </div>
+        <div>
+          <div class="col-title">建议 <span class="badge">RgChip</span></div>
+          <div class="row"><span class="label">应用状态</span><span class="prop-chip ai"><i class="dot"></i>需求中</span><span class="prop-chip warn"><i class="dot"></i>设计中</span><span class="prop-chip ok"><i class="dot"></i>开发中</span></div>
+          <div class="row"><span class="label">运行状态</span><span class="prop-chip ok"><i class="dot"></i>已连接</span><span class="prop-chip danger"><i class="dot"></i>失败</span><span class="prop-chip"><i class="dot"></i>未启动</span></div>
+          <div class="row"><span class="label">上下文</span><span class="prop-context"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h10M4 17h7"/></svg>上下文 1% · 120 / 10k</span><span class="prop-context">模型 stub-model</span></div>
+          <div class="row"><span class="label">设计模板</span><span class="prop-context">企业级应用管理平台 · 平台蓝白</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>3. 文本符号 → 图标</h2>
+      <p class="note">现在返回/更多/关闭/切换/箭头用 <code>← ⋯ × ⇄ ›</code> 文本；建议统一 Element Plus 图标（已有依赖），保留 aria-label/title，不改变语义。</p>
+      <div class="cols">
+        <div>
+          <div class="col-title">现在 <span class="badge">文本符号</span></div>
+          <div class="row"><span class="label">返回</span><span class="cur-glyph">← 应用</span></div>
+          <div class="row"><span class="label">更多</span><span class="cur-glyph">⋯</span></div>
+          <div class="row"><span class="label">关闭</span><span class="cur-glyph">×</span></div>
+          <div class="row"><span class="label">通知/切换</span><span class="cur-glyph">⇄</span></div>
+          <div class="row"><span class="label">进入</span><span class="cur-glyph">›</span></div>
+        </div>
+        <div>
+          <div class="col-title">建议 <span class="badge">Icon + aria</span></div>
+          <div class="row"><span class="label">返回</span><button class="prop-btn ghost sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>应用</button></div>
+          <div class="row"><span class="label">更多</span><button class="prop-icon" aria-label="更多"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button></div>
+          <div class="row"><span class="label">关闭</span><button class="prop-icon" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+          <div class="row"><span class="label">通知/切换</span><button class="prop-icon" aria-label="切换"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 7h12l-3-3M17 17H5l3 3"/></svg></button></div>
+          <div class="row"><span class="label">进入</span><button class="prop-icon" aria-label="进入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg></button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>4. 焦点 / 禁用</h2>
+      <p class="note">建议统一 focus-visible 3px 外环（AI 紫低透明）、disabled 48% 透明度、cursor 不变；不再每个组件各写一套。</p>
+      <div class="cols">
+        <div>
+          <div class="col-title">现在 <span class="badge">不统一</span></div>
+          <div class="row"><span class="label">焦点</span><button class="cur-secondary" style="outline:2px solid #c7cdd8; outline-offset:2px">刷新</button><span class="hint">部分组件无 focus 样式</span></div>
+          <div class="row"><span class="label">禁用</span><button class="cur-secondary" disabled style="opacity:.5">刷新</button><span class="hint">透明度不一致</span></div>
+        </div>
+        <div>
+          <div class="col-title">建议 <span class="badge">统一</span></div>
+          <div class="row"><span class="label">焦点</span><button class="prop-btn secondary" style="box-shadow:0 0 0 3px var(--focus)">刷新</button><span class="hint">focus-visible ring</span></div>
+          <div class="row"><span class="label">禁用</span><button class="prop-btn secondary" disabled>刷新</button><span class="hint">48% + not-allowed</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>5. 暗色</h2>
+      <p class="note">建议原语直接用现有暗色 token，不新增颜色；主按钮在暗色下反转为浅墨。</p>
+      <div class="dark">
+        <div class="cols">
+          <div>
+            <div class="col-title">现在 <span class="badge">分散</span></div>
+            <div class="row"><button class="cur-secondary">模板库</button><button class="cur-icon">⋯</button><span class="cur-chip ai">需求视图</span><span class="cur-chip ok">已连接</span></div>
+          </div>
+          <div>
+            <div class="col-title">建议 <span class="badge">RgButton / RgChip</span></div>
+            <div class="row"><button class="prop-btn secondary">模板库</button><button class="prop-icon" aria-label="更多"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button><span class="prop-chip ai"><i class="dot"></i>需求中</span><span class="prop-chip ok"><i class="dot"></i>已连接</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="footer">说明：左列是当前实现的近似值（高度 26–30 / 圆角 6–7 / 字号 11–12.5），右列是 3a 建议值（28/32/36、圆角 8、11.5–13、统一 focus）。如果你更偏好当前的小尺寸/文本符号，也可以只统一 CSS、不换图标。</p>
+</body>
+</html>

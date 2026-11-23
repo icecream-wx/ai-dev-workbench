@@ -1,6 +1,6 @@
 # 设计文档索引
 
-## 当前有效（2026-11-18 起；**第一阶段收尾 2026-11-20，进入细化/优化/打磨**；P6 完成，P7 实施中：P7-1～P7-6c + P7-4b + P8-1 + P8-2 + P9 + P10 + P10b + P11 + P12 已实施待评审；**P7-7 设计稿与 spike 证据已出（2026-11-21）；P7-7a、P7-7b-1（后端工作室）、P7-7b-2a（StudioView/template-preview/测试守卫）、P7-7b-2b（模板中心自定义入口/`e2e:p7-7b`/清理）、P7-7c-1（应用闭环 + `e2e:p7-7c`）、P7-7c-2（真实模型闭环，证据 `evidence/2026-11-21-p7-7-real-model/`）已实施（待评审）**；**2026-11-23：用户确认真实 3300 人工验收全部通过（P7-7 评审仍待定；验收明细待补）**）；打磨批 5（开发视图真实模型复跑，证据 `evidence/2026-11-23-dev-view-real-model/`）已实施（待评审）。
+## 当前有效（2026-11-18 起；**第一阶段收尾 2026-11-20，进入细化/优化/打磨**；P6 完成，P7 实施中：P7-1～P7-6c + P7-4b + P8-1 + P8-2 + P9 + P10 + P10b + P11 + P12 已实施待评审；**P7-7 设计稿与 spike 证据已出（2026-11-21）；P7-7a、P7-7b-1（后端工作室）、P7-7b-2a（StudioView/template-preview/测试守卫）、P7-7b-2b（模板中心自定义入口/`e2e:p7-7b`/清理）、P7-7c-1（应用闭环 + `e2e:p7-7c`）、P7-7c-2（真实模型闭环，证据 `evidence/2026-11-21-p7-7-real-model/`）已实施（待评审）**；**2026-11-23：用户确认真实 3300 人工验收全部通过（P7-7 评审仍待定；验收明细待补）**）；打磨批 5（开发视图真实模型复跑，证据 `evidence/2026-11-23-dev-view-real-model/`）已实施（待评审）；UI-1a/UI-1b/UI-2a/UI-2b/UI-3a（按钮/图标/chip 原语）/UI-3b（卡片/面板 + dialog + tabs）已实施（待评审，2026-11-23）。
 
 | 文档 | 用途 |
 | --- | --- |
@@ -39,6 +39,12 @@
 | `2026-11-23-polish-batch2-c1-ui-check-brief.md` | 打磨批 2 · C1：ui-check 文案/状态区分（开发视图 pending 提示 + fidelity hint 按 missing/skeleton 区分）；已实施（待评审） |
 | `2026-11-23-polish-batch3-mobile-brief.md` | 打磨批 3 · E：移动端 <768 审计与修复（390/414/768 实测；Studio ≤1180 单栏 页面/对话/预览 tab、模板中心/picker ≤560 头部响应式；p7-3b/p7-7b/p7-7c 移动断言）；已实施（待评审） |
 | `2026-11-23-dev-view-real-model-brief.md` | 打磨批 5 · B：开发视图真实模型复跑（临时 3488/4788 + 真实 `deepseek-flash`；自定义模板→应用→agent 实现→ui-check/fidelity 13 项/Playwright；自动收尾 8m34s、fidelity 12 pass/1 warn/0 fail）；证据 `evidence/2026-11-23-dev-view-real-model/`；已实施（待评审） |
+| `2026-11-23-ui1a-shell-home-brief.md` | **UI-1a**：设计 token（type scale/spacing）+ 应用外壳（56px 三区、更多菜单收纳删除）+ 首页（概览式两栏、运行状态 compact）；p7-3b 55→77；证据 `evidence/2026-11-23-ui1a/`；已实施（待评审） |
+| `2026-11-23-ui1b-views-typography-brief.md` | **UI-1b**：三视图排版/层级（字号/间距）+ 去重复 chip + 技术摘要人话化（`X 个模块 · Y 个设计` / `N 处待处理`）+ 状态文案统一（需求中/设计中/开发中/已完成）；p2/p3/p4/p7-3b/p7-7b 断言数保持；证据 `evidence/2026-11-23-ui1b/`；已实施（待评审） |
+| `2026-11-23-ui2a-states-skeleton-brief.md` | **UI-2a**：统一空态/加载/错误 + 骨架——共享 `StatePanel`（empty/error/loading；list/doc/canvas/timeline 骨架；`role=alert/status`；raw error 折叠）+ 需求大纲/文档、设计模块/画布/实体、开发会话/时间线、首页应用列表替换点 + 开发开始卡任务清单版式；`e2e:p2/p3/p4/p7-3b/p7-7c` 保持 **116/126/130/77/116**；证据 `evidence/2026-11-23-ui2a/`；已实施（待评审） |
+| `2026-11-23-ui2b-ai-panel-brief.md` | **UI-2b**：AI 面板空态/示例/头部/加载/错误——`AgentChatPanel` 空态用 `StatePanel`（无会话「开始与 AI 协作」/有会话「发送第一条消息」+ 上下文 pills：视图/模块/工作室 pack + 按视图 3 条示例，点击只填不发 + CTA）、头部压成两行、会话加载时间线骨架（`chat-loading`）、错误条 `role=alert` + 重试；`StatePanel` 增 `#meta` 插槽；`e2e:p2` **116→120**、`e2e:p3` **126→131**（p4/p7-3b/p7-7b/p7-7c 保持 130/77/73/116）；证据 `evidence/2026-11-23-ui2b/`；已实施（待评审） |
+| `2026-11-23-ui3a-primitives-brief.md` | **UI-3a**：按钮/图标/chip 原语——`RgButton`（variant/size 28·32·36/icon/iconOnly/loading）、`RgChip`（tone/size 22·24/dot）、`ui.css`（`.el-button` 32/8/13 全局 + 暗色主按钮浅墨）；顶层替换 AppShell/HomeShell/Requirements(View/Outline)/DesignView/DevView/AgentChatPanel/SessionList；`←`→ArrowLeft、`⋯`→MoreFilled、`☰/▤`→Fold/Expand+Memo、`›`→ArrowRight；`e2e:p2/p3/p4/p7-3b/p7-7b/p7-7c` = **120/131/130/77/73/116**；证据 `evidence/2026-11-23-ui3a/`；已实施（待评审） |
+| `2026-11-23-ui3b-cards-dialog-tabs-brief.md` | **UI-3b**：卡片/面板 + dialog + tabs 统一——`ui.css` 新增 `.rg-card`/`.rg-panel`（padding 16—20/radius 12/shadow-1，hover 只对可点击卡片）与 `.rg-tabs`/`.rg-tab`（34 高/active 2px 墨色下划线/计数 chip），统一 EP `.el-dialog`/`.el-message-box`/`.el-drawer` 间距与关闭按钮；顶层替换首页/需求/设计/开发/会话/AI 面板 + 自定义对话框壳 + 模板中心/模板库/工作室 tabs；`e2e:p2/p3/p4/p7-3b/p7-7b/p7-7c` = **120/131/130/77/73/116**；24 截图 + 23 次无溢出 + 29 次口径测量，证据 `evidence/2026-11-23-ui3b/`；已实施（待评审） |
 
 相关文档（不在本目录）：
 

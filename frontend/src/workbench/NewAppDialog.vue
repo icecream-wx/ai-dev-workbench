@@ -451,7 +451,7 @@ async function submit(): Promise<void> {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  padding: 22px 24px 12px;
+  padding: 18px 20px 12px;
   flex-shrink: 0;
 }
 .head h2 {
@@ -483,8 +483,12 @@ async function submit(): Promise<void> {
   background: var(--rg-fill-2);
   color: var(--rg-text);
 }
+.icon-btn:focus-visible {
+  outline: 2px solid var(--rg-focus-ring);
+  outline-offset: 2px;
+}
 .body {
-  padding: 6px 24px 22px;
+  padding: 4px 20px 16px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -515,10 +519,10 @@ async function submit(): Promise<void> {
     max-height: calc(100vh - 24px);
   }
   .head {
-    padding: 18px 18px 10px;
+    padding: 16px 16px 10px;
   }
   .body {
-    padding: 4px 18px 18px;
+    padding: 4px 16px 14px;
   }
   .row.two,
   .row.three {
@@ -681,11 +685,16 @@ code {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 4px;
-  padding-top: 12px;
+  padding-top: 14px;
   border-top: 1px solid var(--rg-border);
   position: sticky;
-  bottom: -22px;
+  bottom: -16px;
   background: var(--rg-surface);
+}
+@media (max-width: 768px) {
+  .actions {
+    bottom: -14px;
+  }
 }
 .btn {
   display: inline-flex;

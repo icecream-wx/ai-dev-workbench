@@ -183,7 +183,7 @@ async function submit(): Promise<void> {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px 22px 12px;
+  padding: 18px 20px 12px;
 }
 .ndt-head h2 {
   margin: 0 0 5px;
@@ -214,11 +214,15 @@ async function submit(): Promise<void> {
   background: var(--rg-fill-2);
   color: var(--rg-text);
 }
+.icon-btn:focus-visible {
+  outline: 2px solid var(--rg-focus-ring);
+  outline-offset: 2px;
+}
 .ndt-body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 6px 22px 20px;
+  padding: 4px 20px 16px;
   overflow-y: auto;
 }
 .field {
@@ -300,7 +304,7 @@ async function submit(): Promise<void> {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  padding-top: 12px;
+  padding-top: 14px;
   border-top: 1px solid var(--rg-border);
 }
 .btn {

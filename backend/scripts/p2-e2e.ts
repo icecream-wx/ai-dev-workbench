@@ -162,6 +162,18 @@ async function main(): Promise<void> {
     await gotoRequirements(page)
     await page.locator('[data-testid=requirements-empty]').waitFor({ state: 'visible' })
     check((await page.locator('[data-testid=module-outline] .item').count()) === 0, '1.1 初始无模块')
+
+    // ---------- 1b. AI 面板空态 + 示例只填不发（UI-2b） ----------
+    const chatEmpty = page.locator('[data-testid=chat-empty]')
+    await chatEmpty.waitFor({ state: 'visible', timeout: 10000 })
+    check((await chatEmpty.innerText()).includes('开始与 AI 协作'), '1b.1 无会话空态标题')
+    check((await page.locator('[data-testid^="chat-example-"]').count()) === 3, '1b.2 空态示例 3 条')
+    await page.locator('[data-testid=chat-example-1]').click()
+    const exampleValue = await page.locator('[data-testid=chat-composer] textarea').inputValue()
+    check(exampleValue.includes('还缺哪些模块'), '1b.3 点击示例只填入输入框')
+    check((await page.locator('[data-testid=chat-status]').innerText()).includes('未开始'), '1b.4 点击示例不自动发送')
+    await page.locator('[data-testid=chat-composer] textarea').fill('')
+
     await page.locator('[data-testid=empty-create-btn]').click()
     await page.locator('[data-testid=new-module-title]').fill('商品管理')
     await page.locator('[data-testid=new-module-confirm]').click()

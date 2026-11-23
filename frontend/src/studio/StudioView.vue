@@ -45,18 +45,22 @@
     </div>
 
     <template v-else>
-      <nav class="studio-tabs" role="tablist" aria-label="工作室面板" data-testid="studio-pane-tabs">
+      <nav class="studio-tabs rg-tabs rg-tabs--fill" role="tablist" aria-label="工作室面板" data-testid="studio-pane-tabs">
         <button
           type="button"
-          :class="['studio-tab', { on: mobilePane === 'pages' }]"
+          :class="['rg-tab', { 'rg-tab--active': mobilePane === 'pages' }]"
+          role="tab"
+          :aria-selected="mobilePane === 'pages'"
           data-testid="studio-tab-pages"
           @click="mobilePane = 'pages'"
         >
-          页面<span class="tab-count">{{ pages.length }}</span>
+          页面<span class="rg-tab__count">{{ pages.length }}</span>
         </button>
         <button
           type="button"
-          :class="['studio-tab', { on: mobilePane === 'chat' }]"
+          :class="['rg-tab', { 'rg-tab--active': mobilePane === 'chat' }]"
+          role="tab"
+          :aria-selected="mobilePane === 'chat'"
           data-testid="studio-tab-chat"
           @click="mobilePane = 'chat'"
         >
@@ -64,7 +68,9 @@
         </button>
         <button
           type="button"
-          :class="['studio-tab', { on: mobilePane === 'preview' }]"
+          :class="['rg-tab', { 'rg-tab--active': mobilePane === 'preview' }]"
+          role="tab"
+          :aria-selected="mobilePane === 'preview'"
           data-testid="studio-tab-preview"
           @click="mobilePane = 'preview'"
         >
@@ -139,6 +145,7 @@
           view="template"
           :api="studioChatApi"
           :commands="[]"
+          :pack-id="packId"
           empty-hint="模板工作室：描述业务目标，agent 会先读 catalog，再写 spec.json。"
           composer-placeholder="给模板工作室 agent 发消息…  Enter 发送 · Shift+Enter 换行"
         />
@@ -658,37 +665,6 @@ onMounted(() => void reloadAll(true))
   padding: 6px 10px;
   border-bottom: 1px solid var(--rg-border);
   background: var(--rg-surface);
-}
-.studio-tab {
-  flex: 1;
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  min-height: 30px;
-  border: 1px solid var(--rg-border);
-  border-radius: 8px;
-  background: var(--rg-surface);
-  color: var(--rg-text-2);
-  font-size: 12px;
-  cursor: pointer;
-}
-.studio-tab.on {
-  border-color: var(--rg-ink);
-  background: var(--rg-ink);
-  color: var(--rg-ink-contrast);
-}
-.tab-count {
-  font-size: 10px;
-  border-radius: 999px;
-  padding: 0 6px;
-  background: var(--rg-fill-2);
-  color: var(--rg-text-2);
-}
-.studio-tab.on .tab-count {
-  background: rgba(255, 255, 255, 0.2);
-  color: inherit;
 }
 .studio-left {
   min-width: 0;

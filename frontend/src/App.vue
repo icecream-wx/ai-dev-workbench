@@ -16,6 +16,7 @@
  */
 import { onMounted, onUnmounted, ref } from 'vue'
 import './shared/theme.css'
+import './shared/ui.css'
 import './shared/pinia'
 import { setActiveAppId } from './shared/app-context'
 import { useSettingsStore } from './settings/store'

@@ -1,5 +1,5 @@
 <template>
-  <section class="proto-panel" data-testid="prototype-panel">
+  <section class="proto-panel rg-panel" data-testid="prototype-panel">
     <template v-if="pages.length">
       <header class="proto-head">
         <div class="pages" data-testid="prototype-pages">
@@ -65,15 +65,22 @@
         />
       </div>
     </template>
-    <div v-else class="empty" data-testid="prototype-empty">
-      <p>这个模块还没有页面，先让 agent 生成设计。</p>
-    </div>
+    <StatePanel
+      v-else
+      variant="empty"
+      test-id="prototype-empty"
+      title="这个模块还没有页面"
+      description="先让 agent 生成设计，页面会出现在这里。"
+      class="proto-state"
+      compact
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import PrototypeCanvas from '../design/PrototypeCanvas.vue'
+import StatePanel from '../shared/StatePanel.vue'
 import { PAGE_TYPE_LABELS, type DesignEntity, type DesignPageRender, type DesignPageSet, type PrototypeSkin } from '../design/types'
 import { buildDesignPreviewUrl } from './design-template-helpers.js'
 import {
@@ -184,10 +191,14 @@ watch(
 .proto-panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
   height: 100%;
   min-height: 0;
-  padding: 10px 12px 12px;
+  padding: 12px 16px 16px;
+  background: var(--rg-surface);
+  border: 1px solid var(--rg-border);
+  border-radius: 12px;
+  box-shadow: var(--rg-shadow-1);
 }
 .proto-head {
   flex-shrink: 0;
@@ -208,8 +219,8 @@ watch(
   background: var(--rg-surface);
   color: var(--rg-text-2);
   border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 11.5px;
+  padding: 4px 11px;
+  font-size: 12px;
   cursor: pointer;
   display: inline-flex;
   gap: 6px;
@@ -221,7 +232,7 @@ watch(
   background: var(--rg-fill-2);
 }
 .page-chip .type {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--rg-text-3);
 }
 .tools {
@@ -232,7 +243,7 @@ watch(
 }
 .render-mode {
   flex-shrink: 0;
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
   background: var(--rg-fill-2);
   border: 1px solid var(--rg-border);
@@ -250,7 +261,7 @@ watch(
   border: none;
   background: var(--rg-surface);
   color: var(--rg-text-2);
-  font-size: 10.5px;
+  font-size: 11px;
   padding: 4px 8px;
   cursor: pointer;
 }
@@ -265,29 +276,29 @@ watch(
 .page-hint {
   flex-shrink: 0;
   margin: 0;
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--rg-warn);
   background: var(--rg-warn-soft);
   border: 1px solid var(--rg-warn-border);
   border-radius: 8px;
-  padding: 5px 9px;
+  padding: 6px 10px;
 }
 .export-hint {
   flex-shrink: 0;
   margin: 0;
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
   background: var(--rg-fill-2);
   border: 1px solid var(--rg-border);
   border-radius: 8px;
-  padding: 5px 9px;
+  padding: 6px 10px;
 }
 .canvas-wrap {
   flex: 1;
   min-height: 0;
   overflow: auto;
   border: 1px solid var(--rg-border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--rg-surface-2);
 }
 .preview-wrap {
@@ -295,7 +306,7 @@ watch(
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--rg-border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--rg-surface-2);
 }
 .preview-frame {
@@ -315,7 +326,7 @@ watch(
   color: var(--rg-text-2);
   border-radius: 7px;
   padding: 3px 9px;
-  font-size: 11px;
+  font-size: 11.5px;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -331,8 +342,12 @@ watch(
 .empty {
   margin: auto;
   text-align: center;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--rg-text-3);
   line-height: 1.7;
+}
+.proto-state {
+  max-width: 520px;
+  margin: 36px auto;
 }
 </style>

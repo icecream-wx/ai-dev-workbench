@@ -15,13 +15,13 @@
           <el-button size="small" type="primary" plain @click="startCreate">新建模板</el-button>
         </div>
 
-        <div v-if="categories.length > 1" class="categories">
-          <button type="button" :class="['cat', { on: !category }]" @click="category = ''">全部</button>
+        <div v-if="categories.length > 1" class="categories rg-tabs rg-tabs--wrap">
+          <button type="button" :class="['rg-tab', { 'rg-tab--active': !category }]" @click="category = ''">全部</button>
           <button
             v-for="item in categories"
             :key="item"
             type="button"
-            :class="['cat', { on: category === item }]"
+            :class="['rg-tab', { 'rg-tab--active': category === item }]"
             @click="category = item"
           >
             {{ item }}
@@ -447,21 +447,7 @@ async function removeSelected(): Promise<void> {
 .categories {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-}
-.cat {
-  border: 1px solid var(--rg-border);
-  background: var(--rg-surface);
-  border-radius: 999px;
-  padding: 2px 10px;
-  font-size: 11.5px;
-  color: var(--rg-text-2);
-  cursor: pointer;
-}
-.cat.on {
-  border-color: var(--rg-ink);
-  color: var(--rg-text);
-  background: var(--rg-fill-2);
+  gap: 4px;
 }
 .list {
   flex: 1;

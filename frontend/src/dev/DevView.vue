@@ -2,21 +2,19 @@
   <div class="dev-view" data-testid="dev-view">
     <header class="dev-head">
       <div class="dev-title">
-        <button
-          type="button"
-          class="pane-toggle"
+        <RgButton
+          variant="ghost"
+          size="sm"
+          icon-only
+          :icon="sidebarOpen ? Fold : Expand"
           data-testid="dev-sidebar-toggle"
-          :class="{ active: sidebarOpen }"
           :title="sidebarOpen ? '收起会话列表' : '展开会话列表'"
           :aria-label="sidebarOpen ? '收起会话列表' : '展开会话列表'"
           :aria-expanded="sidebarOpen"
           @click="toggleSidebar"
-        >
-          ☰
-        </button>
-        <span class="badge">开发</span>
-        <strong>{{ headerTitle }}</strong>
-        <span class="meta">{{ session?.agent ?? 'build' }} · {{ modelLabel }}</span>
+        />
+        <strong class="session-title" :title="headerTitleFull">{{ headerTitle }}</strong>
+        <RgChip class="model-chip" :dot="false" :title="modelTitle" data-testid="dev-model-chip">{{ modelChipLabel }}</RgChip>
         <label v-if="moduleOptions.length" class="module-pick" title="开发目标模块；prompt 会带上模块并生成 ui-check 骨架">
           <span>模块</span>
           <select v-model="moduleKey" data-testid="dev-module-select" :disabled="actionBusy !== ''">
@@ -27,37 +25,42 @@
           </select>
         </label>
         <span v-else class="meta" data-testid="dev-module-empty">暂无设计模块</span>
-        <span v-if="readOnly" class="readonly-chip">只读 · {{ sessionStatusLabel(session?.status ?? '') }}</span>
+        <RgChip v-if="readOnly" tone="warn" size="sm" class="readonly-chip">只读 · {{ sessionStatusLabel(session?.status ?? '') }}</RgChip>
       </div>
       <div class="dev-actions">
-        <span v-if="session" :class="['ctx-chip', contextInfo.level]" :title="contextInfo.title" data-testid="context-chip">
+        <RgChip
+          v-if="session"
+          :tone="contextTone"
+          :title="contextInfo.title"
+          data-testid="context-chip"
+        >
           {{ contextInfo.label }}
-        </span>
-        <button
+        </RgChip>
+        <RgButton
           v-if="session && !readOnly"
-          type="button"
-          :class="['btn', 'compact-btn', contextInfo.level, { highlight: contextInfo.needsCompact }]"
+          size="sm"
+          :variant="contextInfo.needsCompact ? 'danger' : 'secondary'"
           :disabled="actionBusy !== ''"
+          :loading="actionBusy === 'compact'"
           data-testid="compact-btn"
           @click="compactContext"
         >
           {{ actionBusy === 'compact' ? '压缩中…' : '压缩上下文' }}
-        </button>
+        </RgButton>
         <span :class="['conn', connectionState]">{{ connectionLabel }}</span>
-        <span :class="['run-status', statusClass]" data-testid="dev-status">{{ statusLabel }}</span>
-        <button type="button" class="btn" :disabled="actionBusy !== ''" @click="newSession">新会话</button>
-        <button
-          type="button"
-          class="pane-toggle"
+        <RgChip :tone="statusTone" data-testid="dev-status">{{ statusLabel }}</RgChip>
+        <RgButton size="sm" :disabled="actionBusy !== ''" @click="newSession">新会话</RgButton>
+        <RgButton
+          variant="ghost"
+          size="sm"
+          icon-only
+          :icon="Memo"
           data-testid="dev-aside-toggle"
-          :class="{ active: asideOpen }"
           :title="asideOpen ? '收起会话信息' : '展开会话信息'"
           :aria-label="asideOpen ? '收起会话信息' : '展开会话信息'"
           :aria-expanded="asideOpen"
           @click="toggleAside"
-        >
-          ▤
-        </button>
+        />
       </div>
     </header>
 
@@ -67,7 +70,7 @@
         <SessionList
           :sessions="sessions"
           :selected-id="selectedSessionId"
-          :loading="sessionsLoading"
+          :loading="sessionsLoading || loading"
           @select="selectSession"
           @rename="renameSession"
           @archive="archiveSession"
@@ -76,49 +79,86 @@
         />
       </div>
       <main class="timeline" data-testid="dev-timeline">
-        <div v-if="loading" class="center-card">正在加载开发会话…</div>
-        <div v-else-if="error" class="center-card error-card">
-          <p>{{ error }}</p>
-          <div class="center-actions">
-            <button type="button" class="btn" @click="refresh(false)">重试</button>
-          </div>
-        </div>
-        <div v-else-if="!session && sessions.length" class="start-card">
-          <div class="start-head">
-            <h2>选择或新建会话</h2>
-            <span class="hint">旧会话保留在左侧列表，可随时查看/恢复</span>
-          </div>
-          <p>当前没有进行中的开发会话。选择一个历史会话只读查看，或新建会话继续开发。</p>
-          <div class="start-actions">
-            <button type="button" class="btn primary" :disabled="actionBusy !== ''" @click="newSession">新建会话</button>
-            <button type="button" class="btn" @click="toggleSidebar">查看会话列表</button>
-          </div>
-        </div>
+        <StatePanel
+          v-if="loading"
+          variant="loading"
+          skeleton="timeline"
+          :loading-lines="3"
+          test-id="dev-loading"
+          title="正在加载开发会话"
+          description="读取会话、时间线与状态…"
+          class="timeline-state"
+        />
+        <StatePanel
+          v-else-if="error"
+          variant="error"
+          test-id="dev-error"
+          title="开发会话读取失败"
+          description="请检查后端与 opencode 连接，稍后重试。"
+          class="timeline-state"
+        >
+          <template #actions>
+            <RgButton size="sm" @click="refresh(false)">重试</RgButton>
+          </template>
+          <template #details>
+            <pre>{{ error }}</pre>
+          </template>
+        </StatePanel>
+        <StatePanel
+          v-else-if="!session && sessions.length"
+          variant="empty"
+          test-id="dev-session-choice"
+          title="选择或新建会话"
+          description="当前没有进行中的开发会话。选择一个历史会话只读查看，或新建会话继续开发。旧会话保留在左侧列表，可随时查看/恢复。"
+          class="start-state"
+        >
+          <template #actions>
+            <RgButton variant="primary" :disabled="actionBusy !== ''" @click="newSession">新建会话</RgButton>
+            <RgButton @click="toggleSidebar">查看会话列表</RgButton>
+          </template>
+        </StatePanel>
         <div v-else-if="!session" class="start-card" data-testid="dev-start-card">
           <div class="start-head">
             <h2>开始开发</h2>
             <span class="hint">opencode 原生 build agent · 不限制工具/流程</span>
           </div>
-          <p>
+          <p class="start-lead">
             产物是工作区里的文件：<code>AGENTS.md</code>、<code>docs/requirements/</code>、<code>docs/design/</code> 与现有代码。
             首条提示已让 agent 先读这些材料再动手；你可以编辑后再发送。
           </p>
+          <ol class="start-checklist" data-testid="dev-start-checklist">
+            <li>
+              <span class="step-no">1</span>
+              <span class="step-text"><strong>确认目标</strong>：选择开发模块，并在右侧「设计参考」核对应用类型与页面库。</span>
+            </li>
+            <li>
+              <span class="step-no">2</span>
+              <span class="step-text"><strong>补充首条提示</strong>：写清要实现哪些页面与验收标准，保留「先读材料再动手」的约束。</span>
+            </li>
+            <li>
+              <span class="step-no">3</span>
+              <span class="step-text"><strong>开始开发</strong>：agent 会先读需求/设计产物，再修改代码并检查结果。</span>
+            </li>
+          </ol>
+          <label class="start-prompt-label" for="dev-start-prompt-input">首条提示</label>
           <textarea
+            id="dev-start-prompt-input"
             v-model="startPrompt"
             rows="5"
             data-testid="dev-start-prompt"
             :disabled="actionBusy !== ''"
           />
           <div class="start-actions">
-            <button
-              type="button"
-              class="btn primary"
+            <span class="start-next">下一步</span>
+            <RgButton
+              variant="primary"
               data-testid="dev-start-btn"
               :disabled="actionBusy !== ''"
+              :loading="actionBusy === 'start'"
               @click="start"
             >
               {{ actionBusy === 'start' ? '启动中…' : '开始开发' }}
-            </button>
+            </RgButton>
           </div>
         </div>
         <template v-else>
@@ -137,15 +177,14 @@
                   data-testid="context-hint"
                 >
                   <span>{{ contextInfo.hint }}</span>
-                  <button
-                    type="button"
-                    class="btn small"
+                  <RgButton
+                    size="sm"
                     :disabled="actionBusy !== ''"
                     data-testid="context-hint-compact"
                     @click="compactContext"
                   >
                     压缩上下文
-                  </button>
+                  </RgButton>
                 </div>
 
                 <template v-for="entry in entries" :key="entry.key">
@@ -200,9 +239,14 @@
                   Agent 正在执行 · {{ state.phase.label }}
                 </div>
 
-                <div v-if="!entries.length && !pendingPermissions.length && !pendingForms.length" class="empty-timeline">
-                  <p>会话已创建。发送消息后，文本、工具卡、diff 和权限询问会出现在这里。</p>
-                </div>
+                <StatePanel
+                  v-if="!entries.length && !pendingPermissions.length && !pendingForms.length"
+                  variant="empty"
+                  test-id="dev-empty-timeline"
+                  title="会话已创建"
+                  description="发送消息后，文本、工具卡、diff 和权限询问会出现在这里。"
+                  compact
+                />
               </div>
             </div>
             <button v-if="hasNew" type="button" class="back-latest" @click="scrollToBottom(true)">回到最新</button>
@@ -220,7 +264,7 @@
         />
         <div v-else-if="session && readOnly" class="readonly-bar" data-testid="dev-readonly-bar">
           <span>该会话{{ sessionStatusLabel(session.status) }}，只读查看；恢复为当前会话后可继续发送。</span>
-          <button type="button" class="btn primary" :disabled="actionBusy !== ''" @click="restoreCurrent">恢复为当前会话</button>
+          <RgButton variant="primary" :disabled="actionBusy !== ''" @click="restoreCurrent">恢复为当前会话</RgButton>
         </div>
       </main>
 
@@ -250,16 +294,16 @@
           </p>
           <p class="muted">软门禁：先填 ui-check 对照表再写代码；未填不阻断，只标记流程未完成。</p>
           <div class="side-actions">
-            <button
-              type="button"
-              class="btn small"
+            <RgButton
+              size="sm"
               data-testid="dev-fidelity-check"
               :disabled="fidelityBusy"
+              :loading="fidelityBusy"
               @click="runFidelityCheck"
             >
               {{ fidelityBusy ? '检查中…' : '检查一致性' }}
-            </button>
-            <button type="button" class="btn small" data-testid="dev-open-templates" @click="openDesignTemplates">打开模板中心</button>
+            </RgButton>
+            <RgButton size="sm" data-testid="dev-open-templates" @click="openDesignTemplates">打开模板中心</RgButton>
           </div>
           <p class="muted">只读静态检查：PageTemplates/pm-*/表单/列表/样式/ui-check/PNG stale；不阻断、不改代码。</p>
           <p v-if="fidelityError" class="muted warn" data-testid="dev-fidelity-error">{{ fidelityError }}</p>
@@ -271,7 +315,15 @@
             <p class="muted" data-testid="dev-fidelity-meta">
               {{ fidelityScope }} · {{ formatTime(fidelityReport.generatedAt) }}
             </p>
-            <p v-if="fidelityReport.empty" class="muted warn" data-testid="dev-fidelity-empty">{{ fidelityEmpty }}</p>
+            <StatePanel
+              v-if="fidelityReport.empty"
+              variant="empty"
+              test-id="dev-fidelity-empty"
+              title="暂无可检查内容"
+              :description="fidelityEmpty"
+              class="fidelity-state"
+              compact
+            />
             <ul v-else class="fidelity-checks">
               <li
                 v-for="check in fidelityReport.checks"
@@ -306,8 +358,8 @@
             <div><dt>Token</dt><dd>{{ tokenLabel }}</dd></div>
           </dl>
           <div class="side-actions">
-            <button type="button" class="btn small" :disabled="refreshing" @click="refresh(false)">刷新</button>
-            <button v-if="session && !readOnly" type="button" class="btn small" :disabled="actionBusy !== ''" @click="newSession">新会话</button>
+            <RgButton size="sm" :disabled="refreshing" :loading="refreshing" @click="refresh(false)">刷新</RgButton>
+            <RgButton v-if="session && !readOnly" size="sm" :disabled="actionBusy !== ''" @click="newSession">新会话</RgButton>
           </div>
         </section>
 
@@ -340,12 +392,16 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Expand, Fold, Memo } from '@element-plus/icons-vue'
 import Composer from './Composer.vue'
 import FormCard from './FormCard.vue'
 import PermissionCard from './PermissionCard.vue'
 import SessionList from './SessionList.vue'
 import StepCard from './StepCard.vue'
 import DesignTemplateCenter from '../workbench/DesignTemplateCenter.vue'
+import StatePanel from '../shared/StatePanel.vue'
+import RgButton from '../shared/RgButton.vue'
+import RgChip from '../shared/RgChip.vue'
 import '../shared/reasoning.css'
 import {
   activateDevSession,
@@ -453,7 +509,16 @@ const currentItem = computed<DevSessionListItem | null>(() => {
   if (!id) return null
   return sessions.value.find(item => item.id === id) ?? null
 })
-const headerTitle = computed(() => (currentItem.value ? sessionDisplayTitle(currentItem.value, appName.value) : appName.value))
+const headerTitleFull = computed(() =>
+  currentItem.value ? sessionDisplayTitle(currentItem.value, appName.value) : '开发'
+)
+/** 头部不放应用名（顶栏已有）：会话默认标题「应用名 视图 · 时间」只留后半段 */
+const headerTitle = computed(() => {
+  const full = headerTitleFull.value
+  const name = appName.value
+  if (name && full.startsWith(`${name} `)) return full.slice(name.length + 1).trim() || full
+  return full
+})
 const isRunning = computed(() => state.value?.status === 'running')
 const pendingPermissions = computed(() => (state.value?.pending.permissions ?? []) as unknown as PermissionRequest[])
 const pendingForms = computed(() => (state.value?.pending.forms ?? []) as unknown as FormInfo[])
@@ -461,6 +526,9 @@ const modelLabel = computed(() => {
   const model = session.value?.model
   return model ? `${model.providerID}/${model.id}` : 'opencode 默认模型'
 })
+/** 头部只放短标签（模型 + id），完整 provider/agent 收进 tooltip（详情仍在右侧「会话」面板） */
+const modelChipLabel = computed(() => (session.value?.model?.id ? `模型 ${session.value.model.id}` : '默认模型'))
+const modelTitle = computed(() => `${session.value?.agent ?? 'build'} · ${modelLabel.value}`)
 const statusLabel = computed(() => {
   if (readOnly.value) return '只读查看'
   if (!session.value) return '未开始'
@@ -472,11 +540,12 @@ const statusLabel = computed(() => {
   if (status === 'idle') return '空闲'
   return status || '空闲'
 })
-const statusClass = computed(() => ({
-  running: isRunning.value,
-  done: state.value?.status === 'succeeded',
-  idle: Boolean(session.value) && !isRunning.value
-}))
+/** 会话状态 chip tone：运行中=AI 紫 / 完成=绿 / 其他=中性 */
+const statusTone = computed<'ai' | 'ok' | 'neutral'>(() => {
+  if (isRunning.value) return 'ai'
+  if (state.value?.status === 'succeeded') return 'ok'
+  return 'neutral'
+})
 const connectionLabel = computed(
   () => ({ connecting: '连接中', open: '实时', error: '连接异常', closed: '未连接' })[connectionState.value]
 )
@@ -495,6 +564,14 @@ const contextInfo = computed(() => {
     level: context?.level ?? 'unknown',
     needsCompact: !readOnly.value && contextNeedsCompact(context)
   }
+})
+/** 上下文 chip tone：warn/danger 与健康度对齐，ok 也给出绿色反馈 */
+const contextTone = computed<'ok' | 'warn' | 'danger' | 'neutral'>(() => {
+  const level = contextInfo.value.level
+  if (level === 'warn') return 'warn'
+  if (level === 'danger') return 'danger'
+  if (level === 'ok') return 'ok'
+  return 'neutral'
 })
 const selectedModule = computed(() => moduleOptionOf(moduleOptions.value, moduleKey.value))
 const uiCheckStatus = computed(() => selectedModule.value?.uiCheckStatus ?? 'missing')
@@ -1190,10 +1267,10 @@ onUnmounted(() => {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px 12px;
-  padding: 6px 14px;
+  padding: 7px 16px;
   background: var(--rg-surface, #fff);
   border-bottom: 1px solid var(--rg-border, #e4e7ec);
-  font-size: 12px;
+  font-size: 12.5px;
 }
 .dev-title {
   flex: 1 1 auto;
@@ -1203,29 +1280,26 @@ onUnmounted(() => {
   gap: 8px;
   flex-wrap: wrap;
 }
-.badge {
-  border-radius: 999px;
-  background: var(--rg-ai-soft);
-  color: var(--rg-ai);
-  font-size: 10.5px;
-  padding: 2px 9px;
-}
-.dev-title strong {
-  font-size: 13px;
+.session-title {
+  font-size: 13.5px;
+  font-weight: 600;
   max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.model-chip {
+  max-width: 180px;
+}
 .meta {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
 }
 .module-pick {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--rg-text-3);
 }
 .module-pick select {
@@ -1236,7 +1310,7 @@ onUnmounted(() => {
   padding: 2px 7px;
   background: var(--rg-surface);
   color: var(--rg-text);
-  font-size: 11.5px;
+  font-size: 12px;
 }
 .ui-check.ok {
   color: var(--rg-ok);
@@ -1250,55 +1324,24 @@ onUnmounted(() => {
 .muted.warn {
   color: var(--rg-warn);
 }
-.readonly-chip {
-  font-size: 10.5px;
-  color: var(--rg-warn);
-  background: var(--rg-warn-soft);
-  border-radius: 999px;
-  padding: 2px 8px;
-}
 .dev-actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 .ctx-chip {
-  font-size: 10.5px;
-  border-radius: 999px;
-  padding: 3px 9px;
-  background: var(--rg-fill-2);
-  color: var(--rg-text-2);
-}
-.ctx-chip.warn {
-  background: var(--rg-warn-soft);
-  color: var(--rg-warn);
-}
-.ctx-chip.danger {
-  background: var(--rg-danger-soft);
-  color: var(--rg-danger);
+  flex-shrink: 0;
 }
 .conn {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
 }
 .conn.error {
   color: var(--rg-danger);
-}
-.run-status {
-  font-size: 11px;
-  border-radius: 999px;
-  padding: 3px 9px;
-  background: var(--rg-fill-2);
-  color: var(--rg-text-2);
-}
-.run-status.running {
-  background: var(--rg-ai-soft);
-  color: var(--rg-ai);
-}
-.run-status.done {
-  background: var(--rg-ok-soft);
-  color: var(--rg-ok);
 }
 .dev-body {
   flex: 1;
@@ -1331,11 +1374,20 @@ onUnmounted(() => {
   padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+}
+.dev-side > section {
+  min-width: 0;
+  padding: 14px 16px;
+  background: var(--rg-surface);
+  border: 1px solid var(--rg-border);
+  border-radius: 12px;
+  box-shadow: var(--rg-shadow-1);
 }
 .dev-side h3 {
   margin: 0 0 8px;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--rg-text-2);
 }
 .dev-side dl {
@@ -1348,7 +1400,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 11.5px;
+  font-size: 12px;
 }
 .dev-side dt {
   color: var(--rg-text-3);
@@ -1365,7 +1417,7 @@ onUnmounted(() => {
 }
 .dev-side dd.mono {
   font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-  font-size: 10.5px;
+  font-size: 11px;
 }
 .ctx-detail.warn {
   color: var(--rg-warn);
@@ -1382,9 +1434,9 @@ onUnmounted(() => {
 .fidelity-report {
   margin-top: 10px;
   border: 1px solid var(--rg-border);
-  border-radius: 9px;
-  padding: 8px 10px;
-  background: var(--rg-surface);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--rg-surface-2);
 }
 .fidelity-head {
   display: flex;
@@ -1394,7 +1446,7 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 .fidelity-status {
-  font-size: 10.5px;
+  font-size: 11.5px;
   border-radius: 999px;
   padding: 2px 8px;
   background: var(--rg-fill-2);
@@ -1437,10 +1489,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 11.5px;
 }
 .fidelity-badge {
-  font-size: 10px;
+  font-size: 11px;
   border-radius: 4px;
   padding: 1px 5px;
   background: var(--rg-fill-2);
@@ -1457,7 +1509,7 @@ onUnmounted(() => {
 }
 .fidelity-item p {
   margin: 2px 0 0;
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.55;
   color: var(--rg-text-3);
   word-break: break-word;
@@ -1466,7 +1518,7 @@ onUnmounted(() => {
   color: var(--rg-warn);
 }
 .muted {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--rg-text-3);
   line-height: 1.7;
   margin: 0;
@@ -1478,7 +1530,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 10.5px;
+  font-size: 11.5px;
 }
 .file-list li {
   display: flex;
@@ -1496,26 +1548,17 @@ onUnmounted(() => {
   flex-direction: column;
   background: var(--rg-bg, #f4f5f7);
 }
-.center-card {
-  margin: 60px auto;
-  min-width: 300px;
-  max-width: 520px;
-  background: var(--rg-surface);
-  border: 1px solid var(--rg-border);
-  border-radius: 12px;
-  padding: 22px;
-  text-align: center;
-  font-size: 12.5px;
-  color: var(--rg-text-2);
+.timeline-state {
+  max-width: 640px;
+  margin: 36px auto;
 }
-.error-card p {
-  color: var(--rg-danger);
-  white-space: pre-wrap;
-  line-height: 1.6;
+.start-state {
+  max-width: 640px;
+  margin: 26px auto;
 }
-.center-actions,
 .start-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
   justify-content: center;
   flex-wrap: wrap;
@@ -1527,8 +1570,9 @@ onUnmounted(() => {
   background: var(--rg-surface);
   border: 1px solid var(--rg-border);
   border-radius: 12px;
-  padding: 18px;
-  font-size: 12.5px;
+  padding: 20px;
+  box-shadow: var(--rg-shadow-1);
+  font-size: 13px;
   color: var(--rg-text-2);
 }
 .start-head {
@@ -1539,26 +1583,80 @@ onUnmounted(() => {
 }
 .start-head h2 {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 650;
   color: var(--rg-text);
 }
 .start-head .hint {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
 }
 .start-card p {
   line-height: 1.7;
 }
+.start-lead {
+  margin: 10px 0 0;
+}
 .start-card .warn {
   color: var(--rg-warn);
+}
+.start-checklist {
+  list-style: none;
+  margin: 14px 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.start-checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--rg-text-2);
+}
+.start-checklist .step-no {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--rg-fill-2);
+  color: var(--rg-text-2);
+  font-size: 11px;
+  font-weight: 600;
+}
+.start-checklist .step-text {
+  min-width: 0;
+}
+.start-checklist strong {
+  color: var(--rg-text);
+  font-weight: 600;
+}
+.start-prompt-label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rg-text-2);
+}
+.start-next {
+  font-size: 11.5px;
+  color: var(--rg-text-3);
+}
+.fidelity-state {
+  margin-top: 8px;
 }
 .start-card textarea {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid var(--rg-border);
   border-radius: 9px;
-  padding: 9px 11px;
-  font-size: 12.5px;
+  padding: 10px 12px;
+  font-size: 13px;
   line-height: 1.6;
   resize: vertical;
   background: var(--rg-surface);
@@ -1582,8 +1680,8 @@ onUnmounted(() => {
 .context-banner,
 .error-banner {
   border-radius: 9px;
-  padding: 8px 12px;
-  font-size: 11.5px;
+  padding: 9px 12px;
+  font-size: 12px;
   line-height: 1.7;
   margin-bottom: 10px;
   display: flex;
@@ -1617,7 +1715,7 @@ onUnmounted(() => {
   margin: 0 0 12px;
   border: 1px solid var(--rg-border);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 11px 14px;
   background: var(--rg-surface);
 }
 .user-message {
@@ -1629,7 +1727,7 @@ onUnmounted(() => {
   white-space: pre-wrap;
   word-break: break-word;
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 13.5px;
   line-height: 1.7;
   color: var(--rg-text);
 }
@@ -1637,11 +1735,11 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--rg-text-2);
   background: var(--rg-fill-2);
   border-radius: 9px;
-  padding: 7px 11px;
+  padding: 8px 11px;
   margin-bottom: 10px;
 }
 .timeline-notice.failed {
@@ -1650,7 +1748,7 @@ onUnmounted(() => {
 .notice-time {
   margin-left: auto;
   color: var(--rg-text-3);
-  font-size: 10.5px;
+  font-size: 11px;
 }
 .pending-stack {
   display: flex;
@@ -1662,7 +1760,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--rg-text-2);
   padding: 6px 2px;
 }
@@ -1679,12 +1777,6 @@ onUnmounted(() => {
     transform: rotate(360deg);
   }
 }
-.empty-timeline {
-  font-size: 12px;
-  color: var(--rg-text-3);
-  text-align: center;
-  padding: 28px 0;
-}
 .back-latest {
   position: absolute;
   right: 18px;
@@ -1694,7 +1786,7 @@ onUnmounted(() => {
   color: var(--rg-text-2);
   border-radius: 999px;
   padding: 5px 12px;
-  font-size: 11px;
+  font-size: 11.5px;
   cursor: pointer;
   box-shadow: var(--rg-shadow-1);
 }
@@ -1704,73 +1796,18 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-  padding: 10px 16px;
+  padding: 11px 16px;
   border-top: 1px solid var(--rg-border);
   background: var(--rg-surface);
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--rg-text-2);
-}
-.pane-toggle {
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--rg-border);
-  border-radius: 7px;
-  background: var(--rg-surface);
-  color: var(--rg-text-2);
-  cursor: pointer;
-}
-.pane-toggle.active {
-  border-color: var(--rg-border-strong);
-  color: var(--rg-text);
 }
 .dev-mask {
   display: none;
 }
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 30px;
-  border: 1px solid var(--rg-border-strong);
-  background: var(--rg-surface);
-  color: var(--rg-text-2);
-  border-radius: 8px;
-  padding: 5px 11px;
-  font-size: 12px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.btn:hover:not(:disabled) {
-  border-color: var(--rg-text-3);
-  background: var(--rg-hover);
-  color: var(--rg-text);
-}
-.btn.primary {
-  background: var(--rg-ink);
-  border-color: var(--rg-ink);
-  color: var(--rg-ink-contrast);
-}
-.btn.small {
-  min-height: 26px;
-  padding: 3px 9px;
-  font-size: 11px;
-}
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-.compact-btn.warn {
-  border-color: var(--rg-warn-border);
-  color: var(--rg-warn);
-}
-.compact-btn.danger,
-.compact-btn.highlight {
-  border-color: var(--rg-danger-border);
-  color: var(--rg-danger);
-}
 code {
   font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-  font-size: 11px;
+  font-size: 11.5px;
   background: var(--rg-fill-2);
   border-radius: 4px;
   padding: 1px 5px;

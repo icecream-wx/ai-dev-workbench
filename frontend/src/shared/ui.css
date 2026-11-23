@@ -1,0 +1,523 @@
+/**
+ * UI-3a 共享原语样式：RgButton / RgChip + Element Plus 按钮全局统一。
+ *
+ * 只在工作台主入口（App.vue）引入；preview / design-preview / template-preview
+ * 各自独立入口，不加载本文件，避免影响模板预览与设计产物渲染。
+ */
+
+/* ============================ RgButton ============================ */
+.rg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--rg-text-2);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+}
+.rg-btn--sm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12.5px;
+}
+.rg-btn--lg {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13.5px;
+}
+.rg-btn--icon {
+  width: 32px;
+  padding: 0;
+}
+.rg-btn--icon.rg-btn--sm {
+  width: 28px;
+}
+.rg-btn--icon.rg-btn--lg {
+  width: 36px;
+}
+.rg-btn__icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.rg-btn__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rg-btn__spinner {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: rg-btn-spin 0.7s linear infinite;
+}
+@keyframes rg-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* secondary（默认）：描边浅底 */
+.rg-btn--secondary {
+  border-color: var(--rg-border-strong);
+  background: var(--rg-surface);
+  color: var(--rg-text-2);
+}
+.rg-btn--secondary:hover:not(:disabled) {
+  border-color: var(--rg-text-3);
+  background: var(--rg-hover);
+  color: var(--rg-text);
+}
+.rg-btn--secondary:active:not(:disabled) {
+  background: var(--rg-fill-2);
+}
+
+/* primary：墨色实心（暗色 token 自动反转为浅墨 + 深字） */
+.rg-btn--primary {
+  border-color: var(--rg-ink);
+  background: var(--rg-ink);
+  color: var(--rg-ink-contrast);
+}
+.rg-btn--primary:hover:not(:disabled) {
+  border-color: var(--rg-ink-hover);
+  background: var(--rg-ink-hover);
+  color: var(--rg-ink-contrast);
+}
+.rg-btn--primary:active:not(:disabled) {
+  border-color: var(--rg-ink-active);
+  background: var(--rg-ink-active);
+  color: var(--rg-ink-contrast);
+}
+
+/* ghost：无边框，悬停才出底 */
+.rg-btn--ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--rg-text-2);
+}
+.rg-btn--ghost:hover:not(:disabled) {
+  border-color: var(--rg-border);
+  background: var(--rg-hover);
+  color: var(--rg-text);
+}
+.rg-btn--ghost:active:not(:disabled) {
+  background: var(--rg-fill-2);
+}
+
+/* danger：只做危险动作标识，不整块变红 */
+.rg-btn--danger {
+  border-color: var(--rg-danger-border);
+  background: transparent;
+  color: var(--rg-danger);
+}
+.rg-btn--danger:hover:not(:disabled) {
+  border-color: var(--rg-danger);
+  background: var(--rg-danger-soft);
+  color: var(--rg-danger);
+}
+
+.rg-btn:focus-visible {
+  outline: 2px solid var(--rg-focus-ring);
+  outline-offset: 2px;
+}
+.rg-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ============================= RgChip ============================= */
+.rg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  max-width: 100%;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--rg-fill-2);
+  color: var(--rg-text-2);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+.rg-chip--sm {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+.rg-chip__dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+.rg-chip__icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.rg-chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rg-chip--neutral {
+  background: var(--rg-fill-2);
+  color: var(--rg-text-2);
+}
+.rg-chip--ai {
+  background: var(--rg-ai-soft);
+  color: var(--rg-ai);
+}
+.rg-chip--ok {
+  background: var(--rg-ok-soft);
+  color: var(--rg-ok);
+}
+.rg-chip--warn {
+  background: var(--rg-warn-soft);
+  color: var(--rg-warn);
+}
+.rg-chip--danger {
+  background: var(--rg-danger-soft);
+  color: var(--rg-danger);
+}
+.rg-chip--ink {
+  background: var(--rg-ink);
+  color: var(--rg-ink-contrast);
+}
+
+/* ========================= 卡片 / 面板 ========================= */
+/*
+ * 中等密度：padding 16—20、圆角 12、1px border、shadow-1。
+ * 只对可点击卡片（--interactive）提升 hover 的 border/底色；静态卡片不抖动。
+ * 全部复用 --rg-* token，深浅色自动跟随，不新增颜色。
+ */
+.rg-card {
+  --rg-card-pad: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rg-space-3);
+  min-width: 0;
+  padding: var(--rg-card-pad);
+  background: var(--rg-surface);
+  border: 1px solid var(--rg-border);
+  border-radius: 12px;
+  box-shadow: var(--rg-shadow-1);
+}
+.rg-card--sm {
+  --rg-card-pad: 16px;
+}
+.rg-card--lg {
+  --rg-card-pad: 20px;
+}
+.rg-card--flat {
+  box-shadow: none;
+}
+.rg-card--sub {
+  background: var(--rg-surface-2);
+}
+.rg-card--interactive {
+  cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+.rg-card--interactive:hover {
+  border-color: var(--rg-border-strong);
+  background: var(--rg-hover);
+}
+.rg-card--interactive:focus-visible {
+  outline: 2px solid var(--rg-focus-ring);
+  outline-offset: 2px;
+}
+.rg-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rg-space-2);
+  min-width: 0;
+}
+.rg-card__title {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--rg-font-section);
+  line-height: var(--rg-leading-title);
+  font-weight: 600;
+  color: var(--rg-text);
+}
+.rg-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rg-space-2);
+  min-width: 0;
+}
+.rg-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rg-space-2);
+  min-width: 0;
+}
+
+/* 面板：与卡片同一密度，用于区域容器（画布/表格/侧栏分组/聊天面板） */
+.rg-panel {
+  min-width: 0;
+  padding: var(--rg-space-4);
+  background: var(--rg-surface);
+  border: 1px solid var(--rg-border);
+  border-radius: 12px;
+  box-shadow: var(--rg-shadow-1);
+}
+.rg-panel--sub {
+  background: var(--rg-surface-2);
+}
+.rg-panel--flat {
+  box-shadow: none;
+}
+/* 充满父容器的面板（对话侧栏）：保留自身分割线，不额外加圆角/阴影 */
+.rg-panel--flush {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--rg-surface);
+}
+.rg-panel--warn {
+  background: var(--rg-warn-soft);
+  border-color: var(--rg-warn-border);
+  box-shadow: none;
+}
+.rg-panel--danger {
+  background: var(--rg-danger-soft);
+  border-color: var(--rg-danger-border);
+  box-shadow: none;
+}
+
+/* ============================ Tabs ============================= */
+/* 与 AppShell 视图导航同一口径：34 高、active 为 2px 墨色下划线。 */
+.rg-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--rg-space-1);
+  min-width: 0;
+}
+.rg-tabs--wrap {
+  flex-wrap: wrap;
+}
+.rg-tabs--fill {
+  width: 100%;
+}
+.rg-tabs--fill .rg-tab {
+  flex: 1;
+}
+.rg-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--rg-radius-sm);
+  background: transparent;
+  color: var(--rg-text-2);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rg-tab::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: transparent;
+}
+.rg-tab:hover {
+  background: var(--rg-hover);
+  color: var(--rg-text);
+}
+.rg-tab:focus-visible {
+  outline: 2px solid var(--rg-focus-ring);
+  outline-offset: 2px;
+}
+.rg-tab--active {
+  color: var(--rg-text);
+  font-weight: 600;
+}
+.rg-tab--active::after {
+  background: var(--rg-ink);
+}
+.rg-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--rg-fill-2);
+  color: var(--rg-text-3);
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1;
+}
+.rg-tab--active .rg-tab__count {
+  background: var(--rg-ai-soft);
+  color: var(--rg-ai);
+}
+
+/* ===================== Element Plus 按钮统一 ===================== */
+/* 只约束尺寸与焦点；颜色/语义继续走 --el-color-primary 与既有覆盖 */
+.el-button {
+  height: 32px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.el-button--small {
+  height: 28px;
+}
+.el-button--large {
+  height: 36px;
+}
+.el-button:focus-visible {
+  outline: 2px solid var(--rg-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ================= Element Plus 弹窗 / 抽屉统一 ================= */
+/* 中等密度：header 18/20、body 16/20、footer 14/20 + 顶部 hairline；关闭按钮可 hover/focus。 */
+.el-dialog {
+  border-radius: var(--rg-radius-lg);
+}
+.el-dialog__header {
+  flex-shrink: 0;
+  padding: 18px 20px 12px;
+}
+.el-dialog__headerbtn {
+  top: 14px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--rg-radius-sm);
+  transition: background-color 0.12s;
+}
+.el-dialog__headerbtn .el-dialog__close {
+  color: var(--rg-text-3);
+  font-size: 16px;
+}
+.el-dialog__headerbtn:hover {
+  background: var(--rg-fill-2);
+}
+.el-dialog__headerbtn:hover .el-dialog__close {
+  color: var(--rg-text);
+}
+.el-dialog__headerbtn:focus-visible {
+  outline: 2px solid var(--rg-focus-ring);
+  outline-offset: 2px;
+}
+.el-dialog__body {
+  padding: 4px 20px 16px;
+}
+.el-dialog__footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--rg-border);
+}
+.el-dialog__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--rg-text);
+}
+.el-message-box {
+  border-radius: var(--rg-radius-lg);
+  padding: 18px 20px 16px;
+}
+.el-message-box__header {
+  padding: 0 0 10px;
+}
+.el-message-box__title {
+  font-size: 15px;
+  font-weight: 600;
+}
+.el-message-box__headerbtn {
+  top: 14px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--rg-radius-sm);
+}
+.el-message-box__headerbtn:hover {
+  background: var(--rg-fill-2);
+}
+.el-message-box__headerbtn:focus-visible {
+  outline: 2px solid var(--rg-focus-ring);
+  outline-offset: 2px;
+}
+.el-message-box__content {
+  padding: 0;
+  font-size: 13px;
+}
+.el-message-box__btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 14px;
+}
+.el-drawer__header {
+  margin-bottom: 0;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--rg-border);
+  color: var(--rg-text);
+}
+.el-drawer__title {
+  font-size: 15px;
+  font-weight: 600;
+}
+.el-drawer__body {
+  padding: 16px 18px;
+}
+.el-drawer__close-btn {
+  border-radius: var(--rg-radius-sm);
+}
+.el-drawer__close-btn:hover {
+  background: var(--rg-fill-2);
+}
+.el-drawer__close-btn:focus-visible {
+  outline: 2px solid var(--rg-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .el-dialog__header {
+    padding: 16px 16px 10px;
+  }
+  .el-dialog__body {
+    padding: 4px 16px 14px;
+  }
+  .el-dialog__footer {
+    padding: 12px 16px 16px;
+  }
+}

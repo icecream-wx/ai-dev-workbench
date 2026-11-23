@@ -2,7 +2,6 @@
   <section class="design-view" data-testid="design-view">
     <header class="toolbar">
       <div class="left">
-        <span class="view-chip">设计视图</span>
         <button
           v-if="designBadge"
           type="button"
@@ -17,59 +16,59 @@
         <span :class="['sync', connectionState]">{{ syncLabel }}</span>
       </div>
       <div class="right">
-        <button type="button" class="btn small drawer-only" data-testid="design-outline-toggle" @click="toggleOutline">模块</button>
-        <button type="button" class="btn small drawer-only" data-testid="design-chat-toggle" @click="toggleChat">对话</button>
-        <button type="button" class="btn small" data-testid="design-template-library" @click="designCenterOpen = true">
+        <RgButton size="sm" class="drawer-only" data-testid="design-outline-toggle" @click="toggleOutline">模块</RgButton>
+        <RgButton size="sm" class="drawer-only" data-testid="design-chat-toggle" @click="toggleChat">对话</RgButton>
+        <RgButton size="sm" data-testid="design-template-library" @click="designCenterOpen = true">
           模板页面库
-        </button>
-        <button
-          type="button"
-          class="btn small primary"
+        </RgButton>
+        <RgButton
+          variant="primary"
+          size="sm"
           :disabled="!selectedModule || chatBusy"
+          :loading="chatBusy"
           data-testid="design-generate-btn"
           @click="runGenerate"
         >
           {{ chatBusy ? '生成中…' : '生成/更新设计' }}
-        </button>
-        <button
-          type="button"
-          class="btn small"
+        </RgButton>
+        <RgButton
+          size="sm"
           :disabled="!canExport || exporting"
+          :loading="exporting"
           data-testid="design-reexport-btn"
           @click="runExport('manual')"
         >
           {{ exporting ? '导出中…' : '重新导出' }}
-        </button>
-        <button type="button" class="btn small" :disabled="loading" data-testid="design-refresh-btn" @click="loadAll(false)">刷新</button>
+        </RgButton>
+        <RgButton size="sm" :disabled="loading" data-testid="design-refresh-btn" @click="loadAll(false)">刷新</RgButton>
       </div>
     </header>
 
-    <div v-if="warningLines.length" class="warning-strip" data-testid="design-warning-strip">
+    <div v-if="warningLines.length" class="warning-strip rg-panel rg-panel--warn" data-testid="design-warning-strip">
       <div class="strip-text">
         <strong>发现 {{ warningLines.length }} 处问题</strong>
         <ul>
           <li v-for="line in warningLines.slice(0, 3)" :key="line">{{ line }}</li>
         </ul>
       </div>
-      <button type="button" class="btn small danger" data-testid="design-fix-with-ai" @click="fixWithAi">让 AI 修</button>
+      <RgButton variant="danger" size="sm" data-testid="design-fix-with-ai" @click="fixWithAi">让 AI 修</RgButton>
     </div>
 
-    <div v-if="prototypeStale" class="stale-strip" data-testid="design-prototype-stale">
+    <div v-if="prototypeStale" class="stale-strip rg-panel rg-panel--warn" data-testid="design-prototype-stale">
       <span>原型图已过期：design.json 已变化，请重新导出。</span>
-      <button type="button" class="btn small" :disabled="exporting" data-testid="design-stale-reexport" @click="runExport('manual')">
+      <RgButton size="sm" :disabled="exporting" data-testid="design-stale-reexport" @click="runExport('manual')">
         重新导出
-      </button>
+      </RgButton>
     </div>
 
-    <div v-if="exportError" class="export-error" data-testid="design-export-error">
+    <div v-if="exportError" class="export-error rg-panel rg-panel--danger" data-testid="design-export-error">
       <span>{{ exportError }}</span>
-      <button
-        type="button"
-        class="btn small"
+      <RgButton
+        size="sm"
         :disabled="!canExport || exporting"
         data-testid="design-export-retry"
         @click="runExport('manual')"
-      >重试</button>
+      >重试</RgButton>
     </div>
 
     <div :class="['design-body', { narrow }]">
@@ -80,7 +79,17 @@
           <strong>模块</strong>
           <span class="count">{{ entries.length }}</span>
         </header>
-        <p v-if="!entries.length" class="muted">还没有需求模块。先到需求视图新建模块。</p>
+        <StatePanel
+          v-if="loading"
+          variant="loading"
+          skeleton="list"
+          :loading-lines="3"
+          test-id="design-module-loading"
+          title="正在加载模块"
+          class="module-state"
+          compact
+        />
+        <p v-else-if="!entries.length" class="muted">还没有需求模块。先到需求视图新建模块。</p>
         <ul v-else class="modules">
           <li
             v-for="entry in entries"
@@ -112,52 +121,100 @@
       </aside>
 
       <main class="col col-main">
-        <div v-if="loading" class="center-card">正在读取 docs/design/…</div>
-        <div v-else-if="error" class="center-card error-card">
-          <p>{{ error }}</p>
-          <button type="button" class="btn small" @click="loadAll(false)">重试</button>
+        <div v-if="loading" class="design-loading" data-testid="design-loading">
+          <StatePanel
+            variant="loading"
+            skeleton="canvas"
+            test-id="design-loading-canvas"
+            title="正在读取设计产物"
+            description="docs/design/<MOD>/design.json"
+            compact
+          />
+          <StatePanel
+            variant="loading"
+            skeleton="list"
+            :loading-lines="4"
+            test-id="design-loading-fields"
+            title="正在加载实体与字段"
+            compact
+          />
         </div>
-        <div v-else-if="!entries.length" class="empty-main" data-testid="design-no-modules">
-          <h2>先创建需求模块</h2>
-          <p>设计以需求模块为单位：`docs/design/&lt;MOD&gt;/design.json`。先去需求视图新建模块并确认目标。</p>
-          <button type="button" class="btn primary" data-testid="design-go-requirements" @click="goRequirements">去需求视图</button>
-        </div>
-        <div v-else-if="!adapted" class="empty-main" data-testid="design-empty">
-          <h2>{{ selectedEntry?.title || selectedKey }} · 还没有设计</h2>
-          <p>
-            agent 会按需求生成 `docs/design/{{ selectedKey }}/design.json`（实体 / 关系 / 页面）。
+        <StatePanel
+          v-else-if="error"
+          variant="error"
+          test-id="design-error"
+          title="设计产物读取失败"
+          description="请检查工作区或后端服务，稍后重试。"
+          class="main-state"
+        >
+          <template #actions>
+            <RgButton size="sm" @click="loadAll(false)">重试</RgButton>
+          </template>
+          <template #details>
+            <pre>{{ error }}</pre>
+          </template>
+        </StatePanel>
+        <StatePanel
+          v-else-if="!entries.length"
+          variant="empty"
+          test-id="design-no-modules"
+          title="先创建需求模块"
+          :icon="Brush"
+          class="main-state"
+        >
+          <template #default>
+            设计以需求模块为单位：<code>docs/design/&lt;MOD&gt;/design.json</code>。先去需求视图新建模块并确认目标。
+          </template>
+          <template #actions>
+            <RgButton variant="primary" data-testid="design-go-requirements" @click="goRequirements">去需求视图</RgButton>
+          </template>
+        </StatePanel>
+        <StatePanel
+          v-else-if="!adapted"
+          variant="empty"
+          test-id="design-empty"
+          :icon="Brush"
+          :title="`${selectedEntry?.title || selectedKey} · 还没有设计`"
+          class="main-state"
+        >
+          <template #default>
+            agent 会按需求生成 <code>docs/design/{{ selectedKey }}/design.json</code>（实体 / 关系 / 页面）。
             生成后这里会渲染 ER 图与原型，也可以直接在对话里描述要改什么。
-          </p>
-          <div class="empty-actions">
-            <button
-              type="button"
-              class="btn primary"
+          </template>
+          <template #examples>
+            <ul class="examples">
+              <li v-for="(example, index) in EXAMPLE_PROMPTS" :key="example">
+                <button
+                  type="button"
+                  class="link"
+                  :data-testid="`design-example-${index + 1}`"
+                  @click="fillComposer(example)"
+                >
+                  {{ example }}
+                </button>
+              </li>
+            </ul>
+          </template>
+          <template #actions>
+            <RgButton
+              variant="primary"
               :disabled="chatBusy"
+              :loading="chatBusy"
               data-testid="design-empty-generate"
               @click="runGenerate"
             >
               生成设计
-            </button>
-          </div>
-          <ul class="examples">
-            <li v-for="(example, index) in EXAMPLE_PROMPTS" :key="example">
-              <button
-                type="button"
-                class="link"
-                :data-testid="`design-example-${index + 1}`"
-                @click="fillComposer(example)"
-              >
-                {{ example }}
-              </button>
-            </li>
-          </ul>
-        </div>
+            </RgButton>
+          </template>
+        </StatePanel>
         <template v-else>
           <div class="main-head">
-            <div class="tabs">
+            <div class="rg-tabs" role="tablist" aria-label="设计视图">
               <button
                 type="button"
-                :class="['tab', { on: tab === 'er' }]"
+                :class="['rg-tab', { 'rg-tab--active': tab === 'er' }]"
+                role="tab"
+                :aria-selected="tab === 'er'"
                 data-testid="design-tab-er"
                 @click="tab = 'er'"
               >
@@ -165,7 +222,9 @@
               </button>
               <button
                 type="button"
-                :class="['tab', { on: tab === 'prototype' }]"
+                :class="['rg-tab', { 'rg-tab--active': tab === 'prototype' }]"
+                role="tab"
+                :aria-selected="tab === 'prototype'"
                 data-testid="design-tab-prototype"
                 @click="tab = 'prototype'"
               >
@@ -202,9 +261,14 @@
               :exporting="exporting"
               @export="runExport('manual')"
             />
-            <div v-else class="empty-main" data-testid="design-no-prototype-template">
-              <p>设计系统未解析出视觉风格，暂时无法渲染原型。请重新选择设计模板后重试。</p>
-            </div>
+            <StatePanel
+              v-else
+              variant="empty"
+              test-id="design-no-prototype-template"
+              title="无法渲染原型"
+              description="设计系统未解析出视觉风格，暂时无法渲染原型。请重新选择设计模板后重试。"
+              compact
+            />
           </div>
         </template>
       </main>
@@ -242,10 +306,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Brush } from '@element-plus/icons-vue'
 import AgentChatPanel from './AgentChatPanel.vue'
 import DesignErPanel from './DesignErPanel.vue'
 import DesignPrototypePanel from './DesignPrototypePanel.vue'
 import DesignTemplateCenter from './DesignTemplateCenter.vue'
+import StatePanel from '../shared/StatePanel.vue'
+import RgButton from '../shared/RgButton.vue'
 import PrototypeCanvas from '../design/PrototypeCanvas.vue'
 import { captureElementPng } from '../design/snapshot'
 import { captureTemplatePage, shouldTemplateCapture } from '../design/template-capture'
@@ -382,13 +449,13 @@ const warningLines = computed(() => {
 
 const summary = computed(() => {
   const entry = selectedEntry.value
-  if (!entry) return `模块 ${modules.value.length} · 设计 ${designs.value.length}`
+  if (!entry) return `${modules.value.length} 个模块 · ${designs.value.length} 个设计`
   const status = designSummaryOf(selectedDesign.value)
-  const errorText = designErrors.value.length ? ` · 错误 ${designErrors.value.length}` : ''
+  const issueText = designErrors.value.length ? ` · ${designErrors.value.length} 处待处理` : ''
   const orphanText = entry.orphan ? '缺需求模块 · ' : ''
   return status.hasDesign
-    ? `${orphanText}实体 ${status.entityCount} · 页面 ${status.pageCount}${errorText}`
-    : `未生成设计${errorText}`
+    ? `${orphanText}实体 ${status.entityCount} · 页面 ${status.pageCount}${issueText}`
+    : `未生成设计${issueText}`
 })
 
 const syncLabel = computed(
@@ -660,7 +727,7 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-  padding: 8px 14px;
+  padding: 9px 16px;
   background: var(--rg-surface);
   border-bottom: 1px solid var(--rg-border);
 }
@@ -672,15 +739,8 @@ onUnmounted(() => {
   flex-wrap: wrap;
   min-width: 0;
 }
-.view-chip {
-  font-size: 11px;
-  border-radius: 999px;
-  background: var(--rg-ai-soft);
-  color: var(--rg-ai);
-  padding: 2px 9px;
-}
 .badge {
-  font-size: 10.5px;
+  font-size: 11.5px;
   border-radius: 999px;
   background: var(--rg-fill-2);
   color: var(--rg-text-2);
@@ -697,11 +757,12 @@ onUnmounted(() => {
   background: var(--rg-ai-soft);
 }
 .summary {
-  font-size: 11.5px;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--rg-text-2);
 }
 .sync {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
 }
 .sync.open {
@@ -716,11 +777,11 @@ onUnmounted(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
-  padding: 8px 14px;
-  background: var(--rg-warn-soft);
-  border-bottom: 1px solid var(--rg-warn-border);
+  margin: 10px 16px 0;
+  padding: 12px 14px;
   color: var(--rg-warn);
-  font-size: 11.5px;
+  font-size: 12.5px;
+  border-radius: 12px;
 }
 .strip-text ul {
   margin: 4px 0 0;
@@ -737,19 +798,16 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 6px 14px;
-  font-size: 11.5px;
-  border-bottom: 1px solid transparent;
+  margin: 10px 16px 0;
+  padding: 12px 14px;
+  font-size: 12px;
+  border-radius: 12px;
 }
 .stale-strip {
   color: var(--rg-warn);
-  background: var(--rg-warn-soft);
-  border-bottom-color: var(--rg-warn-border);
 }
 .export-error {
   color: var(--rg-danger);
-  background: var(--rg-danger-soft);
-  border-bottom-color: var(--rg-danger-border);
 }
 .export-host {
   position: fixed;
@@ -781,14 +839,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 11px 14px;
   border-bottom: 1px solid var(--rg-border);
 }
 .modules-head strong {
-  font-size: 12.5px;
+  font-size: 13.5px;
+  font-weight: 600;
 }
 .count {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
   background: var(--rg-fill-2);
   border-radius: 999px;
@@ -800,17 +859,23 @@ onUnmounted(() => {
   overflow-y: auto;
   list-style: none;
   margin: 0;
-  padding: 8px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 .module {
   border: 1px solid var(--rg-border);
-  border-radius: 9px;
+  border-radius: 12px;
   background: var(--rg-surface);
-  padding: 8px 10px;
+  padding: 16px;
+  box-shadow: var(--rg-shadow-1);
   cursor: pointer;
+  min-width: 0;
+}
+.module:hover {
+  border-color: var(--rg-border-strong);
+  background: var(--rg-hover);
 }
 .module.on {
   border-color: var(--rg-ink);
@@ -823,7 +888,7 @@ onUnmounted(() => {
 }
 .module-top code {
   font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-  font-size: 10.5px;
+  font-size: 11px;
   background: var(--rg-fill-2);
   border-radius: 4px;
   padding: 1px 5px;
@@ -838,20 +903,20 @@ onUnmounted(() => {
   background: var(--rg-danger);
 }
 .module-title {
-  margin-top: 3px;
-  font-size: 12.5px;
+  margin-top: 4px;
+  font-size: 13.5px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .module-meta {
-  margin-top: 3px;
+  margin-top: 4px;
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
 }
 .module-meta .badge.error {
@@ -872,79 +937,50 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-  padding: 8px 14px;
+  padding: 9px 16px;
   border-bottom: 1px solid var(--rg-border);
-}
-.tabs {
-  display: inline-flex;
-  border: 1px solid var(--rg-border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-.tab {
-  border: none;
-  background: var(--rg-surface);
-  color: var(--rg-text-2);
-  font-size: 11.5px;
-  padding: 5px 12px;
-  cursor: pointer;
-}
-.tab + .tab {
-  border-left: 1px solid var(--rg-border);
-}
-.tab.on {
-  background: var(--rg-ink);
-  color: var(--rg-ink-contrast);
 }
 .meta {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
 }
 .meta code {
   font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-  font-size: 10.5px;
+  font-size: 11px;
   word-break: break-all;
 }
 .main-panel {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  padding: 12px 16px 16px;
+  background: var(--rg-bg);
 }
-.center-card {
-  margin: 40px auto;
-  max-width: 460px;
-  background: var(--rg-surface);
-  border: 1px solid var(--rg-border);
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  font-size: 12.5px;
-  color: var(--rg-text-2);
+.main-panel > .state-panel {
+  max-width: 640px;
+  margin: 24px auto;
 }
-.error-card p {
-  color: var(--rg-danger);
-  white-space: pre-wrap;
-  line-height: 1.6;
+.design-loading {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--rg-space-5);
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  align-content: start;
+  gap: var(--rg-space-4);
 }
-.empty-main {
+.main-state {
   max-width: 640px;
   margin: 36px auto;
-  padding: 0 20px;
-  font-size: 12.5px;
-  color: var(--rg-text-2);
-  line-height: 1.75;
 }
-.empty-main h2 {
-  margin: 0 0 8px;
-  font-size: 17px;
-  color: var(--rg-text);
-}
-.empty-actions {
-  margin-top: 12px;
+.module-state {
+  width: auto;
+  margin: 10px;
 }
 .examples {
   margin: 16px 0 0;
@@ -959,8 +995,8 @@ onUnmounted(() => {
   background: var(--rg-surface);
   color: var(--rg-text-2);
   border-radius: 8px;
-  padding: 7px 10px;
-  font-size: 11.5px;
+  padding: 8px 11px;
+  font-size: 12px;
   text-align: left;
   cursor: pointer;
   width: 100%;
@@ -970,48 +1006,11 @@ onUnmounted(() => {
   color: var(--rg-ai);
 }
 .muted {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--rg-text-3);
   line-height: 1.7;
   padding: 12px;
   margin: 0;
-}
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 28px;
-  border: 1px solid var(--rg-border-strong);
-  background: var(--rg-surface);
-  color: var(--rg-text-2);
-  border-radius: 7px;
-  padding: 4px 10px;
-  font-size: 11.5px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.btn:hover:not(:disabled) {
-  border-color: var(--rg-text-3);
-  background: var(--rg-hover);
-  color: var(--rg-text);
-}
-.btn.small {
-  min-height: 24px;
-  padding: 3px 8px;
-  font-size: 11px;
-}
-.btn.primary {
-  background: var(--rg-ink);
-  border-color: var(--rg-ink);
-  color: var(--rg-ink-contrast);
-}
-.btn.danger {
-  color: var(--rg-danger);
-  border-color: var(--rg-danger-border);
-}
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 .drawer-only {
   display: none;
@@ -1064,6 +1063,10 @@ onUnmounted(() => {
   }
   .col-main {
     height: 100%;
+  }
+  .design-loading {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--rg-space-4);
   }
 }
 </style>

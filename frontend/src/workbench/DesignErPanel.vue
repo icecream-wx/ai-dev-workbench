@@ -1,10 +1,10 @@
 <template>
   <section class="er-panel" data-testid="er-panel">
     <template v-if="entities.length">
-      <div class="er-canvas">
+      <div class="er-canvas rg-panel">
         <ErGraph :entities="entities" :selected-id="selectedId ?? undefined" @select="select" />
       </div>
-      <aside class="field-panel" data-testid="entity-fields">
+      <aside class="field-panel rg-panel rg-panel--sub" data-testid="entity-fields">
         <template v-if="selected">
           <header>
             <strong>{{ selected.name }}</strong>
@@ -53,15 +53,22 @@
         <p v-else class="muted">点击 ER 图中的实体查看字段。</p>
       </aside>
     </template>
-    <div v-else class="empty" data-testid="er-empty">
-      <p>还没有实体，先让 agent 生成设计。</p>
-    </div>
+    <StatePanel
+      v-else
+      variant="empty"
+      test-id="er-empty"
+      title="还没有实体"
+      description="先让 agent 生成设计，或在对话里描述要建哪些实体。"
+      class="er-state"
+      compact
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import ErGraph from '../design/ErGraph.vue'
+import StatePanel from '../shared/StatePanel.vue'
 import type { DesignEntity, DesignRelation } from '../design/types'
 
 const props = defineProps<{ entities: DesignEntity[]; relations: DesignRelation[] }>()
@@ -94,13 +101,14 @@ watch(
   gap: 12px;
   height: 100%;
   min-height: 0;
-  padding: 12px 14px 16px;
+  padding: 0;
   overflow-y: auto;
 }
 .er-canvas {
   flex: 0 0 auto;
   min-width: 0;
   overflow-x: auto;
+  padding: 16px;
 }
 /* P3 不做实体在线编辑：隐藏 ErGraph 的“在实体编辑里维护”提示 */
 .er-canvas :deep(.er-hint) {
@@ -108,9 +116,10 @@ watch(
 }
 .field-panel {
   border: 1px solid var(--rg-border);
-  border-radius: 10px;
-  background: var(--rg-surface);
-  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--rg-surface-2);
+  padding: 16px;
+  box-shadow: var(--rg-shadow-1);
   min-height: 120px;
 }
 .field-panel header {
@@ -120,31 +129,32 @@ watch(
   flex-wrap: wrap;
 }
 .field-panel header strong {
-  font-size: 13px;
+  font-size: 13.5px;
+  font-weight: 600;
 }
 .field-panel code {
   font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-  font-size: 10.5px;
+  font-size: 11px;
   background: var(--rg-fill-2);
   border-radius: 4px;
   padding: 1px 5px;
 }
 .field-panel .table {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
 }
 .desc {
   margin: 6px 0 0;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--rg-text-2);
   line-height: 1.6;
 }
 .field-head {
-  margin-top: 8px;
+  margin-top: 10px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--rg-text-2);
 }
 .count {
@@ -156,12 +166,12 @@ watch(
   width: 100%;
   margin-top: 6px;
   border-collapse: collapse;
-  font-size: 11.5px;
+  font-size: 12px;
 }
 .field-table th,
 .field-table td {
   border-top: 1px solid var(--rg-border);
-  padding: 5px 6px;
+  padding: 6px 7px;
   text-align: left;
   vertical-align: top;
 }
@@ -175,7 +185,7 @@ watch(
 .tag {
   display: inline-block;
   margin-right: 4px;
-  font-size: 10px;
+  font-size: 11px;
   border-radius: 999px;
   padding: 0 6px;
   background: var(--rg-fill-2);
@@ -190,22 +200,26 @@ watch(
   color: var(--rg-warn);
 }
 .relations {
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   display: flex;
   flex-direction: column;
   gap: 3px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--rg-text-2);
 }
 .muted {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--rg-text-3);
 }
 .empty {
   margin: auto;
   text-align: center;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--rg-text-3);
   line-height: 1.7;
+}
+.er-state {
+  max-width: 520px;
+  margin: 36px auto;
 }
 </style>

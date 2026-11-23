@@ -1,31 +1,11 @@
 <template>
-  <section class="chat-panel" data-testid="chat-panel">
+  <section class="chat-panel rg-panel rg-panel--flush" data-testid="chat-panel">
     <header class="chat-head">
       <div class="head-row">
         <strong>AI 对话</strong>
-        <span :class="['run-status', statusClass]" data-testid="chat-status">{{ statusLabel }}</span>
+        <RgChip :tone="statusTone" size="sm" class="run-status" data-testid="chat-status">{{ statusLabel }}</RgChip>
       </div>
-      <div class="head-row">
-        <span
-          v-if="session"
-          :class="['ctx-chip', contextInfo.level]"
-          :title="contextInfo.title"
-          data-testid="context-chip"
-        >
-          {{ contextInfo.label }}
-        </span>
-        <button
-          v-if="session"
-          type="button"
-          :class="['btn', 'small', { highlight: contextInfo.needsCompact }]"
-          :disabled="actionBusy !== ''"
-          data-testid="compact-btn"
-          @click="compactContext"
-        >
-          {{ actionBusy === 'compact' ? '压缩中…' : '压缩' }}
-        </button>
-      </div>
-      <div class="head-row history-row">
+      <div class="head-controls">
         <select
           class="history-select"
           data-testid="chat-history-select"
@@ -38,21 +18,45 @@
             {{ item.label }}{{ item.status === 'active' ? '（当前）' : item.status === 'archived' ? '（归档）' : '' }}
           </option>
         </select>
-        <button
-          type="button"
-          class="btn small"
+        <RgChip
+          v-if="session"
+          :tone="contextTone"
+          class="ctx-chip"
+          :title="contextInfo.title"
+          data-testid="context-chip"
+        >
+          {{ contextInfo.label }}
+        </RgChip>
+        <RgButton
+          v-if="session"
+          size="sm"
+          :variant="contextInfo.needsCompact ? 'danger' : 'secondary'"
+          :disabled="actionBusy !== ''"
+          :loading="actionBusy === 'compact'"
+          data-testid="compact-btn"
+          @click="compactContext"
+        >
+          {{ actionBusy === 'compact' ? '压缩中…' : '压缩' }}
+        </RgButton>
+        <RgButton
+          size="sm"
           :disabled="actionBusy !== ''"
           data-testid="chat-new-session-btn"
           @click="newSession()"
         >
           新会话
-        </button>
+        </RgButton>
       </div>
     </header>
 
-    <div v-if="errorText" class="error-strip" data-testid="chat-error-strip">
-      <span>{{ errorText }}</span>
-      <button type="button" class="link" @click="errorText = ''">关闭</button>
+    <div v-if="errorText" class="error-strip" data-testid="chat-error-strip" role="alert">
+      <span class="error-text" :title="errorText">{{ errorText }}</span>
+      <div class="error-actions">
+        <RgButton variant="ghost" size="sm" data-testid="chat-error-retry" :disabled="loading" @click="retrySession">
+          重试
+        </RgButton>
+        <RgButton variant="ghost" size="sm" @click="errorText = ''">关闭</RgButton>
+      </div>
     </div>
 
     <div
@@ -62,27 +66,90 @@
     >
       <span>{{ contextInfo.hint || '当前会话上下文接近上限' }}</span>
       <div class="banner-actions">
-        <button type="button" class="btn small" data-testid="compact-continue-btn" :disabled="actionBusy !== ''" @click="compactContext">
+        <RgButton size="sm" data-testid="compact-continue-btn" :disabled="actionBusy !== ''" @click="compactContext">
           压缩后继续
-        </button>
-        <button
-          type="button"
-          class="btn small"
+        </RgButton>
+        <RgButton
+          size="sm"
           data-testid="new-session-continue-btn"
           :disabled="actionBusy !== ''"
           @click="newSession(continuationComposerText)"
         >
           开新会话继续
-        </button>
+        </RgButton>
       </div>
     </div>
 
     <div ref="scroller" class="chat-scroll" data-testid="chat-timeline" @scroll="onScroll">
       <div class="chat-content">
-        <div v-if="loading" class="muted">正在加载会话…</div>
-        <div v-else-if="!entries.length && !pending && !pendingPermissions.length && !pendingForms.length" class="empty">
-          <p>{{ emptyHintText }}</p>
-        </div>
+        <StatePanel
+          v-if="loading"
+          class="chat-loading"
+          variant="loading"
+          test-id="chat-loading"
+          skeleton="timeline"
+          :loading-lines="3"
+          title="正在加载会话"
+          description="读取会话与最近消息…"
+          compact
+        />
+        <StatePanel
+          v-else-if="showEmptyState"
+          class="chat-empty"
+          variant="empty"
+          test-id="chat-empty"
+          :icon="ChatDotRound"
+          :title="emptyTitleText"
+          compact
+        >
+          <template #default>{{ emptyHintText }}</template>
+          <template #meta>
+            <span
+              v-for="pill in emptyPills"
+              :key="pill.key"
+              class="pill"
+              :data-testid="`chat-context-${pill.key}`"
+              :title="pill.title"
+            >
+              {{ pill.label }}
+            </span>
+          </template>
+          <template #examples>
+            <ul v-if="!readOnly" class="chat-examples">
+              <li v-for="(example, index) in emptyExamples" :key="example">
+                <button
+                  type="button"
+                  class="example-btn"
+                  :data-testid="`chat-example-${index + 1}`"
+                  @click="useExample(example)"
+                >
+                  <span class="example-text">{{ example }}</span>
+                  <span class="example-arrow" aria-hidden="true">→</span>
+                </button>
+              </li>
+            </ul>
+          </template>
+          <template #actions>
+            <RgButton
+              v-if="!session"
+              variant="primary"
+              size="sm"
+              data-testid="chat-empty-cta"
+              :disabled="actionBusy !== ''"
+              @click="newSession()"
+            >
+              {{ emptyCopy.cta }}
+            </RgButton>
+            <RgButton
+              v-else-if="!readOnly"
+              size="sm"
+              data-testid="chat-empty-cta"
+              @click="focusComposer"
+            >
+              {{ emptyCopy.cta }}
+            </RgButton>
+          </template>
+        </StatePanel>
         <template v-for="entry in entries" :key="entry.key">
           <div v-if="entry.kind === 'user'" class="msg user">
             <pre>{{ entry.message?.text }}</pre>
@@ -136,22 +203,21 @@
 
     <div v-if="session && readOnly" class="readonly-bar">
       <span>该会话{{ sessionStatusLabel(session.status) }}，只读查看；切到当前会话后可继续发送。</span>
-      <button type="button" class="btn small primary" :disabled="actionBusy !== ''" @click="restoreActive">切换为当前会话</button>
+      <RgButton variant="primary" size="sm" :disabled="actionBusy !== ''" @click="restoreActive">切换为当前会话</RgButton>
     </div>
 
     <div v-else class="composer-wrap" data-testid="chat-composer">
       <div v-if="showCommandsRow" class="commands">
-        <button
+        <RgButton
           v-for="item in viewCommands"
           :key="item.name"
-          type="button"
-          class="btn small"
+          size="sm"
           :disabled="commandDisabled"
           :data-testid="`chat-command-${item.testId}`"
           @click="sendCommand(item.name)"
         >
           {{ item.label }}
-        </button>
+        </RgButton>
         <span class="hint">{{ commandHint }}</span>
       </div>
       <Composer
@@ -170,11 +236,15 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { ChatDotRound } from '@element-plus/icons-vue'
 import Composer from '../dev/Composer.vue'
 import FormCard from '../dev/FormCard.vue'
 import PermissionCard from '../dev/PermissionCard.vue'
 import StepCard from '../dev/StepCard.vue'
 import MarkdownView from '../shared/MarkdownView.vue'
+import StatePanel from '../shared/StatePanel.vue'
+import RgButton from '../shared/RgButton.vue'
+import RgChip from '../shared/RgChip.vue'
 import '../shared/reasoning.css'
 import {
   devApi,
@@ -184,6 +254,13 @@ import {
 import { contextHint, contextLabel, contextNeedsCompact, contextTitle } from '../dev/dev-health.js'
 import { sessionStatusLabel } from '../dev/session-labels.js'
 import { commandArgs, commandsForView } from '../dev/view-commands.js'
+import {
+  composerPlaceholderFor,
+  contextPillsFor,
+  emptyCopyFor,
+  emptyExamplesFor,
+  emptyHintFor
+} from './chat-empty.js'
 import { nextPending, pendingLabel, pendingTestId, runningToolLine, shouldShowReasoning } from './chat-status.js'
 import { continuationText, needsContextBanner, recentSessions } from './requirements-helpers.js'
 import type {
@@ -214,10 +291,16 @@ const props = defineProps<{
   api?: ChatPanelApi
   /** 命令按钮；默认按视图取 `commandsForView(view)`（工作室传 [] 隐藏命令行） */
   commands?: ChatPanelCommand[]
-  /** 空对话提示（默认需求视图文案） */
+  /** 空对话说明（默认按视图，见 `chat-empty.js#emptyHintFor`） */
   emptyHint?: string
-  /** 输入框占位（默认需求视图文案） */
+  /** 空态标题（默认：无会话「开始与 AI 协作」/ 有会话「发送第一条消息」） */
+  emptyTitle?: string
+  /** 空态示例 prompts（默认按视图 3 条；点击只填入输入框，不发送） */
+  emptyExamples?: string[]
+  /** 输入框占位（默认按视图） */
   composerPlaceholder?: string
+  /** 工作室 packId（`view=template` 时空态上下文 pill 显示） */
+  packId?: string
 }>()
 const emit = defineEmits<{ 'session-changed': []; 'busy-changed': [boolean] }>()
 
@@ -270,6 +353,14 @@ const contextInfo = computed(() => {
     needsCompact: contextNeedsCompact(context)
   }
 })
+/** 上下文 chip tone：与健康度对齐（ok 绿 / warn 橙 / danger 红） */
+const contextTone = computed<'ok' | 'warn' | 'danger' | 'neutral'>(() => {
+  const level = contextInfo.value.level
+  if (level === 'warn') return 'warn'
+  if (level === 'danger') return 'danger'
+  if (level === 'ok') return 'ok'
+  return 'neutral'
+})
 
 const statusLabel = computed(() => {
   if (readOnly.value) return `只读 · ${sessionStatusLabel(session.value?.status ?? '')}`
@@ -282,16 +373,28 @@ const statusLabel = computed(() => {
   if (status === 'idle') return '空闲'
   return status || '空闲'
 })
-const statusClass = computed(() => ({ running: running.value, done: state.value?.status === 'succeeded', idle: Boolean(session.value) && !running.value }))
+/** 会话状态 chip tone：运行中=AI 紫 / 完成=绿 / 其他=中性 */
+const statusTone = computed<'ai' | 'ok' | 'neutral'>(() => {
+  if (running.value) return 'ai'
+  if (state.value?.status === 'succeeded') return 'ok'
+  return 'neutral'
+})
 const commandDisabled = computed(() => actionBusy.value !== '' || running.value || readOnly.value)
 const viewCommands = computed<ChatPanelCommand[]>(() => props.commands ?? commandsForView(props.view))
 /** 工作室传 commands=[] 时隐藏整行（应用三视图保持原样，含 development 的提示行） */
 const showCommandsRow = computed(() => viewCommands.value.length > 0 || props.commands === undefined)
 const commandHint = computed(() => (running.value ? '生成中，命令暂不可用' : '命令会带上当前模块'))
-const emptyHintText = computed(() => props.emptyHint ?? '需求对话：说明目标、要补的章节或要改的模块。')
-const composerPlaceholderText = computed(
-  () => props.composerPlaceholder ?? '给需求 agent 发消息…  Enter 发送 · Shift+Enter 换行'
+const emptyHintText = computed(() => props.emptyHint ?? emptyHintFor(props.view))
+const emptyExamples = computed(() => props.emptyExamples ?? emptyExamplesFor(props.view))
+const emptyCopy = computed(() => emptyCopyFor({ hasSession: Boolean(session.value) }))
+const emptyTitleText = computed(() => props.emptyTitle ?? emptyCopy.value.title)
+const emptyPills = computed(() =>
+  contextPillsFor({ view: props.view, moduleKey: props.moduleKey, packId: props.packId })
 )
+const showEmptyState = computed(
+  () => !entries.value.length && !pending.value && !pendingPermissions.value.length && !pendingForms.value.length
+)
+const composerPlaceholderText = computed(() => props.composerPlaceholder ?? composerPlaceholderFor(props.view))
 const pendingId = computed(() => pendingTestId(pending.value, 'chat'))
 const pendingText = computed(() => pendingLabel(pending.value))
 const toolLine = computed(() => (state.value?.status === 'running' ? runningToolLine(state.value?.steps) : ''))
@@ -629,6 +732,18 @@ function focusComposer(): void {
   composerRef.value?.focus()
 }
 
+/** 空态示例：只填入输入框并聚焦，**不自动发送** */
+function useExample(text: string): void {
+  if (readOnly.value) return
+  setComposer(text)
+}
+
+/** 错误条重试：重新拉取会话状态/最近消息（不新增接口） */
+async function retrySession(): Promise<void> {
+  await loadState(false)
+  await loadSessions()
+}
+
 /** 供空态/工具栏按钮调用（返回是否成功发出） */
 function runCommand(name: string): Promise<boolean> {
   return sendCommand(name)
@@ -701,8 +816,8 @@ onUnmounted(() => {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--rg-border);
 }
 .head-row {
@@ -711,71 +826,63 @@ onUnmounted(() => {
   gap: 8px;
   min-width: 0;
 }
-.head-row strong {
-  font-size: 12.5px;
+.head-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
-.history-row {
-  flex-wrap: nowrap;
+.head-row strong {
+  font-size: 13.5px;
+  font-weight: 600;
 }
 .history-select {
-  flex: 1;
+  flex: 1 1 120px;
   min-width: 0;
-  height: 26px;
+  height: 28px;
   border: 1px solid var(--rg-border);
   border-radius: 7px;
   background: var(--rg-surface);
   color: var(--rg-text);
-  font-size: 11.5px;
+  font-size: 12px;
   padding: 0 6px;
 }
 .run-status {
   margin-left: auto;
-  font-size: 10.5px;
-  color: var(--rg-text-2);
-  background: var(--rg-fill-2);
-  border-radius: 999px;
-  padding: 2px 8px;
-}
-.run-status.running {
-  color: var(--rg-ai);
-  background: var(--rg-ai-soft);
-}
-.run-status.done {
-  color: var(--rg-ok);
-  background: var(--rg-ok-soft);
+  flex-shrink: 0;
 }
 .ctx-chip {
-  font-size: 10.5px;
-  border-radius: 999px;
-  padding: 2px 8px;
-  background: var(--rg-fill-2);
-  color: var(--rg-text-2);
-}
-.ctx-chip.warn {
-  background: var(--rg-warn-soft);
-  color: var(--rg-warn);
-}
-.ctx-chip.danger {
-  background: var(--rg-danger-soft);
-  color: var(--rg-danger);
+  flex-shrink: 0;
 }
 .error-strip {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 6px 12px;
-  font-size: 11px;
+  padding: 7px 14px;
+  font-size: 11.5px;
   color: var(--rg-danger);
   background: var(--rg-danger-soft);
   border-bottom: 1px solid var(--rg-danger-border);
+}
+.error-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: var(--rg-leading-caption);
+}
+.error-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
 }
 .danger-banner {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 8px 12px;
-  font-size: 11.5px;
+  padding: 9px 14px;
+  font-size: 12px;
   color: var(--rg-danger);
   background: var(--rg-danger-soft);
   border-bottom: 1px solid var(--rg-danger-border);
@@ -789,17 +896,91 @@ onUnmounted(() => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 10px 12px;
-}
-.chat-content {
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
+}
+.chat-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+/* 空态/加载：顶部对齐（距头部约 28px：滚动区 12px + 这里 16px），不在长面板里垂直居中 */
+.chat-empty,
+.chat-loading {
+  margin-top: 16px;
+}
+.chat-empty :deep(.sp-examples),
+.chat-empty :deep(.sp-actions) {
+  max-width: 100%;
+}
+.chat-empty :deep(.sp-title) {
+  font-size: 14px;
+}
+.chat-examples {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.example-btn {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: var(--rg-radius);
+  background: var(--rg-surface);
+  color: var(--rg-text-2);
+  padding: 6px 9px;
+  font-size: 12px;
+  line-height: var(--rg-leading-body);
+  text-align: left;
+  cursor: pointer;
+}
+.example-btn:hover,
+.example-btn:focus-visible {
+  border-color: var(--rg-border-strong);
+  color: var(--rg-text);
+  background: var(--rg-hover);
+}
+.example-btn:focus-visible {
+  outline: 2px solid var(--rg-focus-ring);
+  outline-offset: 1px;
+}
+.example-text {
+  flex: 1;
+  min-width: 0;
+}
+.example-arrow {
+  flex-shrink: 0;
+  color: var(--rg-text-3);
+  font-size: 12px;
+}
+.example-btn:hover .example-arrow,
+.example-btn:focus-visible .example-arrow {
+  color: var(--rg-ai);
+}
+.pill {
+  font-size: 11.5px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: var(--rg-surface);
+  border: 1px solid var(--rg-border);
+  color: var(--rg-text-2);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .msg {
   border: 1px solid var(--rg-border);
   border-radius: 9px;
-  padding: 8px 10px;
+  padding: 9px 12px;
   background: var(--rg-surface-2);
   min-width: 0;
 }
@@ -814,17 +995,17 @@ onUnmounted(() => {
   white-space: pre-wrap;
   word-break: break-word;
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 13.5px;
   line-height: 1.65;
 }
 .notice {
   display: flex;
   gap: 6px;
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--rg-text-2);
   background: var(--rg-fill-2);
   border-radius: 8px;
-  padding: 5px 9px;
+  padding: 6px 10px;
 }
 .pending {
   display: flex;
@@ -835,7 +1016,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--rg-text-2);
 }
 .spinner {
@@ -851,12 +1032,6 @@ onUnmounted(() => {
     transform: rotate(360deg);
   }
 }
-.empty,
-.muted {
-  font-size: 11.5px;
-  color: var(--rg-text-3);
-  line-height: 1.7;
-}
 .composer-wrap {
   flex-shrink: 0;
   border-top: 1px solid var(--rg-border);
@@ -867,10 +1042,10 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  padding: 8px 12px 0;
+  padding: 9px 14px 0;
 }
 .hint {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--rg-text-3);
 }
 .readonly-bar {
@@ -880,55 +1055,10 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 8px;
   flex-wrap: wrap;
-  padding: 9px 12px;
+  padding: 10px 14px;
   border-top: 1px solid var(--rg-border);
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--rg-text-2);
-}
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 28px;
-  border: 1px solid var(--rg-border-strong);
-  background: var(--rg-surface);
-  color: var(--rg-text-2);
-  border-radius: 7px;
-  padding: 4px 10px;
-  font-size: 11.5px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.btn:hover:not(:disabled) {
-  border-color: var(--rg-text-3);
-  background: var(--rg-hover);
-  color: var(--rg-text);
-}
-.btn.small {
-  min-height: 24px;
-  padding: 3px 8px;
-  font-size: 11px;
-}
-.btn.primary {
-  background: var(--rg-ink);
-  border-color: var(--rg-ink);
-  color: var(--rg-ink-contrast);
-}
-.btn.highlight {
-  border-color: var(--rg-danger-border);
-  color: var(--rg-danger);
-}
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-.link {
-  border: none;
-  background: transparent;
-  color: inherit;
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 11px;
 }
 @media (max-width: 1024px) {
   .chat-panel {

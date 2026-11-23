@@ -6,11 +6,14 @@
  *
  * 覆盖：
  * 1. 首页「模板库」（需求模板中心）保持不变；新增「设计模板」入口
+ * 1b. UI-1a 首页外壳：新建应用 CTA / 空态 3 步 / 运行状态 compact（诊断默认折叠）
  * 2. 设计模板中心：4 应用类型卡片 / 搜索 / 分类 / 自定义“即将支持”
  * 3. 企业级详情：4 风格切换 + 页面集 + iframe 加载 organization / audit
  * 4. 新建应用：需求模板 select 仍在；picker 选择运营 + 经典暖色；创建透传设计字段
+ * 4b. UI-1a 应用外壳：返回 / 三段视图导航 / 模型·主题·更多（删除只在更多菜单里）
  * 5. 设计视图：新应用徽标（类型 · 风格）+「模板页面库」；旧应用仍显示旧原型模板
  * 6. 全程 0 console error / 0 pageerror / 0 请求失败（忽略导航 abort）/ 0 外部请求
+ * 7. 移动端 390×844：首页/应用外壳无整页横向溢出、「更多」在视口内
  */
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
 import fs from 'node:fs'
@@ -225,6 +228,19 @@ async function main(): Promise<void> {
   checkEqual(await page.getByTestId('home-template-library').count(), 1, '首页保留「模板库」入口')
   checkEqual(await page.getByTestId('home-design-templates').count(), 1, '首页新增「设计模板」入口')
 
+  // ---- 1b. UI-1a 首页：主 CTA / 空态 3 步 / 快捷开始 / 运行状态 compact ----
+  checkEqual(await page.getByTestId('home-new-app').count(), 1, '首页有「新建应用」主 CTA')
+  const homeEmpty = page.getByTestId('home-empty')
+  await homeEmpty.waitFor({ state: 'visible', timeout: 8000 })
+  checkEqual(await homeEmpty.locator('.steps li').count(), 3, '首页空态为 3 步引导')
+  checkEqual(await page.getByText('快捷开始').count(), 1, '首页右列有「快捷开始」')
+  const runtimeCard = page.getByTestId('home-runtime')
+  await runtimeCard.waitFor({ state: 'visible', timeout: 8000 })
+  check((await page.getByTestId('home-runtime-state').innerText()).trim().length > 0, '运行状态显示状态文案')
+  checkEqual(await page.getByTestId('home-runtime-diagnostics').getAttribute('open'), null, '运行诊断默认折叠')
+  checkEqual(await page.locator('.runtime-card dd').first().isVisible(), false, '端口/事件流默认不在首屏可见')
+  await page.screenshot({ path: path.join(shotsDir, 'ui1a-home-empty-light.png') })
+
   await page.getByTestId('home-template-library').click()
   const requirementDialog = page.locator('.el-dialog:visible').last()
   await requirementDialog.waitFor({ state: 'visible', timeout: 8000 })
@@ -359,11 +375,49 @@ async function main(): Promise<void> {
   checkEqual(created.data?.resolved?.style, 'classic-warm', '创建应用透传 designStyle')
   checkEqual(created.data?.resolved?.pack, 'afcenter-app-templates-v1', '创建应用透传 designPack')
 
+  // ---- 4b. UI-1a 应用外壳：返回 / 三段视图导航 / 模型·主题·更多 ----
+  await page.locator('[data-testid=requirements-view]').waitFor({ state: 'visible', timeout: 15000 })
+  checkEqual(await page.getByRole('link', { name: '返回应用列表' }).count(), 1, '应用外壳有返回按钮')
+  const viewNav = page.getByTestId('app-view-nav')
+  checkEqual(await viewNav.count(), 1, '应用外壳有视图导航')
+  checkEqual(await viewNav.getByRole('button').count(), 3, '视图导航为三段（需求/设计/开发）')
+  checkEqual(await page.getByTestId('app-status').count(), 1, '应用外壳有状态 chip')
+  checkEqual(await page.getByRole('button', { name: '模型' }).count(), 1, '应用外壳有模型按钮')
+  checkEqual(await page.getByRole('button', { name: /切换到(浅色|深色)主题/ }).count(), 1, '应用外壳有主题切换')
+  checkEqual(await page.getByTestId('app-more').count(), 1, '应用外壳有更多菜单')
+  checkEqual(
+    await page.getByTestId('app-delete').isVisible().catch(() => false),
+    false,
+    '「删除应用」不在全局主栏'
+  )
+  await page.screenshot({ path: path.join(shotsDir, 'ui1a-app-shell.png') })
+  await page.getByTestId('app-more').click()
+  await page.getByTestId('app-delete').waitFor({ state: 'visible', timeout: 8000 })
+  await delay(250)
+  checkEqual(await page.getByTestId('app-delete').count(), 1, '更多菜单包含「删除应用」')
+  await page.screenshot({ path: path.join(shotsDir, 'ui1a-app-shell-more.png') })
+  // 点击外壳空白处关闭菜单（不触发任何动作）
+  await page.locator('.appbar .app-name').click()
+  await page.getByTestId('app-delete').waitFor({ state: 'hidden', timeout: 8000 })
+  checkEqual(
+    await page.getByTestId('app-delete').isVisible().catch(() => false),
+    false,
+    '更多菜单关闭后「删除应用」隐藏'
+  )
+
   // ---- 5. 首页应用摘要显示设计系统 ----
   await page.goto(`${base}/`, { waitUntil: 'networkidle' })
   const homeSummary = page.getByTestId('home-app-templates').first()
   await waitForText(homeSummary, '设计模板：运营管理后台 · 经典暖色', '首页应用摘要')
   await page.screenshot({ path: path.join(shotsDir, 'p7-3b-home-app-summary.png') })
+
+  // UI-1a 证据：1440 浅/深首页
+  await page.screenshot({ path: path.join(shotsDir, 'ui1a-home-light.png') })
+  await page.getByRole('button', { name: '切换到深色主题' }).click()
+  await delay(250)
+  await page.screenshot({ path: path.join(shotsDir, 'ui1a-home-dark.png') })
+  await page.getByRole('button', { name: '切换到浅色主题' }).click()
+  await delay(250)
 
   // ---- 6. 设计视图徽标 / 模板页面库 ----
   await page.goto(`${base}/#/apps/p73b-new/design`, { waitUntil: 'networkidle' })
@@ -393,6 +447,34 @@ async function main(): Promise<void> {
   const mobileAudit = auditPage(mobilePage)
   const noPageOverflow = async (): Promise<boolean> =>
     mobilePage.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)
+
+  await mobilePage.goto(`${base}/`, { waitUntil: 'domcontentloaded' })
+  // UI-1a：390 首页无整页横向溢出
+  await mobilePage.getByTestId('home-new-app').waitFor({ state: 'visible', timeout: 10000 })
+  await waitForText(mobilePage.locator('h1'), '从一个应用开始', '390×844 首页标题')
+  checkEqual(await noPageOverflow(), false, '390×844 首页无整页横向溢出')
+  checkEqual(await mobilePage.getByTestId('home-runtime').isVisible(), true, '390×844 首页运行状态可见')
+  await mobilePage.screenshot({ path: path.join(shotsDir, 'ui1a-mobile-home.png') })
+
+  // UI-1a：390 应用外壳无整页横向溢出、应用名截断、「更多」在视口内
+  await mobilePage.goto(`${base}/#/apps/p73b-new/requirements`, { waitUntil: 'domcontentloaded' })
+  await mobilePage.locator('[data-testid=requirements-view]').waitFor({ state: 'visible', timeout: 15000 })
+  checkEqual(await noPageOverflow(), false, '390×844 应用外壳无整页横向溢出')
+  const mobileAppNameWidth = await mobilePage
+    .locator('.app-name')
+    .evaluate(el => Math.round(el.getBoundingClientRect().width))
+  check(mobileAppNameWidth > 0 && mobileAppNameWidth <= 130, `390×844 应用名被截断（实际宽 ${mobileAppNameWidth}）`)
+  const mobileMoreBox = await mobilePage.getByTestId('app-more').boundingBox()
+  check(
+    Boolean(mobileMoreBox && mobileMoreBox.x >= 0 && mobileMoreBox.x + mobileMoreBox.width <= 390),
+    '390×844 应用外壳「更多」菜单在视口内'
+  )
+  await mobilePage.getByTestId('app-more').click()
+  await mobilePage.getByTestId('app-delete').waitFor({ state: 'visible', timeout: 8000 })
+  checkEqual(await mobilePage.getByTestId('app-delete').count(), 1, '390×844 更多菜单可打开并含删除项')
+  await mobilePage.locator('.appbar .app-name').click()
+  await mobilePage.getByTestId('app-delete').waitFor({ state: 'hidden', timeout: 8000 })
+  await mobilePage.screenshot({ path: path.join(shotsDir, 'ui1a-mobile-shell.png') })
 
   await mobilePage.goto(`${base}/`, { waitUntil: 'domcontentloaded' })
   await mobilePage.getByTestId('home-design-templates').click()
@@ -440,7 +522,7 @@ async function main(): Promise<void> {
 
   checkAudit(audit, 'P7-3B 设计模板中心流程')
 
-  console.log(`\n[p7-3b-e2e] 通过：${assertions} 条断言`)
+  console.log(`\n[p7-3b-e2e] 通过：${assertions} 条断言（assertions=${assertions}）`)
   console.log(`[p7-3b-e2e] 截图目录：${shotsDir}`)
   console.log(`[p7-3b-e2e] 临时数据：${runtimeRoot}`)
 }

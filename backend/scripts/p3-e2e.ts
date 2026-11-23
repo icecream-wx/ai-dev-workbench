@@ -207,6 +207,20 @@ async function main(): Promise<void> {
       '1.3 设计系统徽标（类型 · 风格）'
     )
 
+    // ---------- 1b. AI 面板空态 + 示例只填不发（UI-2b） ----------
+    const chatEmpty = page.locator('[data-testid=chat-empty]')
+    await chatEmpty.waitFor({ state: 'visible', timeout: 10000 })
+    check((await chatEmpty.innerText()).includes('开始与 AI 协作'), '1b.1 无会话空态标题')
+    check((await page.locator('[data-testid=chat-context-view]').isVisible()) === true, '1b.2 上下文 pills 可见')
+    check((await page.locator('[data-testid=chat-context-view]').innerText()).includes('设计'), '1b.3 上下文视图 pill')
+    await page.locator('[data-testid=chat-example-1]').click()
+    check(
+      (await page.locator('[data-testid=chat-composer] textarea').inputValue()).includes('页面契约'),
+      '1b.4 点击示例只填入输入框'
+    )
+    check((await page.locator('[data-testid=chat-status]').innerText()).includes('未开始'), '1b.5 点击示例不自动发送')
+    await page.locator('[data-testid=chat-composer] textarea').fill('')
+
     // ---------- 2. 生成设计（命令）→ ER ----------
     await page.locator('[data-testid=design-empty-generate]').click()
     const commandDelay = await waitFor(

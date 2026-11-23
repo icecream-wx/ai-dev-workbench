@@ -39,16 +39,18 @@
           <!-- 列表：应用类型卡片 -->
           <div v-if="view === 'gallery'" class="gallery">
             <div class="gallery-toolbar">
-              <div class="cats" role="tablist" aria-label="应用类型分类">
+              <div class="cats rg-tabs rg-tabs--wrap" role="tablist" aria-label="应用类型分类">
                 <button
                   v-for="tab in categoryTabs"
                   :key="tab.value || 'all'"
                   type="button"
-                  :class="['cat', { on: category === tab.value }]"
+                  :class="['rg-tab', { 'rg-tab--active': category === tab.value }]"
+                  role="tab"
+                  :aria-selected="category === tab.value"
                   :data-testid="`design-template-category-${tab.value || 'all'}`"
                   @click="selectCategory(tab.value)"
                 >
-                  {{ tab.label }}<span>{{ tab.count }}</span>
+                  {{ tab.label }}<span class="rg-tab__count">{{ tab.count }}</span>
                 </button>
               </div>
               <div class="gallery-actions">
@@ -1027,37 +1029,8 @@ onUnmounted(() => {
 .cats {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
-}
-.cat {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  border: 1px solid var(--rg-border);
-  background: var(--rg-surface);
-  color: var(--rg-text-2);
-  border-radius: 8px;
-  padding: 4px 11px;
-  font-size: 12px;
-  cursor: pointer;
-}
-.cat span {
-  font-size: 10.5px;
-  color: var(--rg-text-3);
-  background: var(--rg-fill-2);
-  border-radius: 999px;
-  padding: 1px 6px;
-}
-.cat.on {
-  border-color: var(--rg-ink);
-  background: var(--rg-ink);
-  color: var(--rg-ink-contrast);
-}
-.cat.on span {
-  background: rgba(255, 255, 255, 0.18);
-  color: inherit;
 }
 .gallery-actions {
   display: flex;

@@ -3,18 +3,30 @@
     <header class="outline-head">
       <strong>模块</strong>
       <span class="count">{{ modules.length }}</span>
-      <button
-        type="button"
-        class="btn primary small"
+      <RgButton
+        variant="primary"
+        size="sm"
+        :icon="Plus"
         :disabled="busy"
         data-testid="new-module-btn"
         @click="emit('create')"
       >
-        + 新建模块
-      </button>
+        新建模块
+      </RgButton>
     </header>
 
-    <div v-if="!modules.length" class="empty">还没有需求模块。先新建一个模块，或让 AI 按模板生成。</div>
+    <StatePanel
+      v-if="loading"
+      variant="loading"
+      skeleton="list"
+      :loading-lines="3"
+      test-id="module-outline-loading"
+      title="正在加载模块"
+      class="outline-state"
+      compact
+    />
+
+    <div v-else-if="!modules.length" class="empty">还没有需求模块。先新建一个模块，或让 AI 按模板生成。</div>
 
     <ul v-else class="items">
       <li
@@ -44,33 +56,30 @@
 
     <div v-if="selected" class="actions">
       <div class="actions-row">
-        <button
-          type="button"
-          class="btn small"
+        <RgButton
+          size="sm"
           :disabled="busy"
           data-testid="module-rename-btn"
           @click="emit('rename')"
         >
           改名
-        </button>
-        <button
-          type="button"
-          class="btn small"
+        </RgButton>
+        <RgButton
+          size="sm"
           :disabled="busy || isFirst"
           data-testid="module-up-btn"
           @click="emit('move', -1)"
         >
           上移
-        </button>
-        <button
-          type="button"
-          class="btn small"
+        </RgButton>
+        <RgButton
+          size="sm"
           :disabled="busy || isLast"
           data-testid="module-down-btn"
           @click="emit('move', 1)"
         >
           下移
-        </button>
+        </RgButton>
       </div>
       <label class="template-row">
         <span>模板</span>
@@ -91,6 +100,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Plus } from '@element-plus/icons-vue'
+import StatePanel from '../shared/StatePanel.vue'
+import RgButton from '../shared/RgButton.vue'
 import { moduleMeta } from './requirements-helpers.js'
 
 interface OutlineModule {
@@ -114,6 +126,7 @@ const props = defineProps<{
   selectedKey: string | null
   templates: TemplateOption[]
   busy?: boolean
+  loading?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -153,20 +166,21 @@ function onTemplateChange(event: Event): void {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 11px 14px;
   border-bottom: 1px solid var(--rg-border);
 }
 .outline-head strong {
-  font-size: 12.5px;
+  font-size: 13.5px;
+  font-weight: 600;
 }
 .count {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
   background: var(--rg-fill-2);
   border-radius: 999px;
   padding: 1px 7px;
 }
-.outline-head .btn {
+.outline-head .rg-btn {
   margin-left: auto;
 }
 .items {
@@ -175,21 +189,23 @@ function onTemplateChange(event: Event): void {
   overflow-y: auto;
   list-style: none;
   margin: 0;
-  padding: 8px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 .item {
   border: 1px solid var(--rg-border);
-  border-radius: 9px;
+  border-radius: 12px;
   background: var(--rg-surface);
-  padding: 8px 10px;
+  padding: 16px;
+  box-shadow: var(--rg-shadow-1);
   cursor: pointer;
   min-width: 0;
 }
 .item:hover {
   border-color: var(--rg-border-strong);
+  background: var(--rg-hover);
 }
 .item.on {
   border-color: var(--rg-ink);
@@ -202,7 +218,7 @@ function onTemplateChange(event: Event): void {
 }
 .item-top code {
   font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--rg-text-2);
   background: var(--rg-fill-2);
   border-radius: 4px;
@@ -221,20 +237,20 @@ function onTemplateChange(event: Event): void {
   background: var(--rg-warn);
 }
 .item-title {
-  margin-top: 3px;
-  font-size: 12.5px;
+  margin-top: 4px;
+  font-size: 13.5px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .item-meta {
-  margin-top: 3px;
+  margin-top: 4px;
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
 }
 .tpl {
@@ -271,57 +287,29 @@ function onTemplateChange(event: Event): void {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--rg-text-2);
 }
 .template-select {
   flex: 1;
   min-width: 0;
-  height: 26px;
+  height: 28px;
   border: 1px solid var(--rg-border);
   border-radius: 7px;
   background: var(--rg-surface);
   color: var(--rg-text);
-  font-size: 11px;
+  font-size: 12px;
   padding: 0 6px;
 }
 .empty {
-  margin: 18px 12px;
-  font-size: 11.5px;
+  margin: 18px 14px;
+  font-size: 12px;
   color: var(--rg-text-3);
   line-height: 1.7;
 }
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 26px;
-  border: 1px solid var(--rg-border-strong);
-  background: var(--rg-surface);
-  color: var(--rg-text-2);
-  border-radius: 7px;
-  padding: 3px 9px;
-  font-size: 11px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.btn:hover:not(:disabled) {
-  border-color: var(--rg-text-3);
-  background: var(--rg-hover);
-  color: var(--rg-text);
-}
-.btn.primary {
-  background: var(--rg-ink);
-  border-color: var(--rg-ink);
-  color: var(--rg-ink-contrast);
-}
-.btn.small {
-  min-height: 24px;
-  font-size: 10.5px;
-}
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+.outline-state {
+  width: auto;
+  margin: 10px;
 }
 @media (max-width: 1024px) {
   .outline {

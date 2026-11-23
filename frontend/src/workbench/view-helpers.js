@@ -24,9 +24,12 @@ export function viewLabel(view) {
   return '未知'
 }
 
+/** 应用状态标签：与外壳状态 chip 一致（需求中/设计中/开发中/已完成），不再出现“X 视图” */
 export function statusLabel(status) {
   if (status === 'completed') return '已完成'
-  return `${viewLabel(viewFromStatus(status))}视图`
+  if (status === 'design') return '设计中'
+  if (status === 'development') return '开发中'
+  return '需求中'
 }
 
 export function appRoute(app) {
@@ -43,10 +46,9 @@ export function artifactErrorLine(error) {
   return `${file} · ${path} · ${message}${expected}`
 }
 
-/** 产物概览文案：模块数 / 设计数 / 错误数 */
+/** 产物概览文案（人话）：N 个模块 · M 个设计；错误数在视图里单独提示“N 处待处理” */
 export function artifactSummary(artifacts) {
   const modules = Array.isArray(artifacts?.modules) ? artifacts.modules.length : 0
   const designs = Array.isArray(artifacts?.designs) ? artifacts.designs.length : 0
-  const errors = Array.isArray(artifacts?.errors) ? artifacts.errors.length : 0
-  return `模块 ${modules} · 设计 ${designs}${errors ? ` · 错误 ${errors}` : ''}`
+  return `${modules} 个模块 · ${designs} 个设计`
 }

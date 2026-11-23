@@ -90,11 +90,11 @@ textarea {
   resize: none;
   border: 1px solid var(--rg-border-strong, #d4d9e2);
   border-radius: 9px;
-  padding: 9px 11px;
+  padding: 10px 12px;
   min-height: 68px;
   max-height: 220px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.6;
   color: var(--rg-text, #1f2937);
   background: var(--rg-surface-2, #fafbfc);
@@ -121,7 +121,7 @@ textarea:disabled {
   flex-wrap: wrap;
 }
 .hint {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--rg-text-3, #8a93a3);
 }
 .actions {

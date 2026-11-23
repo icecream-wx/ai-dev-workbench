@@ -3,21 +3,35 @@
     <header class="list-head">
       <div class="head-row">
         <strong>开发会话</strong>
-        <button type="button" class="btn primary small" :disabled="loading" @click="emit('new-session')">新会话</button>
+        <RgButton variant="primary" size="sm" :disabled="loading" @click="emit('new-session')">新会话</RgButton>
       </div>
       <input v-model="query" class="search" type="search" placeholder="搜索标题 / 备注" />
     </header>
 
-    <div v-if="loading && !sessions.length" class="list-hint">正在加载会话…</div>
-    <div v-else-if="!filtered.length" class="list-empty">
-      <p v-if="query.trim()">没有匹配“{{ query.trim() }}”的会话。</p>
-      <p v-else>还没有开发会话。点击“新会话”开始。</p>
-    </div>
+    <StatePanel
+      v-if="loading && !sessions.length"
+      variant="loading"
+      skeleton="list"
+      :loading-lines="3"
+      test-id="session-list-loading"
+      title="正在加载会话"
+      class="list-state"
+      compact
+    />
+    <StatePanel
+      v-else-if="!filtered.length"
+      variant="empty"
+      test-id="session-list-empty"
+      :title="emptyTitle"
+      :description="emptyDescription"
+      class="list-state"
+      compact
+    />
 
     <div v-else class="groups">
       <div v-for="group in groups" :key="group.key" class="group">
         <button type="button" class="group-head" @click="toggleGroup(group.key)">
-          <span class="chevron" :class="{ open: isOpen(group) }">›</span>
+          <el-icon class="chevron" :class="{ open: isOpen(group) }"><ArrowRight /></el-icon>
           <span class="group-title">{{ group.label }}</span>
           <span class="group-count">{{ group.sessions.length }}</span>
         </button>
@@ -36,7 +50,7 @@
             <div class="item-top">
               <span v-if="item.status === 'active'" class="dot" />
               <span class="item-title">{{ displayTitle(item) }}</span>
-              <span :class="['status-chip', sessionStatusClass(item.status)]">{{ sessionStatusLabel(item.status) }}</span>
+              <RgChip :tone="statusTone(item.status)" size="sm" class="status-chip">{{ sessionStatusLabel(item.status) }}</RgChip>
             </div>
             <div class="item-meta">
               <span>{{ sessionTimeLabel(item) }}</span>
@@ -44,9 +58,9 @@
             </div>
             <p v-if="item.note" class="item-note">{{ item.note }}</p>
             <div class="item-actions" @click.stop>
-              <button type="button" class="mini" data-testid="session-rename" @click="emit('rename', item)">重命名</button>
-              <button v-if="item.status === 'active'" type="button" class="mini" data-testid="session-archive" @click="emit('archive', item)">归档</button>
-              <button v-else-if="item.status === 'archived'" type="button" class="mini" data-testid="session-restore" @click="emit('restore', item)">恢复</button>
+              <RgButton size="sm" data-testid="session-rename" @click="emit('rename', item)">重命名</RgButton>
+              <RgButton v-if="item.status === 'active'" size="sm" data-testid="session-archive" @click="emit('archive', item)">归档</RgButton>
+              <RgButton v-else-if="item.status === 'archived'" size="sm" data-testid="session-restore" @click="emit('restore', item)">恢复</RgButton>
             </div>
           </li>
         </ul>
@@ -57,13 +71,16 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { ArrowRight } from '@element-plus/icons-vue'
+import StatePanel from '../shared/StatePanel.vue'
+import RgButton from '../shared/RgButton.vue'
+import RgChip from '../shared/RgChip.vue'
 import type { DevSessionListItem } from './types'
 import {
   displayTitle,
   filterSessions,
   groupSessions,
   modelShort,
-  sessionStatusClass,
   sessionStatusLabel,
   sessionTimeLabel
 } from './session-labels.js'
@@ -89,6 +106,10 @@ let groupKeys = ''
 const filtered = computed(() => filterSessions(props.sessions, query.value))
 const groups = computed(() => groupSessions(filtered.value))
 const searching = computed(() => Boolean(query.value.trim()))
+const emptyTitle = computed(() => (searching.value ? '没有匹配的会话' : '还没有开发会话'))
+const emptyDescription = computed(() =>
+  searching.value ? `没有匹配“${query.value.trim()}”的会话。` : '点击“新会话”开始。'
+)
 
 watch(
   groups,
@@ -113,6 +134,13 @@ function isOpen(group: { key: string }): boolean {
   return searching.value || expanded.value.has(group.key)
 }
 
+/** 会话状态 chip tone：进行中=绿 / 已归档=中性 / 已失效=红 */
+function statusTone(status: string): 'ok' | 'neutral' | 'danger' {
+  if (status === 'active') return 'ok'
+  if (status === 'stale') return 'danger'
+  return 'neutral'
+}
+
 function toggleGroup(key: string): void {
   if (searching.value) return
   const next = new Set(expanded.value)
@@ -135,7 +163,7 @@ function toggleGroup(key: string): void {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px 12px 10px;
+  padding: 13px 14px 11px;
   border-bottom: 1px solid var(--rg-border, #e4e7ec);
 }
 .head-row {
@@ -143,7 +171,7 @@ function toggleGroup(key: string): void {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-size: 12.5px;
+  font-size: 13px;
 }
 .search {
   width: 100%;
@@ -151,7 +179,7 @@ function toggleGroup(key: string): void {
   background: var(--rg-fill, #f4f5f7);
   border-radius: 7px;
   padding: 6px 9px;
-  font-size: 11.5px;
+  font-size: 12px;
   font-family: inherit;
   color: var(--rg-text, #1f2937);
   outline: none;
@@ -181,7 +209,7 @@ function toggleGroup(key: string): void {
   border: 0;
   background: transparent;
   padding: 7px 4px;
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--rg-text-3, #8a93a3);
   cursor: pointer;
   text-align: left;
@@ -192,10 +220,10 @@ function toggleGroup(key: string): void {
   color: var(--rg-text-2, #4b5563);
 }
 .chevron {
-  display: inline-block;
+  display: inline-flex;
   transform: rotate(0deg);
   transition: transform 0.12s ease;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1;
 }
 .chevron.open {
@@ -210,7 +238,7 @@ function toggleGroup(key: string): void {
 }
 .group-count {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--rg-text-3, #8a93a3);
 }
 .items {
@@ -223,8 +251,8 @@ function toggleGroup(key: string): void {
 }
 .item {
   position: relative;
-  border-radius: 8px;
-  padding: 7px 8px;
+  border-radius: 10px;
+  padding: 8px 10px;
   cursor: pointer;
   border: 1px solid transparent;
   display: flex;
@@ -233,6 +261,7 @@ function toggleGroup(key: string): void {
 }
 .item:hover {
   background: var(--rg-hover, #f6f7f9);
+  border-color: var(--rg-border, #e4e7ec);
 }
 .item.selected {
   background: var(--rg-ai-soft, #eeeefc);
@@ -257,7 +286,8 @@ function toggleGroup(key: string): void {
 .item-title {
   flex: 1;
   min-width: 0;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--rg-text, #1f2937);
   white-space: nowrap;
   overflow: hidden;
@@ -265,34 +295,18 @@ function toggleGroup(key: string): void {
 }
 .status-chip {
   flex-shrink: 0;
-  border-radius: 999px;
-  padding: 1px 6px;
-  font-size: 9.5px;
-  background: var(--rg-fill-2, #eef0f4);
-  color: var(--rg-text-3, #8a93a3);
-}
-.status-chip.active {
-  color: var(--rg-ok, #12855f);
-  background: var(--rg-ok-soft, #e8f5ef);
-}
-.status-chip.archived {
-  color: var(--rg-text-3, #8a93a3);
-}
-.status-chip.stale {
-  color: var(--rg-danger, #c23a45);
-  background: var(--rg-danger-soft, #fdeeef);
 }
 .item-meta {
   display: flex;
   gap: 8px;
-  font-size: 10px;
+  font-size: 11.5px;
   color: var(--rg-text-3, #8a93a3);
   white-space: nowrap;
   overflow: hidden;
 }
 .item-note {
   margin: 0;
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--rg-text-3, #8a93a3);
   white-space: nowrap;
   overflow: hidden;
@@ -309,63 +323,8 @@ function toggleGroup(key: string): void {
 .item:focus-visible .item-actions {
   display: flex;
 }
-.mini {
-  border: 1px solid var(--rg-border, #e4e7ec);
-  background: var(--rg-surface, #fff);
-  color: var(--rg-text-2, #4b5563);
-  border-radius: 5px;
-  padding: 3px 7px;
-  font-size: 10px;
-  cursor: pointer;
-}
-.mini:hover {
-  border-color: var(--rg-border-strong, #d4d9e2);
-  background: var(--rg-hover, #f6f7f9);
-  color: var(--rg-text, #1f2937);
-}
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--rg-border, #e4e7ec);
-  background: var(--rg-surface, #fff);
-  color: var(--rg-text-2, #4b5563);
-  border-radius: 7px;
-  padding: 5px 9px;
-  font-size: 11px;
-  cursor: pointer;
-}
-.btn.primary {
-  background: var(--rg-ink, #20242e);
-  border-color: var(--rg-ink, #20242e);
-  color: var(--rg-ink-contrast, #fff);
-}
-.btn:hover:not(:disabled) {
-  border-color: var(--rg-border-strong, #d4d9e2);
-  background: var(--rg-hover, #f6f7f9);
-  color: var(--rg-text, #1f2937);
-}
-.btn.primary:hover:not(:disabled) {
-  background: var(--rg-ink-hover, #333846);
-  border-color: var(--rg-ink-hover, #333846);
-  color: var(--rg-ink-contrast, #fff);
-}
-.btn.small {
-  padding: 4px 8px;
-  font-size: 10.5px;
-}
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-.list-hint,
-.list-empty {
-  padding: 18px 14px;
-  font-size: 11.5px;
-  color: var(--rg-text-3, #8a93a3);
-  line-height: 1.7;
-}
-.list-empty p {
-  margin: 0;
+.list-state {
+  width: auto;
+  margin: 10px 8px;
 }
 </style>

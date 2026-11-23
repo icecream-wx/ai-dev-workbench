@@ -1,27 +1,36 @@
-<template>
+﻿<template>
   <section class="requirements-view" data-testid="requirements-view">
     <header class="toolbar">
       <div class="left">
-        <span class="view-chip">需求视图</span>
         <span class="summary" data-testid="artifact-summary">{{ summary }}</span>
+        <RgChip
+          v-if="issueCount"
+          tone="danger"
+          size="sm"
+          class="issues"
+          data-testid="artifact-issues"
+          :title="`${issueCount} 处问题，详见下方提示`"
+        >
+          {{ issueCount }} 处待处理
+        </RgChip>
         <span :class="['sync', connectionState]" data-testid="sync-state">{{ syncLabel }}</span>
       </div>
       <div class="right">
-        <button type="button" class="btn small drawer-only" data-testid="outline-toggle" @click="toggleOutline">模块</button>
-        <button type="button" class="btn small drawer-only" data-testid="chat-toggle" @click="toggleChat">对话</button>
-        <button type="button" class="btn small" data-testid="template-library-btn" @click="libraryOpen = true">模板库</button>
-        <button type="button" class="btn small" :disabled="loading" data-testid="refresh-btn" @click="loadAll(false)">刷新</button>
+        <RgButton size="sm" class="drawer-only" data-testid="outline-toggle" @click="toggleOutline">模块</RgButton>
+        <RgButton size="sm" class="drawer-only" data-testid="chat-toggle" @click="toggleChat">对话</RgButton>
+        <RgButton size="sm" data-testid="template-library-btn" @click="libraryOpen = true">模板库</RgButton>
+        <RgButton size="sm" :disabled="loading" data-testid="refresh-btn" @click="loadAll(false)">刷新</RgButton>
       </div>
     </header>
 
-    <div v-if="warningLines.length" class="warning-strip" data-testid="artifact-warning-strip">
+    <div v-if="warningLines.length" class="warning-strip rg-panel rg-panel--warn" data-testid="artifact-warning-strip">
       <div class="strip-text">
         <strong>发现 {{ warningLines.length }} 处问题</strong>
         <ul>
           <li v-for="line in warningLines.slice(0, 3)" :key="line">{{ line }}</li>
         </ul>
       </div>
-      <button type="button" class="btn small danger" data-testid="fix-with-ai-btn" @click="fixWithAi">让 AI 修</button>
+      <RgButton variant="danger" size="sm" data-testid="fix-with-ai-btn" @click="fixWithAi">让 AI 修</RgButton>
     </div>
 
     <div :class="['req-body', { narrow }]">
@@ -33,6 +42,7 @@
           :selected-key="selectedKey"
           :templates="requirementTemplates"
           :busy="busy"
+          :loading="loading"
           @select="selectModule"
           @create="openCreate"
           @rename="openRename"
@@ -42,11 +52,30 @@
       </div>
 
       <div class="col col-doc">
-        <div v-if="loading" class="center-card">正在读取 docs/…</div>
-        <div v-else-if="error" class="center-card error-card">
-          <p>{{ error }}</p>
-          <button type="button" class="btn small" @click="loadAll(false)">重试</button>
-        </div>
+        <StatePanel
+          v-if="loading"
+          variant="loading"
+          skeleton="doc"
+          test-id="requirements-loading"
+          title="正在读取需求文档"
+          description="docs/requirements/"
+          class="doc-state"
+        />
+        <StatePanel
+          v-else-if="error"
+          variant="error"
+          test-id="requirements-error"
+          title="需求文档读取失败"
+          description="请检查工作区或后端服务，稍后重试。"
+          class="doc-state"
+        >
+          <template #actions>
+            <RgButton size="sm" @click="loadAll(false)">重试</RgButton>
+          </template>
+          <template #details>
+            <pre>{{ error }}</pre>
+          </template>
+        </StatePanel>
         <RequirementsDocument
           v-else-if="selectedModule"
           :module="selectedModule"
@@ -54,21 +83,31 @@
           :template-name="templateNameOf(selectedModule.template)"
           @go-design="goDesign"
         />
-        <div v-else class="empty-doc" data-testid="requirements-empty">
-          <h2>从需求模块开始</h2>
-          <p>
+        <StatePanel
+          v-else
+          variant="empty"
+          test-id="requirements-empty"
+          title="从需求模块开始"
+          :icon="Document"
+          class="doc-state"
+        >
+          <template #default>
             模块 = <code>docs/requirements/MOD-xxx-&lt;标题&gt;.md</code>。新建后按应用默认模板生成章节骨架；
             也可以直接在对话里描述目标，让 agent 生成或修改文档。
-          </p>
-          <button type="button" class="btn primary" data-testid="empty-create-btn" @click="openCreate">新建模块</button>
-          <ul class="examples">
-            <li v-for="(example, index) in EXAMPLE_PROMPTS" :key="example">
-              <button type="button" class="link" :data-testid="`example-prompt-${index + 1}`" @click="fillComposer(example)">
-                {{ example }}
-              </button>
-            </li>
-          </ul>
-        </div>
+          </template>
+          <template #examples>
+            <ul class="examples">
+              <li v-for="(example, index) in EXAMPLE_PROMPTS" :key="example">
+                <button type="button" class="link" :data-testid="`example-prompt-${index + 1}`" @click="fillComposer(example)">
+                  {{ example }}
+                </button>
+              </li>
+            </ul>
+          </template>
+          <template #actions>
+            <RgButton variant="primary" data-testid="empty-create-btn" @click="openCreate">新建模块</RgButton>
+          </template>
+        </StatePanel>
       </div>
 
       <div :class="['col', 'col-chat', { drawer: narrow, open: chatOpen }]">
@@ -118,10 +157,14 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Document } from '@element-plus/icons-vue'
 import AgentChatPanel from './AgentChatPanel.vue'
 import RequirementsDocument from './RequirementsDocument.vue'
 import RequirementsOutline from './RequirementsOutline.vue'
 import TemplateLibraryDialog from './TemplateLibraryDialog.vue'
+import StatePanel from '../shared/StatePanel.vue'
+import RgButton from '../shared/RgButton.vue'
+import RgChip from '../shared/RgChip.vue'
 import {
   connectArtifactEvents,
   createModule,
@@ -187,6 +230,8 @@ const syncLabel = computed(
 const warningLines = computed(() =>
   mergeArtifactLines(artifacts.value?.errors ?? [], selectedModule.value?.warnings ?? [], selectedModule.value?.file ?? '')
 )
+/** 工具栏只显示数量（人话），明细在下方提示条 */
+const issueCount = computed(() => warningLines.value.length)
 
 function templateNameOf(templateId: string): string {
   if (!templateId) return ''
@@ -404,7 +449,7 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-  padding: 8px 14px;
+  padding: 9px 16px;
   background: var(--rg-surface);
   border-bottom: 1px solid var(--rg-border);
 }
@@ -416,19 +461,17 @@ onUnmounted(() => {
   flex-wrap: wrap;
   min-width: 0;
 }
-.view-chip {
-  font-size: 11px;
-  border-radius: 999px;
-  background: var(--rg-ai-soft);
-  color: var(--rg-ai);
-  padding: 2px 9px;
-}
 .summary {
-  font-size: 11.5px;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--rg-text-2);
 }
+.issues {
+  flex-shrink: 0;
+  max-width: 160px;
+}
 .sync {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
 }
 .sync.open {
@@ -443,11 +486,11 @@ onUnmounted(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
-  padding: 8px 14px;
-  background: var(--rg-warn-soft);
-  border-bottom: 1px solid var(--rg-warn-border);
+  margin: 10px 16px 0;
+  padding: 12px 14px;
   color: var(--rg-warn);
-  font-size: 11.5px;
+  font-size: 12.5px;
+  border-radius: 12px;
 }
 .strip-text {
   min-width: 0;
@@ -473,43 +516,17 @@ onUnmounted(() => {
 }
 .col-doc {
   overflow: hidden;
-  background: var(--rg-surface);
+  background: var(--rg-bg);
+  padding: 12px 16px;
 }
-.center-card {
-  margin: 40px auto;
-  max-width: 460px;
-  background: var(--rg-surface);
+.col-doc :deep(.doc) {
   border: 1px solid var(--rg-border);
   border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  font-size: 12.5px;
-  color: var(--rg-text-2);
+  box-shadow: var(--rg-shadow-1);
 }
-.error-card p {
-  color: var(--rg-danger);
-  white-space: pre-wrap;
-  line-height: 1.6;
-}
-.empty-doc {
+.doc-state {
   max-width: 640px;
-  margin: 36px auto;
-  padding: 0 20px;
-  font-size: 12.5px;
-  color: var(--rg-text-2);
-  line-height: 1.75;
-}
-.empty-doc h2 {
-  margin: 0 0 8px;
-  font-size: 17px;
-  color: var(--rg-text);
-}
-.empty-doc code {
-  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-  font-size: 11px;
-  background: var(--rg-fill-2);
-  border-radius: 4px;
-  padding: 1px 5px;
+  margin: 24px auto;
 }
 .examples {
   margin: 16px 0 0;
@@ -524,8 +541,8 @@ onUnmounted(() => {
   background: var(--rg-surface);
   color: var(--rg-text-2);
   border-radius: 8px;
-  padding: 7px 10px;
-  font-size: 11.5px;
+  padding: 8px 11px;
+  font-size: 12px;
   text-align: left;
   cursor: pointer;
   width: 100%;
@@ -543,7 +560,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--rg-text-2);
 }
 .dialog-form input,
@@ -552,52 +569,15 @@ onUnmounted(() => {
   border: 1px solid var(--rg-border-strong);
   border-radius: 8px;
   padding: 0 9px;
-  font-size: 12.5px;
+  font-size: 13px;
   background: var(--rg-surface);
   color: var(--rg-text);
 }
 .dialog-hint {
   margin: 0;
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--rg-text-3);
   line-height: 1.6;
-}
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 28px;
-  border: 1px solid var(--rg-border-strong);
-  background: var(--rg-surface);
-  color: var(--rg-text-2);
-  border-radius: 7px;
-  padding: 4px 10px;
-  font-size: 11.5px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.btn:hover:not(:disabled) {
-  border-color: var(--rg-text-3);
-  background: var(--rg-hover);
-  color: var(--rg-text);
-}
-.btn.small {
-  min-height: 24px;
-  padding: 3px 8px;
-  font-size: 11px;
-}
-.btn.primary {
-  background: var(--rg-ink);
-  border-color: var(--rg-ink);
-  color: var(--rg-ink-contrast);
-}
-.btn.danger {
-  color: var(--rg-danger);
-  border-color: var(--rg-danger-border);
-}
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 .drawer-only {
   display: none;

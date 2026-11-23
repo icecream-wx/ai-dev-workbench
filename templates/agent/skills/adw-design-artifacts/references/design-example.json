@@ -1,0 +1,107 @@
+{
+  "module": "MOD-001",
+  "title": "商品管理",
+  "designSystem": {
+    "pack": "afcenter-app-templates-v1",
+    "applicationType": "enterprise-application-platform",
+    "style": "platform-blue"
+  },
+  "entities": [
+    {
+      "id": "product",
+      "name": "商品",
+      "table": "biz_product",
+      "description": "可售卖的商品主数据",
+      "fields": [
+        { "name": "商品编码", "type": "string", "required": true, "unique": true },
+        { "name": "商品名称", "type": "string", "required": true },
+        { "name": "分类", "type": "ref", "ref": "category" },
+        { "name": "价格", "type": "decimal", "required": true },
+        { "name": "状态", "type": "enum", "options": ["上架", "下架"] },
+        { "name": "上架时间", "type": "datetime" }
+      ]
+    },
+    {
+      "id": "category",
+      "name": "商品分类",
+      "table": "biz_category",
+      "fields": [
+        { "name": "分类名称", "type": "string", "required": true },
+        { "name": "上级分类", "type": "ref", "ref": "category" },
+        { "name": "排序", "type": "number" }
+      ]
+    }
+  ],
+  "relations": [
+    { "from": "product", "to": "category", "type": "N:1", "label": "所属分类" },
+    { "from": "category", "to": "category", "type": "1:N", "label": "下级分类" }
+  ],
+  "pages": [
+    {
+      "id": "product-list",
+      "name": "商品列表",
+      "type": "list",
+      "recipe": "list",
+      "catalogRef": "enterprise-application-platform/applications",
+      "blueprint": "application-types/enterprise-application-platform/pages/ApplicationCenter.vue",
+      "entity": "product",
+      "filters": ["商品名称", "商品编码", "状态"],
+      "columns": ["商品编码", "商品名称", "状态", "价格"],
+      "rowActions": ["detail", "edit", "delete"],
+      "toolbarActions": ["create", "batchDelete", "export"],
+      "selection": true,
+      "pagination": { "layout": "three-part", "pageSize": 10 },
+      "components": {
+        "状态": "pm-select",
+        "分类": "pm-select-entity"
+      },
+      "actions": ["新增", "编辑", "删除"]
+    },
+    {
+      "id": "category-tree",
+      "name": "商品分类树",
+      "type": "list",
+      "recipe": "tree-list",
+      "catalogRef": "enterprise-application-platform/organization",
+      "blueprint": "application-types/enterprise-application-platform/pages/OrganizationUsers.vue",
+      "entity": "category",
+      "filters": ["分类名称", "上级分类"],
+      "columns": ["分类名称", "上级分类", "排序"],
+      "rowActions": ["edit", "delete"],
+      "toolbarActions": ["create", "batchDelete"],
+      "selection": true,
+      "pagination": { "layout": "split", "pageSize": 20 },
+      "tree": {
+        "titleField": "分类名称",
+        "parentField": "上级分类",
+        "actionStyle": "header",
+        "selectionStyle": "dot"
+      },
+      "components": {
+        "上级分类": "pm-select-tree"
+      }
+    },
+    {
+      "id": "product-form",
+      "name": "商品编辑",
+      "type": "form",
+      "recipe": "dialog-form",
+      "entity": "product",
+      "form": {
+        "presentation": "dialog",
+        "columns": 2,
+        "width": 800,
+        "fields": ["商品编码", "商品名称", "分类", "价格", "状态", "上架时间"],
+        "groups": [
+          { "title": "基本信息", "fields": ["商品编码", "商品名称", "分类"] },
+          { "title": "价格与状态", "fields": ["价格", "状态", "上架时间"] }
+        ]
+      },
+      "components": {
+        "分类": "pm-select-entity",
+        "状态": "pm-select"
+      },
+      "actions": ["保存", "取消"]
+    }
+  ]
+}

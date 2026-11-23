@@ -18,11 +18,3 @@ export function saveJson(key: string, value: unknown): void {
     console.error(`[rg-storage] 保存失败（常见原因：localStorage 配额已满）：${key}`, e)
   }
 }
-
-export function removeKey(key: string): void {
-  try {
-    localStorage.removeItem(key)
-  } catch {
-    return
-  }
-}

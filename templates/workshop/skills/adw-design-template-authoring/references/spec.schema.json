@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI Dev Workbench 自定义设计模板 spec（drafts/<packId>/spec.json）",
+  "description": "P7-7a 最小 schema：与共享生成核心 scripts/lib/spec.cjs 的校验口径一致；agent 只写这份 spec，pack 由生成器产出。P7-7b 可继续完善描述/示例。",
+  "type": "object",
+  "required": ["schemaVersion", "name", "pages"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "integer", "enum": [1] },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+      "description": "pack id（= 草稿 id = applicationType id，不可变）；缺省由草稿 id/名称 slug 化"
+    },
+    "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "description": { "type": "string", "maxLength": 500 },
+    "baseApplicationType": {
+      "type": "string",
+      "description": "内置 pack 的应用类型 id；缺省取第一个 reference 的来源类型，否则内置默认"
+    },
+    "style": { "type": "string", "description": "内置 pack 的风格 id；缺省内置默认风格" },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "kind"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "kind": { "type": "string", "enum": ["reference", "contract"] },
+          "type": {
+            "type": "string",
+            "enum": ["list", "form", "detail", "dashboard", "kanban", "gantt", "calendar"]
+          },
+          "recipe": {
+            "type": "string",
+            "enum": ["list", "tree-list", "dialog-form", "page-form", "main-sub", "detail", "dashboard", "wizard"]
+          },
+          "description": { "type": "string", "maxLength": 500 },
+          "preview": { "type": "string" },
+          "source": {
+            "type": "object",
+            "description": "仅 reference：指向内置 pack 页面",
+            "required": ["pack", "applicationType", "pageId"],
+            "additionalProperties": false,
+            "properties": {
+              "pack": { "type": "string" },
+              "applicationType": { "type": "string" },
+              "pageId": { "type": "string" }
+            }
+          },
+          "contract": {
+            "type": "object",
+            "description": "仅 contract：design.json 页面契约容器（filters/columns/rowActions/toolbarActions/selection/pagination/form/tree/subTables/components）"
+          },
+          "sampleEntity": {
+            "type": "object",
+            "description": "仅 contract：模板预览样例主实体",
+            "required": ["id", "name", "fields"],
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "fields": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["name"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "label": { "type": "string" },
+                    "type": {
+                      "type": "string",
+                      "enum": ["string", "text", "number", "decimal", "date", "datetime", "time", "boolean", "enum", "ref"]
+                    },
+                    "required": { "type": "boolean" },
+                    "unique": { "type": "boolean" },
+                    "options": { "type": "array", "items": { "type": "string" } },
+                    "ref": { "type": "string" },
+                    "note": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "sampleSubEntities": {
+            "type": "array",
+            "description": "仅 contract：子表实体（subTables.entity/target 在池内解析）",
+            "items": {
+              "type": "object",
+              "required": ["id", "name", "fields"],
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "fields": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "required": ["name"],
+                    "properties": {
+                      "name": { "type": "string" },
+                      "label": { "type": "string" },
+                      "type": { "type": "string" },
+                      "options": { "type": "array", "items": { "type": "string" } }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

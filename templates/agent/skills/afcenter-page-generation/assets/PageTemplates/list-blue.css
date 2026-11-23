@@ -1,0 +1,37 @@
+@import './table-blue.css';
+@import './toolbar-blue.css';
+
+.pt-blue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  color: #0b1c30;
+  background: #f8f9ff;
+  padding: 16px;
+  border-radius: 8px;
+}
+.pt-blue-list__header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.pt-blue-list__header h2 { margin: 0; font-size: 22px; line-height: 28px; font-weight: 600; }
+.pt-blue-list__query { padding: 12px; background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.pt-blue-list__fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 8px; }
+.pt-blue-list__fields .el-form-item { margin: 0; min-width: 0; }
+.pt-blue-list__fields .el-form-item__label { color: #434655; font-size: 12px; margin-bottom: 4px; }
+.pt-blue-list__fields .el-form-item__content > * { width: 100%; min-width: 0; }
+.pt-blue-list__fields .el-input__wrapper,
+.pt-blue-list__fields .el-select__wrapper { background: #eff4ff; border-radius: 4px; box-shadow: none; min-height: 36px; }
+.pt-blue-list__fields .el-input__wrapper.is-focus,
+.pt-blue-list__fields .el-select__wrapper.is-focused { background: #fff; box-shadow: 0 0 0 1px #0037b0 inset; }
+.pt-blue-list__query-actions { justify-content: flex-end; border-top: 1px solid rgba(196,197,215,.3); padding-top: 8px; margin-top: 12px; }
+.pt-blue-list__selection { padding: 10px 12px; border-radius: 8px; background: #dce9ff; font-size: 12px; }
+.pt-blue-list__selection strong { color: #0037b0; }
+.pt-blue-list__table { min-width: 0; background: #fff; border-radius: 8px; overflow: hidden; }
+.pt-blue-list__pagination.al-footer { position: static; display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding: 12px; background: #fff; border-radius: 8px; }
+.pt-blue-list__pagination .el-pagination { --el-pagination-button-bg-color: #eff4ff; --el-pagination-hover-color: #0037b0; }
+.pt-blue-list__pagination .el-pager li.is-active { background: #0037b0; color: #fff; border-radius: 4px; }
+@media (max-width: 640px) {
+  .pt-blue-list { padding: 10px; }
+  .pt-blue-list__header { align-items: flex-start; }
+  .pt-blue-list__header h2 { font-size: 18px; }
+}
+/* Modified by AI on 2026-11-12 14:53:29 */

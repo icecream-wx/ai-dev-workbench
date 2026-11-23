@@ -1,0 +1,60 @@
+[
+  {
+    "id": "supplier-list",
+    "name": "供应商列表",
+    "type": "list",
+    "recipe": "list",
+    "description": "复用运营管理后台列表页：左侧检索与概况、右侧台账表格、行内筛选与紧凑分页。",
+    "kind": "reference",
+    "blueprint": "docs/design/template/supplier-management/pages/supplier-list.vue",
+    "packBlueprint": "application-types/supplier-management/pages/supplier-list.vue",
+    "source": {
+      "pack": "afcenter-app-templates-v1",
+      "applicationType": "operations-management",
+      "pageId": "list"
+    },
+    "components": [
+      "pm-form-dialog",
+      "pm-input",
+      "pm-pagination",
+      "pm-search",
+      "pm-select",
+      "pm-table",
+      "pm-toolbar",
+      "pm-toolbar-item"
+    ]
+  },
+  {
+    "id": "supplier-form",
+    "name": "供应商新建/编辑",
+    "type": "form",
+    "recipe": "dialog-form",
+    "description": "弹窗内分组维护供应商基础信息、合作与结算、联系信息及补充说明。",
+    "kind": "contract",
+    "contractFile": "docs/design/template/supplier-management/contracts/supplier-form.json",
+    "components": [
+      "pm-select",
+      "pm-number",
+      "pm-datepicker",
+      "pm-select-user",
+      "pm-textarea",
+      "pm-form-dialog",
+      "FormSection"
+    ],
+    "blocks": 0
+  },
+  {
+    "id": "supplier-detail",
+    "name": "供应商详情",
+    "type": "detail",
+    "recipe": "detail",
+    "description": "展示供应商主数据、合作状态、结算方式、授信额度与联系信息。",
+    "kind": "contract",
+    "contractFile": "docs/design/template/supplier-management/contracts/supplier-detail.json",
+    "components": [
+      "detail sections",
+      "related lists"
+    ],
+    "blocks": 0
+  }
+]

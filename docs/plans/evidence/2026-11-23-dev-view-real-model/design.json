@@ -1,0 +1,152 @@
+{
+  "module": "MOD-001",
+  "title": "商品管理",
+  "designSystem": {
+    "pack": "goods-hub",
+    "applicationType": "goods-hub",
+    "style": "data-cyan"
+  },
+  "entities": [
+    {
+      "id": "goods",
+      "name": "商品",
+      "fields": [
+        {
+          "name": "code",
+          "label": "商品编码",
+          "type": "string",
+          "required": true,
+          "unique": true
+        },
+        {
+          "name": "name",
+          "label": "商品名称",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "category",
+          "label": "商品分类",
+          "type": "enum",
+          "options": [
+            "电子设备",
+            "办公用品",
+            "耗材配件"
+          ]
+        },
+        {
+          "name": "status",
+          "label": "上架状态",
+          "type": "enum",
+          "options": [
+            "已上架",
+            "已下架",
+            "草稿"
+          ]
+        },
+        {
+          "name": "price",
+          "label": "销售单价（元）",
+          "type": "decimal"
+        },
+        {
+          "name": "stock",
+          "label": "库存数量",
+          "type": "number"
+        },
+        {
+          "name": "owner",
+          "label": "负责人",
+          "type": "ref",
+          "ref": "user"
+        },
+        {
+          "name": "remark",
+          "label": "备注",
+          "type": "text"
+        }
+      ]
+    }
+  ],
+  "relations": [],
+  "pages": [
+    {
+      "id": "goods-list",
+      "name": "商品列表",
+      "type": "list",
+      "recipe": "list",
+      "catalogRef": "goods-hub/goods-list",
+      "entity": "goods",
+      "columns": [
+        "code",
+        "name",
+        "category",
+        "status",
+        "price",
+        "stock"
+      ],
+      "filters": [
+        "name",
+        "status"
+      ],
+      "rowActions": [
+        "edit",
+        "delete"
+      ],
+      "toolbarActions": [
+        "create"
+      ],
+      "selection": "multiple",
+      "pagination": {
+        "layout": "three-part",
+        "pageSize": 20
+      }
+    },
+    {
+      "id": "goods-form",
+      "name": "商品新增/编辑",
+      "type": "form",
+      "recipe": "dialog-form",
+      "catalogRef": "goods-hub/goods-form",
+      "entity": "goods",
+      "form": {
+        "presentation": "dialog",
+        "columns": 2,
+        "width": 800,
+        "groups": [
+          {
+            "title": "基本信息",
+            "fields": [
+              "code",
+              "name",
+              "category",
+              "status"
+            ]
+          },
+          {
+            "title": "价格与库存",
+            "fields": [
+              "price",
+              "stock"
+            ]
+          },
+          {
+            "title": "补充说明",
+            "fields": [
+              "owner",
+              "remark"
+            ]
+          }
+        ]
+      },
+      "components": {
+        "category": "pm-select",
+        "status": "pm-select",
+        "price": "pm-number",
+        "stock": "pm-number",
+        "owner": "pm-select-user",
+        "remark": "pm-textarea"
+      }
+    }
+  ]
+}

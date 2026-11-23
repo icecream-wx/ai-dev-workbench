@@ -1,0 +1,4 @@
+session(draft location) = 200 ses_e025681e3ffe6Fh3Ng0QylUdDv
+skill loaded = false ["opencode","report"]
+command loaded = false ["init","review","goal"]
+stopped

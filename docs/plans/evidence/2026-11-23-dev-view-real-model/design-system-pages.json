@@ -1,0 +1,45 @@
+[
+  {
+    "id": "goods-list",
+    "name": "商品列表",
+    "type": "list",
+    "recipe": "list",
+    "description": "行内筛选、边框表格、批量操作与紧凑分页。",
+    "kind": "reference",
+    "blueprint": "docs/design/template/goods-hub/pages/goods-list.vue",
+    "packBlueprint": "application-types/goods-hub/pages/goods-list.vue",
+    "source": {
+      "pack": "afcenter-app-templates-v1",
+      "applicationType": "operations-management",
+      "pageId": "list"
+    },
+    "components": [
+      "pm-form-dialog",
+      "pm-input",
+      "pm-pagination",
+      "pm-search",
+      "pm-select",
+      "pm-table",
+      "pm-toolbar",
+      "pm-toolbar-item"
+    ]
+  },
+  {
+    "id": "goods-form",
+    "name": "商品新增/编辑",
+    "type": "form",
+    "recipe": "dialog-form",
+    "description": "商品新增/编辑（按页面契约实现）",
+    "kind": "contract",
+    "contractFile": "docs/design/template/goods-hub/contracts/goods-form.json",
+    "components": [
+      "pm-select",
+      "pm-number",
+      "pm-select-user",
+      "pm-textarea",
+      "pm-form-dialog",
+      "FormSection"
+    ],
+    "blocks": 0
+  }
+]

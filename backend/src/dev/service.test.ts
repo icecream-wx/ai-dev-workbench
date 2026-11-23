@@ -1,11 +1,20 @@
+﻿/**
+ * 会话服务：无交接包门禁、按 view 过滤、创建/切换/归档、compact
+ * opencode 运行时用内存 stub（不启动 serve、不调用模型）。
+ */
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import test, { after } from 'node:test'
+import test, { after, beforeEach } from 'node:test'
+
+const root = fs.mkdtempSync(path.join(os.tmpdir(), 'workbench-dev-service-'))
+const projects = path.join(root, 'projects')
+process.env.RG_DATA_DIR = path.join(root, 'data')
+process.env.RG_PROJECTS_DIR = projects
+process.env.OPENCODE_AUTO_START = 'false'
 
 interface Setup {
-  root: string
   db: typeof import('../db').db
   service: typeof import('./service')
 }
@@ -15,428 +24,307 @@ let setupPromise: Promise<Setup> | null = null
 async function setup(): Promise<Setup> {
   if (setupPromise) return setupPromise
   setupPromise = (async () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'workbench-dev-'))
-    process.env.RG_DATA_DIR = path.join(root, 'data')
-    process.env.RG_PROJECTS_DIR = path.join(root, 'projects')
     const dbModule = await import('../db')
-    const service = await import('./service')
-    return { root, db: dbModule.db, service }
+    return { db: dbModule.db, service: await import('./service') }
   })()
   return setupPromise
 }
 
+const runtimeState = {
+  sessions: [] as Array<{ id: string; directory: string }>,
+  prompts: [] as Array<{ sessionID: string; text: string }>,
+  commands: [] as Array<{ sessionID: string; name: string; text: string }>,
+  compacted: [] as string[]
+}
+
+async function stubRuntime(): Promise<void> {
+  const runtime = await import('../opencode/runtime')
+  const rt = runtime.opencode as unknown as Record<string, unknown>
+  rt.status = () => ({ ready: false })
+  rt.listAgents = async () => []
+  rt.defaultModel = async () => null
+  rt.lastUsedModel = async () => null
+  rt.session = async (id: string) => (id.startsWith('oc-') ? { id, title: id } : null)
+  rt.createSession = async (input: { directory: string }) => {
+    const created = { id: `oc-${runtimeState.sessions.length + 1}`, directory: input.directory }
+    runtimeState.sessions.push(created)
+    return created
+  }
+  rt.track = () => undefined
+  rt.messages = async () => ({ data: [] })
+  rt.refreshPending = async () => undefined
+  rt.pendingFor = () => ({ permissions: [], forms: [] })
+  rt.prompt = async (sessionID: string, text: string) => {
+    runtimeState.prompts.push({ sessionID, text })
+  }
+  rt.runCommand = async (sessionID: string, name: string, text: string) => {
+    runtimeState.commands.push({ sessionID, name, text })
+  }
+  rt.interrupt = async () => undefined
+  rt.compactSession = async (sessionID: string) => {
+    runtimeState.compacted.push(sessionID)
+  }
+  rt.listSessions = async () => runtimeState.sessions
+}
+
 after(async () => {
-  if (!setupPromise) return
-  const { root, db } = await setupPromise
+  const { db } = await setup()
   db.close()
   fs.rmSync(root, { recursive: true, force: true })
 })
 
-function insertApp(
-  db: Setup['db'],
-  id: string,
-  status: string,
-  options: { designConfirmed?: boolean } = {}
-): void {
+async function seedApp(id: string, withDir = true): Promise<void> {
+  const { db } = await setup()
   const now = new Date().toISOString()
+  db.prepare('DELETE FROM apps WHERE id = ?').run(id)
   db.prepare(
-    `INSERT INTO apps (id, name, description, dir, backend_port, status, design_confirmed_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, `应用 ${id}`, null, id, 8081, status, options.designConfirmed ? now : null, now, now)
-  fs.mkdirSync(path.join(process.env.RG_PROJECTS_DIR as string, id, 'docs', 'handoff'), { recursive: true })
+    `INSERT INTO apps (id, name, description, dir, backend_port, status, created_at, updated_at)
+     VALUES (?, ?, NULL, ?, 8093, 'development', ?, ?)`
+  ).run(id, `应用 ${id}`, id, now, now)
+  if (withDir) fs.mkdirSync(path.join(projects, id), { recursive: true })
 }
 
-test('getDevState 在缺少交接包或阶段不对时给出明确错误', async () => {
-  const { db, service } = await setup()
-  insertApp(db, 'dev-no-handoff', 'development', { designConfirmed: true })
-  await assert.rejects(() => service.getDevState('dev-no-handoff'), (error: Error) => {
-    assert.match(error.message, /交接包不存在/)
-    return true
-  })
-
-  insertApp(db, 'dev-design', 'design')
-  await assert.rejects(() => service.getDevState('dev-design'), (error: Error) => {
-    assert.match(error.message, /请先完成设计阶段/)
-    return true
-  })
+beforeEach(async () => {
+  const { db } = await setup()
+  runtimeState.sessions = []
+  runtimeState.prompts = []
+  runtimeState.commands = []
+  runtimeState.compacted = []
+  db.prepare('DELETE FROM app_sessions').run()
+  db.prepare('DELETE FROM apps').run()
+  await stubRuntime()
 })
 
-test('没有会话时返回默认提示，且 prompt 给出明确错误', async () => {
-  const { db, root, service } = await setup()
-  insertApp(db, 'dev-ready', 'development', { designConfirmed: true })
+test('缺少应用 → 404；缺少应用目录 → 409（无交接包门禁）', async () => {
+  const { service } = await setup()
+  await assert.rejects(() => service.getDevState('nope'), /应用不存在/)
+  await seedApp('dev-no-dir', false)
+  await assert.rejects(() => service.getDevState('dev-no-dir'), /应用目录不存在/)
+})
+
+test('创建会话：默认开发视图；可按 view 创建需求/设计会话', async () => {
+  const { db, service } = await setup()
+  await seedApp('dev-app')
+  const development = await service.createDevSession('dev-app')
+  assert.equal(development.view, 'development')
+  assert.ok(development.session?.opencodeSessionId)
+  assert.match(development.defaultPrompt, /AGENTS\.md/)
+  assert.match(development.defaultPrompt, /docs\/requirements\//)
+  assert.match(development.defaultPrompt, /docs\/design\//)
+  assert.equal(development.defaultPrompt.includes('交接包'), false)
+
+  const requirements = await service.createDevSession('dev-app', { view: 'requirements' })
+  assert.equal(requirements.view, 'requirements')
+  assert.equal(runtimeState.sessions.length, 2)
+
+  const rows = db
+    .prepare('SELECT view, status FROM app_sessions WHERE app_id = ? ORDER BY created_at ASC')
+    .all('dev-app') as Array<{ view: string; status: string }>
+  assert.deepEqual(
+    rows.map(row => row.view),
+    ['development', 'requirements']
+  )
+  assert.ok(rows.every(row => row.status === 'active'))
+})
+
+test('列表按视图过滤；改名/归档只影响该会话', async () => {
+  const { service } = await setup()
+  await seedApp('dev-list')
+  const dev = await service.createDevSession('dev-list')
+  const req = await service.createDevSession('dev-list', { view: 'requirements' })
+
+  const devList = await service.listDevSessions('dev-list')
+  assert.equal(devList.sessions.length, 1)
+  assert.equal(devList.sessions[0].id, dev.session?.id)
+  const reqList = await service.listDevSessions('dev-list', { view: 'requirements' })
+  assert.equal(reqList.sessions.length, 1)
+  assert.equal(reqList.sessions[0].id, req.session?.id)
+
+  const renamed = await service.renameDevSession('dev-list', dev.session!.id, { title: '改造会话' })
+  assert.equal(renamed.title, '改造会话')
+
+  const archived = await service.archiveDevSessionById('dev-list', dev.session!.id)
+  assert.equal(archived.status, 'archived')
+  assert.equal((await service.listDevSessions('dev-list', { view: 'requirements' })).sessions[0].status, 'active')
+})
+
+test('发送消息/压缩：按视图取活跃会话；其它视图无会话 → 409', async () => {
+  const { service } = await setup()
+  await seedApp('dev-prompt')
+  await service.createDevSession('dev-prompt', { view: 'requirements' })
+  await service.promptDevSession('dev-prompt', '写需求', { view: 'requirements' })
+  assert.equal(runtimeState.prompts.length, 1)
+  assert.match(runtimeState.prompts[0].text, /用户消息：\n写需求/)
+
+  const compact = await service.compactDevSession('dev-prompt', { view: 'requirements' })
+  assert.match(compact.message, /压缩/)
+  assert.equal(runtimeState.compacted[0], 'oc-1')
+
+  await assert.rejects(
+    () => service.compactDevSession('dev-prompt'),
+    (error: Error & { status?: number }) => error.status === 409
+  )
+  await assert.rejects(
+    () => service.promptDevSession('dev-prompt', 'hi'),
+    (error: Error & { status?: number }) => error.status === 409
+  )
+})
+
+test('三个视图都用 buildViewPrompt：requirements/design/development 均带视图、产物路径与模块', async () => {
+  const { service } = await setup()
+  await seedApp('dev-prompt-view')
+  await service.createDevSession('dev-prompt-view', { view: 'requirements' })
+
+  await service.promptDevSession('dev-prompt-view', '加一个字段', { view: 'requirements', module: 'MOD-001' })
+  assert.equal(runtimeState.prompts.length, 1)
+  const requirementsPrompt = runtimeState.prompts[0].text
+  assert.match(requirementsPrompt, /当前视图：需求/)
+  assert.match(requirementsPrompt, /MOD-001/)
+  assert.match(requirementsPrompt, /docs\/requirements\/MOD-xxx-/)
+  assert.match(requirementsPrompt, /adw-requirements-document/)
+  assert.match(requirementsPrompt, /用户消息：\n加一个字段/)
+
+  await service.createDevSession('dev-prompt-view', { view: 'design' })
+  await service.promptDevSession('dev-prompt-view', '补一个页面', { view: 'design' })
+  const designPrompt = runtimeState.prompts[1].text
+  assert.match(designPrompt, /当前视图：设计/)
+  assert.match(designPrompt, /docs\/design\/<MOD>\/design\.json/)
+  assert.match(designPrompt, /adw-design-artifacts/)
+
+  await service.createDevSession('dev-prompt-view', { view: 'development' })
+  await service.promptDevSession('dev-prompt-view', '请实现列表页', { view: 'development', module: 'MOD-001' })
+  const developmentPrompt = runtimeState.prompts[2].text
+  assert.match(developmentPrompt, /当前视图：开发/)
+  assert.match(developmentPrompt, /AGENTS\.md/)
+  assert.match(developmentPrompt, /docs\/requirements\//)
+  assert.match(developmentPrompt, /docs\/design\//)
+  assert.match(developmentPrompt, /MOD-001/)
+  assert.match(developmentPrompt, /用户消息：\n请实现列表页/)
+  assert.notEqual(developmentPrompt, '请实现列表页', 'development 不再原文直发')
+})
+
+test('开发视图：传 module → 首条提示带模块、prompt 注入设计摘要并生成 ui-check 骨架', async () => {
+  const { service } = await setup()
+  await seedApp('dev-linkage')
+  const appDir = path.join(projects, 'dev-linkage')
+  const designDir = path.join(appDir, 'docs', 'design', 'MOD-001')
+  fs.mkdirSync(designDir, { recursive: true })
   fs.writeFileSync(
-    path.join(root, 'projects', 'dev-ready', 'docs', 'handoff', '00-README.md'),
-    '# 交接包\n',
+    path.join(appDir, 'docs', 'design', 'design-system.json'),
+    JSON.stringify({
+      schemaVersion: 1,
+      pack: 'afcenter-app-templates-v1',
+      applicationType: 'enterprise-application-platform',
+      applicationTypeName: '企业级应用管理平台',
+      style: 'platform-blue',
+      styleName: '平台蓝白',
+      blueprintRoot: 'docs/design/template',
+      templateDir: 'docs/design/template/enterprise-application-platform',
+      pages: [
+        {
+          id: 'organization',
+          name: '组织与用户',
+          recipe: 'tree-list',
+          blueprint: 'docs/design/template/enterprise-application-platform/pages/OrganizationUsers.vue'
+        }
+      ]
+    }),
     'utf8'
   )
-  const state = await service.getDevState('dev-ready')
-  assert.equal(state.session, null)
-  assert.equal(state.state, null)
-  assert.equal(state.handoffReady, true)
-  assert.match(state.defaultPrompt, /docs\/handoff\/00-README\.md/)
-
-  await assert.rejects(() => service.promptDevSession('dev-ready', '开始'), (error: Error) => {
-    assert.match(error.message, /没有开发会话/)
-    return true
-  })
-  assert.deepEqual(await service.archiveDevSession('dev-ready'), { ok: true })
-})
-
-test('#3 开发首条提示都包含中文要求（初次/重新生成/变更单）', async () => {
-  const { service } = await setup()
-  const phrase = /请全程使用中文回复；思考\/进度说明也使用中文。/
-  const initial = service.buildDevPrompt(null)
-  assert.match(initial, /docs\/handoff\/00-README\.md/)
-  assert.match(initial, phrase)
-  const regenerated = service.buildDevPrompt({
-    version: 2,
-    changeSet: { id: 'cs-1', seq: 1, title: '初始开发', status: 'development' }
-  })
-  assert.match(regenerated, /05-CHANGES\.md/)
-  assert.match(regenerated, phrase)
-  const changed = service.buildDevPrompt({
-    version: 3,
-    baselineHandoffVersion: 1,
-    changeSet: { id: 'cs-2', seq: 2, title: '批量导入', status: 'requirements' }
-  })
-  assert.match(changed, /这是第 2 次变更/)
-  assert.match(changed, phrase)
-})
-
-test('extractSecrets 只提取非占位密码/密钥', async () => {
-  const { service } = await setup()
-  const xml = [
-    '<application>',
-    '<!-- <configValue key="C3p0-Password">example</configValue> -->',
-    '<configValue key="C3p0-Password">real-secret</configValue>',
-    '<configValue key="C3p0-UserName">root</configValue>',
-    '</application>'
-  ].join('\n')
-  assert.deepEqual(service.extractSecrets('user-config.xml', xml), ['real-secret'])
-
-  const properties = [
-    'spring.datasource.password=real-secret',
-    '# spring.data.redis.password=commented',
-    'eos.application.sys-key=CHANGE_ME',
-    'nacos.password=${NACOS_PASSWORD:}'
-  ].join('\n')
-  assert.deepEqual(service.extractSecrets('application.properties', properties), ['real-secret'])
-})
-
-test('app_sessions 表可写入/查询/清理', async () => {
-  const { db, service } = await setup()
-  insertApp(db, 'dev-session-row', 'development', { designConfirmed: true })
-  const now = new Date().toISOString()
-  db.prepare(
-    `INSERT INTO app_sessions (id, app_id, stage, opencode_session_id, provider_id, model_id, status, created_at, updated_at, last_active_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run('row-1', 'dev-session-row', 'development', 'oc-1', 'p', 'm', 'active', now, now, null)
-  assert.equal(service.activeSessionRow('dev-session-row')?.opencode_session_id, 'oc-1')
-  db.prepare('DELETE FROM app_sessions WHERE app_id = ?').run('dev-session-row')
-  assert.equal(service.activeSessionRow('dev-session-row'), undefined)
-})
-
-/** I-10：用内存 stub 替换 opencode runtime，避免单测启动真实 serve */
-async function stubOpencode(
-  options: {
-    missing?: string[]
-    ready?: boolean
-    // I-09a
-    models?: Array<{ providerID: string; modelID: string; id: string; limit?: unknown }>
-    messages?: unknown[]
-    compactError?: Error
-  } = {}
-): Promise<{
-  interrupted: string[]
-  compacted: string[]
-  sessions: Array<{ id: string; title?: string }>
-  missing: Set<string>
-  ready: { value: boolean }
-  messages: { data: unknown[] }
-  models: Array<{ providerID: string; modelID: string; id: string; limit?: unknown }>
-  compactError: { value: Error | null }
-}> {
-  const { opencode } = await import('../opencode/runtime')
-  const target = opencode as unknown as Record<string, unknown>
-  const interrupted: string[] = []
-  const compacted: string[] = []
-  const sessions: Array<{ id: string; title?: string }> = []
-  const missing = new Set(options.missing ?? [])
-  const ready = { value: options.ready ?? true }
-  const messages = { data: options.messages ?? [] }
-  const models = options.models ?? []
-  const compactError: { value: Error | null } = { value: options.compactError ?? null }
-  target.status = () => ({
-    ready: ready.value,
-    starting: false,
-    installed: true,
-    autoStart: false,
-    autoStartAttempted: true,
-    host: '127.0.0.1',
-    port: 0,
-    baseUrl: '',
-    bin: null,
-    version: null,
-    passwordCaptured: false,
-    streamState: 'idle',
-    lastEventAt: null,
-    lastError: null,
-    installError: null,
-    pendingSessions: 0
-  })
-  target.listSessions = async () => sessions
-  target.listModels = async () => models
-  target.session = async (id: string) => (missing.has(id) ? null : { id, title: `opencode ${id}` })
-  target.messages = async () => ({ data: messages.data })
-  target.refreshPending = async () => undefined
-  target.pendingFor = () => ({ permissions: [], forms: [] })
-  target.interrupt = async (id: string) => {
-    interrupted.push(id)
-    return {}
-  }
-  target.compactSession = async (id: string) => {
-    if (compactError.value) throw compactError.value
-    compacted.push(id)
-    return { ok: true }
-  }
-  return { interrupted, compacted, sessions, missing, ready, messages, models, compactError }
-}
-
-function insertSession(
-  db: Setup['db'],
-  appId: string,
-  id: string,
-  opencodeId: string,
-  status: string,
-  createdAt: string,
-  extra: { title?: string; note?: string; changeSetId?: string; handoffVersion?: number } = {}
-): void {
-  db.prepare(
-    `INSERT INTO app_sessions
-       (id, app_id, stage, opencode_session_id, provider_id, model_id, status,
-        change_set_id, handoff_version, handoff_hash, title, note, created_at, updated_at, last_active_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(
-    id,
-    appId,
-    'development',
-    opencodeId,
-    'packycode-deepseek',
-    'deepseek-flash',
-    status,
-    extra.changeSetId ?? null,
-    extra.handoffVersion ?? 1,
-    'hash-1',
-    extra.title ?? null,
-    extra.note ?? null,
-    createdAt,
-    createdAt,
-    null
+  fs.writeFileSync(
+    path.join(designDir, 'design.json'),
+    JSON.stringify({
+      module: 'MOD-001',
+      title: '商品管理',
+      entities: [{ id: 'product', name: '商品', fields: [{ name: '商品名称', type: 'string' }] }],
+      relations: [],
+      pages: [
+        {
+          id: 'product-list',
+          name: '商品列表',
+          type: 'list',
+          recipe: 'tree-list',
+          columns: ['商品名称', '状态'],
+          rowActions: ['edit', 'delete'],
+          blueprint: 'application-types/enterprise-application-platform/pages/OrganizationUsers.vue'
+        }
+      ]
+    }),
+    'utf8'
   )
-}
 
-function writeHandoff(root: string, appId: string): void {
-  fs.mkdirSync(path.join(root, 'projects', appId, 'docs', 'handoff'), { recursive: true })
-  fs.writeFileSync(path.join(root, 'projects', appId, 'docs', 'handoff', '00-README.md'), '# 交接包\n', 'utf8')
-}
+  const created = await service.createDevSession('dev-linkage', { view: 'development', module: 'MOD-001' })
+  assert.equal(created.view, 'development')
+  assert.match(created.defaultPrompt, /本轮目标模块：MOD-001/)
+  assert.match(created.defaultPrompt, /docs\/design\/design-system\.json/)
+  assert.match(created.defaultPrompt, /ui-check\.md/)
 
-test('I-10：会话列表/切换/重命名/归档/只读/失效/跨应用', async () => {
-  const { db, root, service } = await setup()
-  const stub = await stubOpencode()
-  const appId = 'dev-sessions'
-  insertApp(db, appId, 'development', { designConfirmed: true })
-  writeHandoff(root, appId)
-  insertSession(db, appId, 'row-a', 'oc-a', 'active', '2026-11-11T01:00:00.000Z', { title: null })
-  insertSession(db, appId, 'row-b', 'oc-b', 'archived', '2026-11-11T02:00:00.000Z', { note: '第二会话' })
-  stub.sessions.push({ id: 'oc-a', title: 'opencode 自动标题 A' }, { id: 'oc-b' })
+  await service.promptDevSession('dev-linkage', '实现列表页', { view: 'development', module: 'MOD-001' })
+  const prompt = runtimeState.prompts[0].text
+  assert.match(prompt, /设计摘要/)
+  assert.match(prompt, /afcenter-app-templates-v1/)
+  assert.match(prompt, /product-list 商品列表/)
+  assert.match(prompt, /列=商品名称\/状态/)
+  assert.match(prompt, /ui-check：已生成未填/)
+  assert.match(prompt, /用户消息：\n实现列表页/)
 
-  // opencode 未运行：opencodeExists=null，不误判 stale；标题回退到 opencode/应用名
-  stub.ready.value = false
-  const offline = await service.listDevSessions(appId)
-  assert.equal(offline.sessions.length, 2)
-  assert.equal(offline.sessions[0].id, 'row-b')
-  assert.equal(offline.sessions[0].displayTitle, `应用 ${appId} · ${service.dateTimeLabel(offline.sessions[0].createdAt)}`)
-  assert.equal(offline.sessions[0].note, '第二会话')
-  assert.equal(offline.sessions[0].opencodeExists, null)
-  assert.equal(offline.activeSessionId, 'row-a')
+  const uiCheckFile = path.join(designDir, 'ui-check.md')
+  assert.equal(fs.existsSync(uiCheckFile), true)
+  assert.match(fs.readFileSync(uiCheckFile, 'utf8'), /product-list/)
 
-  // opencode 可用：合并标题与存在性
-  stub.ready.value = true
-  const listed = await service.listDevSessions(appId)
-  assert.equal(listed.sessions.find(item => item.id === 'row-a')?.displayTitle, 'opencode 自动标题 A')
-  assert.equal(listed.sessions.find(item => item.id === 'row-a')?.opencodeExists, true)
-  assert.equal(listed.sessions.find(item => item.id === 'row-b')?.status, 'archived')
-
-  // 只读查看归档会话
-  const archived = await service.getDevState(appId, { sessionId: 'row-b' })
-  assert.equal(archived.readOnly, true)
-  assert.equal(archived.session?.status, 'archived')
-  assert.equal(archived.state?.status, 'idle')
-
-  // 重命名：长度校验、空 title 清除、备注
-  await assert.rejects(() => service.renameDevSession(appId, 'row-a', { title: 'x'.repeat(121) }), /title 最多 120/)
-  const renamed = await service.renameDevSession(appId, 'row-a', { title: '  会话 A  ', note: '备注 A' })
-  assert.equal(renamed.title, '会话 A')
-  assert.equal(renamed.displayTitle, '会话 A')
-  assert.equal(renamed.note, '备注 A')
-  const cleared = await service.renameDevSession(appId, 'row-a', { title: '   ' })
-  assert.equal(cleared.title, null)
-  assert.equal(cleared.displayTitle, 'opencode 自动标题 A')
-
-  // 切换：当前 active 先 interrupt，再归档；目标置 active
-  const activated = await service.activateDevSession(appId, 'row-b')
-  assert.deepEqual(stub.interrupted, ['oc-a'])
-  assert.equal(activated.session?.id, 'row-b')
-  assert.equal(activated.readOnly, false)
-  assert.equal(service.activeSessionRow(appId)?.id, 'row-b')
-  const previous = db.prepare('SELECT status FROM app_sessions WHERE id = ?').get('row-a') as { status: string }
-  assert.equal(previous.status, 'archived')
-
-  // 归档 active：interrupt 后无 active；随后回复权限只允许 active
-  const archivedActive = await service.archiveDevSessionById(appId, 'row-b')
-  assert.equal(archivedActive.status, 'archived')
-  assert.deepEqual(stub.interrupted, ['oc-a', 'oc-b'])
-  assert.equal(service.activeSessionRow(appId), undefined)
-  const empty = await service.getDevState(appId)
-  assert.equal(empty.session, null)
-  assert.equal(empty.readOnly, false)
-  await assert.rejects(() => service.replyDevPermission(appId, 'rid', 'once'), /没有开发会话/)
-  // 归档幂等
-  assert.equal((await service.archiveDevSessionById(appId, 'row-b')).status, 'archived')
-
-  // 目标 opencode 会话已不存在 → 标记 stale + 409
-  stub.missing.add('oc-b')
-  await assert.rejects(() => service.activateDevSession(appId, 'row-b'), (error: Error & { status?: number }) => {
-    assert.equal(error.status, 409)
-    assert.match(error.message, /会话已失效/)
-    return true
-  })
-  const stale = await service.getDevState(appId, { sessionId: 'row-b' })
-  assert.equal(stale.readOnly, true)
-  assert.equal(stale.session?.status, 'stale')
-  assert.equal(stale.state, null)
-
-  // 跨应用 404
-  insertApp(db, 'dev-sessions-other', 'development', { designConfirmed: true })
-  writeHandoff(root, 'dev-sessions-other')
-  await assert.rejects(() => service.activateDevSession('dev-sessions-other', 'row-a'), (error: Error & { status?: number }) => {
-    assert.equal(error.status, 404)
-    return true
-  })
-  await assert.rejects(() => service.renameDevSession('dev-sessions-other', 'row-a', { title: 'x' }), /会话不存在/)
+  // 已存在不覆盖
+  fs.appendFileSync(uiCheckFile, '\n- 人工补充\n', 'utf8')
+  await service.promptDevSession('dev-linkage', '继续', { view: 'development', module: 'MOD-001' })
+  assert.match(fs.readFileSync(uiCheckFile, 'utf8'), /人工补充/)
+  assert.match(runtimeState.prompts[1].text, /ui-check：已填/)
 })
 
-test('I-09a：contextWithLimit 阈值 60% 黄 / 85% 红 / limit 未知', async () => {
+test('command 分支：走 runCommand（text 作为参数），不发普通 prompt', async () => {
   const { service } = await setup()
-  assert.deepEqual(service.contextWithLimit(0, 1000), { used: 0, limit: 1000, percent: 0, level: 'ok' })
-  assert.equal(service.contextWithLimit(599, 1000).level, 'ok')
-  assert.equal(service.contextWithLimit(600, 1000).level, 'warn')
-  assert.equal(service.contextWithLimit(849, 1000).level, 'warn')
-  assert.equal(service.contextWithLimit(850, 1000).level, 'danger')
-  assert.equal(service.contextWithLimit(1000, 1000).level, 'danger')
-  assert.equal(service.contextWithLimit(1000, 1000).percent, 1)
-  assert.deepEqual(service.contextWithLimit(65, null), { used: 65, limit: null, percent: null, level: 'unknown' })
-  assert.equal(service.contextWithLimit(-1, 1000).used, 0)
-  // limit.context 提取
-  assert.equal(service.contextLimitOf({ context: 1048576, output: 32768 }), 1048576)
-  assert.equal(service.contextLimitOf({ output: 32768 }), null)
-  assert.equal(service.contextLimitOf(undefined), null)
+  await seedApp('dev-command')
+  await service.createDevSession('dev-command', { view: 'requirements' })
+
+  const result = await service.promptDevSession('dev-command', 'MOD-001', {
+    view: 'requirements',
+    command: 'update-requirements'
+  })
+  assert.equal(result.ok, true)
+  assert.equal(result.command, 'update-requirements')
+  assert.equal(runtimeState.prompts.length, 0)
+  assert.equal(runtimeState.commands.length, 1)
+  assert.equal(runtimeState.commands[0].name, 'update-requirements')
+  assert.equal(runtimeState.commands[0].text, 'MOD-001')
+  assert.equal(runtimeState.commands[0].sessionID, 'oc-1')
+
+  // 空文本 + command 允许（例如无参命令）
+  await service.promptDevSession('dev-command', '', { view: 'requirements', command: 'check-consistency' })
+  assert.equal(runtimeState.commands.length, 2)
+  assert.equal(runtimeState.commands[1].text, '')
+
+  // 空文本 + 无 command → 400
+  await assert.rejects(
+    () => service.promptDevSession('dev-command', '   ', { view: 'requirements' }),
+    (error: Error & { status?: number }) => error.status === 400
+  )
 })
 
-test('I-09a：开发状态按模型 limit 补齐 context（含归档只读会话），无 limit 为 unknown', async () => {
-  const { db, root, service } = await setup()
-  const stub = await stubOpencode({
-    models: [
-      { providerID: 'packycode-deepseek', modelID: 'deepseek-flash', id: 'deepseek-flash', limit: { context: 1000, output: 100 } },
-      // 另一个模型元数据缺失 limit
-      { providerID: 'packycode-deepseek', modelID: 'no-limit', id: 'no-limit' }
-    ],
-    messages: [
-      { id: 'u1', type: 'user', text: '开始', time: { created: 1 } },
-      {
-        id: 'a1',
-        type: 'assistant',
-        content: [{ type: 'text', text: '好' }],
-        tokens: { input: 600, output: 10, cache: { read: 200, write: 0 } },
-        time: { created: 2 }
-      }
-    ]
-  })
-  service.clearDevModelLimitCache()
-  const appId = 'dev-health'
-  insertApp(db, appId, 'development', { designConfirmed: true })
-  writeHandoff(root, appId)
-  insertSession(db, appId, 'row-active', 'oc-active', 'active', '2026-11-11T01:00:00.000Z')
-  insertSession(db, appId, 'row-archived', 'oc-archived', 'archived', '2026-11-11T02:00:00.000Z')
-
-  const state = await service.getDevState(appId)
-  assert.equal(state.state?.context.used, 800)
-  assert.equal(state.state?.context.limit, 1000)
-  assert.equal(state.state?.context.percent, 0.8)
-  assert.equal(state.state?.context.level, 'warn')
-  // 聚合 tokens 不参与上下文
-  assert.equal(state.state?.stats.tokens.input, 0)
-
-  // 归档只读会话同样带 context
-  const archived = await service.getDevState(appId, { sessionId: 'row-archived' })
-  assert.equal(archived.readOnly, true)
-  assert.equal(archived.state?.context.limit, 1000)
-  assert.equal(archived.state?.context.level, 'warn')
-
-  // 模型没有 limit → percent=null / level=unknown
-  service.clearDevModelLimitCache()
-  db.prepare(`UPDATE app_sessions SET model_id = 'no-limit' WHERE id = 'row-active'`).run()
-  const unknown = await service.getDevState(appId)
-  assert.equal(unknown.state?.context.limit, null)
-  assert.equal(unknown.state?.context.percent, null)
-  assert.equal(unknown.state?.context.level, 'unknown')
-
-  // opencode 未就绪 → 不启动、按未知返回（used 仍可用）
-  service.clearDevModelLimitCache()
-  stub.ready.value = false
-  const offline = await service.getDevState(appId)
-  assert.equal(offline.state?.context.used, 800)
-  assert.equal(offline.state?.context.limit, null)
-  assert.equal(offline.state?.context.level, 'unknown')
-  stub.ready.value = true
+test('extractSecrets 跳过占位符，提取非空密码/密钥', async () => {
+  const { service } = await setup()
+  const secrets = service.extractSecrets(
+    'user-config.xml',
+    '<config><configValue key="C3p0-Password">realpass</configValue><configValue key="Mail-Password">CHANGE_ME</configValue></config>'
+  )
+  assert.deepEqual(secrets, ['realpass'])
+  assert.deepEqual(service.extractSecrets('application.properties', 'spring.datasource.password = s3cret\nserver.port=8080'), [
+    's3cret'
+  ])
 })
 
-test('I-09a：compact 需要 active 会话；成功记录 context-compacted；opencode 错误透传', async () => {
-  const { db, root, service } = await setup()
-  const stub = await stubOpencode()
-  const appId = 'dev-compact'
-  insertApp(db, appId, 'development', { designConfirmed: true })
-  writeHandoff(root, appId)
-
-  // 无 active → 409
-  await assert.rejects(() => service.compactDevSession(appId), (error: Error & { status?: number }) => {
-    assert.equal(error.status, 409)
-    assert.match(error.message, /当前没有进行中的开发会话/)
-    return true
-  })
-  assert.deepEqual(stub.compacted, [])
-
-  insertSession(db, appId, 'row-compact', 'oc-compact', 'active', '2026-11-11T01:00:00.000Z')
-  const result = await service.compactDevSession(appId)
-  assert.deepEqual(result, { ok: true, message: '已请求压缩上下文，将在下一步生效' })
-  assert.deepEqual(stub.compacted, ['oc-compact'])
-  const event = db
-    .prepare(`SELECT event, detail FROM app_stage_events WHERE app_id = ? ORDER BY rowid DESC LIMIT 1`)
-    .get(appId) as { event: string; detail: string | null }
-  assert.equal(event.event, 'context-compacted')
-  assert.match(event.detail ?? '', /oc-compact/)
-
-  // opencode 报错 → 原样透传（可读、带 status），不变成 500
-  stub.compactError.value = Object.assign(new Error('压缩上下文失败（HTTP 400）：busy'), { status: 400 })
-  await assert.rejects(() => service.compactDevSession(appId), (error: Error & { status?: number }) => {
-    assert.equal(error.status, 400)
-    assert.match(error.message, /压缩上下文失败/)
-    return true
-  })
-  stub.compactError.value = null
-
-  // 归档会话不能触发 compact（只认 active）
-  await service.archiveDevSessionById(appId, 'row-compact')
-  await assert.rejects(() => service.compactDevSession(appId), /当前没有进行中的开发会话/)
+test('未知会话 → 404', async () => {
+  const { service } = await setup()
+  await seedApp('dev-404')
+  await assert.rejects(
+    () => service.renameDevSession('dev-404', 'missing', { title: 'x' }),
+    (error: Error & { status?: number }) => error.status === 404
+  )
 })
-

@@ -1,0 +1,113 @@
+{
+  "module": "MOD-001",
+  "title": "组织与人员",
+  "designSystem": {
+    "pack": "afcenter-app-templates-v1",
+    "applicationType": "enterprise-application-platform",
+    "style": "platform-blue"
+  },
+  "entities": [
+    {
+      "id": "org",
+      "name": "机构",
+      "description": "企业组织结构树，顶级机构为“普元信息技术”，可维护多级下级机构。",
+      "fields": [
+        { "name": "机构名称", "type": "string", "required": true },
+        { "name": "机构编码", "type": "string", "required": true, "unique": true },
+        { "name": "上级机构", "type": "ref", "ref": "org", "note": "顶级机构为空；停用机构不可新增下级" },
+        { "name": "负责人", "type": "string" },
+        { "name": "状态", "type": "enum", "options": ["启用", "停用"] },
+        { "name": "排序号", "type": "number" }
+      ]
+    },
+    {
+      "id": "employee",
+      "name": "员工",
+      "description": "员工档案，必须归属一个机构；机构停用后仍可查询，但不能新增到该机构。",
+      "fields": [
+        { "name": "员工姓名", "type": "string", "required": true },
+        { "name": "工号", "type": "string", "required": true, "unique": true },
+        { "name": "所属机构", "type": "ref", "ref": "org", "required": true },
+        { "name": "岗位", "type": "string" },
+        { "name": "手机号", "type": "string" },
+        { "name": "邮箱", "type": "string" },
+        { "name": "在职状态", "type": "enum", "options": ["在职", "离职"] }
+      ]
+    },
+    {
+      "id": "account",
+      "name": "账号",
+      "description": "员工登录账号；一个员工最多一个账号，禁用后立即不能登录但保留历史。",
+      "fields": [
+        { "name": "登录账号", "type": "string", "required": true, "unique": true },
+        { "name": "所属员工", "type": "ref", "ref": "employee", "required": true, "note": "一个员工最多一个登录账号" },
+        { "name": "角色", "type": "string", "note": "可多选；角色清单由权限模块提供" },
+        { "name": "状态", "type": "enum", "options": ["启用", "禁用"], "note": "账号启用状态；列表展示为“状态”，表单以“启用账号”开关呈现" },
+        { "name": "锁定状态", "type": "enum", "options": ["已锁定", "未锁定"], "note": "只由安全策略触发，界面仅查看，不能手工解锁" },
+        { "name": "最近登录", "type": "datetime" }
+      ]
+    }
+  ],
+  "relations": [
+    { "from": "org", "to": "org", "type": "1:N", "label": "下级机构" },
+    { "from": "employee", "to": "org", "type": "N:1", "label": "所属机构" },
+    { "from": "account", "to": "employee", "type": "N:1", "label": "所属员工（每员工最多一个账号）" }
+  ],
+  "pages": [
+    {
+      "id": "org-list",
+      "name": "组织与账号列表",
+      "type": "list",
+      "recipe": "tree-list",
+      "catalogRef": "enterprise-application-platform/organization",
+      "blueprint": "application-types/enterprise-application-platform/pages/OrganizationUsers.vue",
+      "entity": "account",
+      "requirementRefs": ["#2 组织结构", "#4 账号", "#5 页面与操作"],
+      "filters": ["登录账号", "所属员工", "状态"],
+      "columns": ["登录账号", "所属员工", "所属机构", "岗位", "角色", "状态", "锁定状态", "最近登录"],
+      "rowActions": ["编辑", "启用", "禁用"],
+      "toolbarActions": ["新建账号", "批量导入", "批量分配角色"],
+      "selection": true,
+      "pagination": { "layout": "three-part", "pageSize": 10 },
+      "tree": {
+        "titleField": "机构名称",
+        "parentField": "上级机构",
+        "actionStyle": "none",
+        "selectionStyle": "background"
+      },
+      "components": {
+        "状态": "pm-select"
+      },
+      "actions": ["新建账号", "批量导入", "编辑", "启用", "禁用", "批量分配角色"]
+    },
+    {
+      "id": "org-form",
+      "name": "账号表单（新建/编辑）",
+      "type": "form",
+      "recipe": "dialog-form",
+      "catalogRef": "enterprise-application-platform/organization",
+      "blueprint": "application-types/enterprise-application-platform/pages/OrganizationUsers.vue",
+      "entity": "account",
+      "requirementRefs": ["#4 账号", "#5 页面与操作", "#6 验收"],
+      "form": {
+        "presentation": "dialog",
+        "columns": 2,
+        "width": 560,
+        "fields": ["登录账号", "所属员工", "所属机构", "岗位", "角色", "状态"],
+        "groups": [
+          { "title": "基本信息", "fields": ["登录账号", "所属员工", "所属机构", "岗位"] },
+          { "title": "角色与状态", "fields": ["角色", "状态"] }
+        ]
+      },
+      "components": {
+        "登录账号": "pm-input",
+        "所属员工": "pm-input",
+        "所属机构": "pm-select",
+        "岗位": "pm-select",
+        "角色": "pm-select",
+        "状态": "pm-switch"
+      },
+      "actions": ["保存", "取消"]
+    }
+  ]
+}

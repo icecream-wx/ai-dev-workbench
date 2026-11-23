@@ -96,6 +96,24 @@ opencodeRoutes.get(
   })
 )
 
+/** 项目级 skills（P0：GET /api/skill；坏 YAML/缺 description 会被静默丢弃） */
+opencodeRoutes.get(
+  '/skills',
+  asyncRoute(async (req, res) => {
+    const directory = req.query.directory ? projectDirectory(req.query.directory) : undefined
+    res.json({ skills: await opencode.listSkills(directory) })
+  })
+)
+
+/** 项目级 commands（只返回 name/description，不含正文） */
+opencodeRoutes.get(
+  '/commands',
+  asyncRoute(async (req, res) => {
+    const directory = req.query.directory ? projectDirectory(req.query.directory) : undefined
+    res.json({ commands: await opencode.listCommands(directory) })
+  })
+)
+
 opencodeRoutes.post(
   '/sessions',
   asyncRoute(async (req, res) => {

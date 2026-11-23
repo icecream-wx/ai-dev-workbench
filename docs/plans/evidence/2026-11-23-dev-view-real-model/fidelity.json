@@ -1,0 +1,109 @@
+{
+  "appId": "p77-dev-real",
+  "schemaVersion": 1,
+  "ok": true,
+  "empty": false,
+  "generatedAt": "2026-11-23T03:08:41.461Z",
+  "module": "MOD-001",
+  "modules": [
+    "MOD-001"
+  ],
+  "designSystem": {
+    "exists": true,
+    "valid": true,
+    "pack": "goods-hub",
+    "applicationType": "goods-hub",
+    "style": "data-cyan",
+    "styleName": "数据蓝青",
+    "pageCount": 2,
+    "blueprintRoot": "docs/design/template"
+  },
+  "checks": [
+    {
+      "id": "design-system",
+      "label": "应用设计系统",
+      "status": "pass",
+      "evidence": "goods-hub v1.0.0 · goods-hub · data-cyan · 2 页蓝图"
+    },
+    {
+      "id": "page-contract",
+      "label": "页面契约",
+      "status": "pass",
+      "evidence": "2 页均含 recipe 与 blueprint/catalogRef/契约文件"
+    },
+    {
+      "id": "blueprint-files",
+      "label": "蓝图文件",
+      "status": "pass",
+      "evidence": "1 个蓝图文件均存在（例如 docs/design/template/goods-hub/pages/goods-list.vue）；另 1 个契约页（无蓝图）"
+    },
+    {
+      "id": "implementation",
+      "label": "实现视图/路由",
+      "status": "pass",
+      "evidence": "视图匹配 2/2；路由 2 条；goods-list→GoodsList.vue、goods-form→GoodsForm.vue"
+    },
+    {
+      "id": "page-templates",
+      "label": "PageTemplates",
+      "status": "pass",
+      "evidence": "已导入 PageTemplates：FormSection、BusinessListPage、QueryPanel、RowActions、ThreePartPagination"
+    },
+    {
+      "id": "pm-components",
+      "label": "pm-* 组件",
+      "status": "pass",
+      "evidence": "9 个：pm-form-dialog、pm-input、pm-select、pm-number、pm-select-user、pm-textarea、pm-toolbar、pm-toolbar-item…"
+    },
+    {
+      "id": "form-dialog",
+      "label": "表单弹窗/FormSection",
+      "status": "pass",
+      "evidence": "1 个表单页均使用 pm-form-dialog/FormSection"
+    },
+    {
+      "id": "auto-height",
+      "label": "列表 v-auto-height",
+      "status": "pass",
+      "evidence": "1 个列表页均使用 v-auto-height"
+    },
+    {
+      "id": "global-preference",
+      "label": "GlobalPreference",
+      "status": "pass",
+      "evidence": "已引用：views/goods/GoodsForm.vue"
+    },
+    {
+      "id": "style-imports",
+      "label": "结构/风格导入",
+      "status": "pass",
+      "evidence": "命中 2 个文件（含 visual-style-*）：views/goods/GoodsForm.vue、views/goods/GoodsList.vue"
+    },
+    {
+      "id": "template-contract",
+      "label": "模板契约页",
+      "status": "pass",
+      "evidence": "1 个契约页与模板契约一致（文件存在、recipe 一致）"
+    },
+    {
+      "id": "ui-check",
+      "label": "ui-check 对照表",
+      "status": "pass",
+      "evidence": "MOD-001: 已填"
+    },
+    {
+      "id": "prototypes",
+      "label": "PNG 原型",
+      "status": "warn",
+      "evidence": "MOD-001: 未导出",
+      "hint": "PNG 未导出不影响静态一致性检查；需要视觉参考时在设计视图导出。"
+    }
+  ],
+  "summary": {
+    "pass": 12,
+    "warn": 1,
+    "fail": 0,
+    "total": 13,
+    "status": "warn"
+  }
+}

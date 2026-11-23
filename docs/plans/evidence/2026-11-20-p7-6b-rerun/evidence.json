@@ -1,0 +1,755 @@
+{
+  "root": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-6b-MBbEuZ",
+  "ports": {
+    "backend": 3441,
+    "opencode": 4741
+  },
+  "model": {
+    "providerID": "packycode-deepseek",
+    "id": "deepseek-flash"
+  },
+  "appId": "p7-6b-e2e",
+  "module": "MOD-001",
+  "startedAt": "2026-11-20T01:09:12.733Z",
+  "steps": [
+    {
+      "name": "后端健康检查",
+      "at": "2026-11-20T01:09:14.839Z",
+      "ms": 2092,
+      "port": 3441
+    },
+    {
+      "name": "opencode serve 就绪",
+      "at": "2026-11-20T01:09:15.349Z",
+      "ms": 508,
+      "version": "2.2.5"
+    },
+    {
+      "name": "创建临时应用",
+      "at": "2026-11-20T01:09:15.579Z",
+      "ms": 230,
+      "warnings": []
+    },
+    {
+      "name": "写入需求 fixture",
+      "at": "2026-11-20T01:09:15.580Z",
+      "file": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-6b-MBbEuZ\\projects\\p7-6b-e2e\\docs\\requirements\\MOD-001-组织与人员.md",
+      "bytes": 2133
+    },
+    {
+      "name": "设计会话完成",
+      "at": "2026-11-20T01:10:48.929Z",
+      "ms": 93327,
+      "error": null,
+      "tools": 0,
+      "texts": 21,
+      "models": []
+    },
+    {
+      "name": "设计产物检查",
+      "at": "2026-11-20T01:10:48.994Z",
+      "designExists": true,
+      "pages": 2,
+      "validateErrors": 0,
+      "validateWarnings": 1
+    },
+    {
+      "name": "开发会话完成",
+      "at": "2026-11-20T01:14:43.519Z",
+      "ms": 234491,
+      "error": null,
+      "tools": 0,
+      "texts": 69,
+      "models": []
+    },
+    {
+      "name": "开发产物检查",
+      "at": "2026-11-20T01:14:43.563Z",
+      "uiCheck": "filled",
+      "implementation": true,
+      "bytes": 17931,
+      "pmTags": [
+        "pm-input",
+        "pm-tree",
+        "pm-select",
+        "pm-table",
+        "pm-form-dialog",
+        "pm-switch"
+      ],
+      "pageTemplates": [
+        "FormSection",
+        "RowActions",
+        "ThreePartPagination"
+      ],
+      "autoHeight": 2
+    },
+    {
+      "name": "一致性检查（第 1 次）",
+      "at": "2026-11-20T01:14:43.579Z",
+      "http": 200,
+      "summary": {
+        "pass": 11,
+        "warn": 1,
+        "fail": 0,
+        "total": 12,
+        "status": "warn"
+      },
+      "fails": [],
+      "warns": [
+        "prototypes"
+      ]
+    }
+  ],
+  "design": {
+    "chat": {
+      "view": "design",
+      "durationMs": 93327,
+      "sessionID": "ses_e097fdaf8ffe29B5tqvn44zwws",
+      "meta": {
+        "type": "meta",
+        "sessionID": "ses_e097fdaf8ffe29B5tqvn44zwws",
+        "sessionRowId": "7cce0b8b-42e0-4f06-81aa-c764096f0011",
+        "appId": "p7-6b-e2e",
+        "view": "design",
+        "module": "MOD-001",
+        "command": null,
+        "agent": "build",
+        "model": {
+          "providerID": "packycode-deepseek",
+          "id": "deepseek-flash"
+        }
+      },
+      "deltas": 53,
+      "textChars": 2369,
+      "toolEvents": 71,
+      "permissionEvents": 0,
+      "formEvents": 0,
+      "abandonedText": "",
+      "error": null,
+      "done": true,
+      "doneChars": 2119,
+      "trace": {
+        "toolCount": 0,
+        "tools": [],
+        "texts": 21,
+        "reasoning": 11,
+        "models": [],
+        "tokens": [
+          {
+            "input": 361,
+            "output": 2634,
+            "reasoning": 1017,
+            "cache": {
+              "read": 35072,
+              "write": 0
+            }
+          },
+          {
+            "input": 1224,
+            "output": 101,
+            "reasoning": 13,
+            "cache": {
+              "read": 37888,
+              "write": 0
+            }
+          },
+          {
+            "input": 2131,
+            "output": 80,
+            "reasoning": 29,
+            "cache": {
+              "read": 39168,
+              "write": 0
+            }
+          },
+          {
+            "input": 1699,
+            "output": 177,
+            "reasoning": 71,
+            "cache": {
+              "read": 41344,
+              "write": 0
+            }
+          },
+          {
+            "input": 183,
+            "output": 80,
+            "reasoning": 39,
+            "cache": {
+              "read": 43136,
+              "write": 0
+            }
+          },
+          {
+            "input": 1188,
+            "output": 1057,
+            "reasoning": 135,
+            "cache": {
+              "read": 43392,
+              "write": 0
+            }
+          }
+        ]
+      }
+    },
+    "finalText": "已完成 MOD-001 的设计产物，两个文件已写入并回读确认。\n\n## 改动文件\n\n| 文件 | 说明 |\n| --- | --- |\n| `docs/design/MOD-001/design.json` | 新建，写入 designSystem、3 个实体、4 条关系、2 个页面契约 |\n| `docs/design/MOD-001/design-brief.md` | 新建，包含概览/导航/页面/页面契约表/冲突与决策/未认领页面/待确认项 |\n\n未改动：需求文件、`docs/design/template/**` 蓝图与样式、`design-system.json`；未写前端代码、未执行 npm/git。\n\n## 设计与页面契约摘要\n\n**实体**（均来自需求 §2–§4，未编造字段）\n- `organization` 机构：机构名称（必填）、机构编码（必填唯一）、上级机构、负责人、状态（启用/停用）、排序号\n- `employee` 员工：员工姓名（必填）、工号（必填唯一）、所属机构（必填）、岗位、手机号、邮箱、在职状态（在职/离职）\n- `account` 账号：登录账号（必填唯一）、所属员工（必填）、角色（多选值）、状态（启用/禁用）、锁定（只读）、最近登录\n\n**关系**：机构 1:N 机构（下级机构）、员工 N:1 机构、账号 1:1 员工、机构 N:1 员工（负责人）。\n\n**页面**\n1. `org-list` 组织与人员：`type=list` / `recipe=tree-list` / `catalogRef=enterprise-application-platform/organization` / 蓝图 `OrganizationUsers.vue`；筛选 员工姓名、工号、在职状态；列 登录账号、所属员工、所属机构、岗位、角色、状态、锁定、最近登录；行操作 `edit/enable/disable`，工具栏 `create/import/batchAssignRole`；`selection=true`、`pagination{three-part,10}`；`tree{机构名称/上级机构/actionStyle:none/selectionStyle:platform}`；组件映射到 `pm-input`、`pm-select`。\n2. `org-form` 新建/编辑账号：`type=form` / `recipe=dialog-form` / 同页内嵌（catalogRef 仍指 `organization`）；`presentation=dialog`、`columns=2`、`width=560`；7 字段分 3 组（账号信息/归属信息/账号状态）；`状态 → pm-switch`，`锁定` 只读展示。\n\n## 校验结果\n\n`node .opencode/skills/adw-design-artifacts/scripts/validate.mjs docs/design/MOD-001/design.json`\n\n- `ok: true`，errors 0\n- warnings 1：`pages[0].toolbarActions[2]` 的 `batchAssignRole` 不在推荐动作码内。这是需求“批量分配角色”的唯一等义表达，推荐码里没有对应项，故保留原值并在 brief 说明（若强行清零会丢掉该批量动作的契约，故未改）。\n\n## 关键判断（已写入 brief「冲突与决策」）\n\n- 需求列「岗位」蓝图缺失 → 按需求补列。\n- 需求筛选（姓名/工号、在职状态）与蓝图（账号/姓名、账号状态）不同 → 契约取需求口径，机构筛选由树选中承担。\n- 需求分页含已选数量提示 → `three-part`；蓝图页脚实为静态文案 + 两段式分页，开发需补「已选 N 个」。\n- 机构树：蓝图 `editable/removable=false` 且无节点操作 → `actionStyle:none`；选中为 `highlight-current` → `selectionStyle:platform`。\n- 需求 §6 要求表单可见锁定，蓝图无该字段 → 契约加入只读 `锁定`，不给可编辑组件。\n- 角色无实体定义 → 账号.角色用多选字符串，不建角色实体。\n\n## 待确认项\n\n1. 是否需要员工档案独立页面（需求 §3 有字段，但 §5 未定义页面）。\n2. 机构树是否需要新增/编辑/停用操作；需要则 `actionStyle` 改 `header` 并补机构表单契约。\n3. 蓝图现存的账号状态筛选是否保留（保留则加 `状态` filter）。\n4. 「批量分配角色」弹窗字段与覆盖/追加语义未定义，暂只落动作码。\n5. 角色主数据所属模块未知，后续可改为跨模块引用。\n6. `tokens.json` 与 `prototypes/*.png` 尚未生成；结构以 design.json 为准，建议在工作台重新导出原型图。",
+    "contract": {
+      "exists": true,
+      "bytes": 5655,
+      "parsed": true,
+      "module": "MOD-001",
+      "title": "组织与人员",
+      "designSystem": {
+        "pack": "afcenter-app-templates-v1",
+        "applicationType": "enterprise-application-platform",
+        "style": "platform-blue"
+      },
+      "entityCount": 3,
+      "entities": [
+        {
+          "id": "organization",
+          "name": "机构",
+          "fields": [
+            "机构名称",
+            "机构编码",
+            "上级机构",
+            "负责人",
+            "状态",
+            "排序号"
+          ]
+        },
+        {
+          "id": "employee",
+          "name": "员工",
+          "fields": [
+            "员工姓名",
+            "工号",
+            "所属机构",
+            "岗位",
+            "手机号",
+            "邮箱",
+            "在职状态"
+          ]
+        },
+        {
+          "id": "account",
+          "name": "账号",
+          "fields": [
+            "登录账号",
+            "所属员工",
+            "角色",
+            "状态",
+            "锁定",
+            "最近登录"
+          ]
+        }
+      ],
+      "relationCount": 4,
+      "pages": [
+        {
+          "id": "org-list",
+          "name": "组织与人员",
+          "type": "list",
+          "recipe": "tree-list",
+          "catalogRef": "enterprise-application-platform/organization",
+          "blueprint": "application-types/enterprise-application-platform/pages/OrganizationUsers.vue",
+          "entity": "account",
+          "filters": [
+            "员工姓名",
+            "工号",
+            "在职状态"
+          ],
+          "columns": [
+            "登录账号",
+            "所属员工",
+            "所属机构",
+            "岗位",
+            "角色",
+            "状态",
+            "锁定",
+            "最近登录"
+          ],
+          "rowActions": [
+            "edit",
+            "enable",
+            "disable"
+          ],
+          "toolbarActions": [
+            "create",
+            "import",
+            "batchAssignRole"
+          ],
+          "selection": true,
+          "pagination": {
+            "layout": "three-part",
+            "pageSize": 10
+          },
+          "tree": {
+            "titleField": "机构名称",
+            "parentField": "上级机构",
+            "actionStyle": "none",
+            "selectionStyle": "platform"
+          },
+          "components": {
+            "登录账号": "pm-input",
+            "所属员工": "pm-input",
+            "所属机构": "pm-select",
+            "岗位": "pm-select",
+            "角色": "pm-select",
+            "状态": "pm-select"
+          },
+          "actions": [
+            "新建账号",
+            "编辑",
+            "启用",
+            "禁用",
+            "批量导入",
+            "批量分配角色"
+          ]
+        },
+        {
+          "id": "org-form",
+          "name": "新建/编辑账号",
+          "type": "form",
+          "recipe": "dialog-form",
+          "catalogRef": "enterprise-application-platform/organization",
+          "blueprint": "application-types/enterprise-application-platform/pages/OrganizationUsers.vue",
+          "entity": "account",
+          "form": {
+            "presentation": "dialog",
+            "columns": 2,
+            "width": 560,
+            "fields": [
+              "登录账号",
+              "员工姓名",
+              "所属机构",
+              "岗位",
+              "角色",
+              "状态",
+              "锁定"
+            ],
+            "groups": [
+              {
+                "title": "账号信息",
+                "fields": [
+                  "登录账号",
+                  "员工姓名",
+                  "角色"
+                ]
+              },
+              {
+                "title": "归属信息",
+                "fields": [
+                  "所属机构",
+                  "岗位"
+                ]
+              },
+              {
+                "title": "账号状态",
+                "fields": [
+                  "状态",
+                  "锁定"
+                ]
+              }
+            ]
+          },
+          "components": {
+            "登录账号": "pm-input",
+            "员工姓名": "pm-input",
+            "所属机构": "pm-select",
+            "岗位": "pm-select",
+            "角色": "pm-select",
+            "状态": "pm-switch"
+          },
+          "actions": [
+            "保存",
+            "取消"
+          ]
+        }
+      ],
+      "hasContract": true,
+      "brief": {
+        "exists": true,
+        "bytes": 9479,
+        "hasPageContractTable": true,
+        "hasConflictSection": true,
+        "hasRecipe": true,
+        "preview": "# 设计说明：MOD-001 组织与人员\n\n> 结构事实源：`docs/design/MOD-001/design.json`（已通过 `scripts/validate.mjs`）。\n> 本文件只做开发参考与差异说明，不替代 design.json。\n\n## 1. 概览\n\n- 设计系统：`afcenter-app-templates-v1` / 应用类型 `enterprise-application-platform` / 风格 `platform-blue`（来源 `docs/design/design-system.json`）。\n- 页面配方：`tree-list`（左侧机构树 + 右侧账号列表）+ 同页内嵌 `dialog-form`（新建/编辑账号），均认领模板页面库 `enterprise-application-platform/organization`。\n- 蓝图：`docs/design/template/enterprise-application-platform/pages/OrganizationUsers.vue`（包内路径 `application-types/enterprise-application-platform/pages/OrganizationUsers.vue`），**未修改**。\n- 实体：机构（自关联树）、员工、账号；角色只作为账号上的多选值，角色主数据归权限/安全模块，本模块不建实体、不编造角色字段结构。\n- 视觉：颜色/间距/圆角以 `styles/shared.css` + `styles/platform-blue/style.css` 为准；`tokens.json` 与 `prototypes/*.png` 尚未由工作台生成，生成后以 design.json 结构为准，不要手改。\n\n## 2. 导航\n\n- 单页入口「组织与人员」（页面 id `org-list`），页面内以左侧机构树做二级定位；本模块不新增独立路由页。\n- 新建/编辑账号为同页内嵌 `pm-form-dialog`，不单独占路由。\n\n## 3. 页面\n\n### 3.1 org-list 组织与人员（tree-list）\n\n- 左侧：机构树面板，标题「组织机构」，上方机构搜索框（`pm-input`），树组件 `pm-tree`；选中节点联动右侧账号列表。\n- 右侧：账号列表，头部为当前机构名 + 账号数量 + 工具栏（姓名/工号搜索、在职状态筛选），表格 `pm-table`（多选、序号），底部为已选提示 + 分页。\n- 主实体 `account`；员工的「所属员工 / 所属机构 / 岗位 / 在职状态」通过 `所属员工`（1:1）关联读取，不重复定义员工字段。\n\n### 3.2 org-form 新建/编辑账号（dialog-form，同页内嵌）\n\n- `pm-form-dialog`，标题「新建账号 / 编辑账号」，宽 560px，双列（`af-form-grid`），提交校验：登录账号、员工姓名必填。\n- 分组：账号信息（登录账号、员工姓名、角色）、归属信息（所属机构、岗位）、账号状态（状态、锁定）。\n- 「锁定」为只读展示（需求 §4：锁定只由安全策略触发，界面不能手工解锁），开发时用只读文本/标签，不要接可编辑控件。\n\n## 4. 页面契约表\n\n| 设计页 | recipe | catalogRef | 蓝图 | 字段 / 筛选 / 列 | 操作 | 分页 / 表单 / 树 | 组件 | 差异 |\n|"
+      },
+      "designSystemFile": {
+        "exists": true,
+        "pack": "afcenter-app-templates-v1"
+      },
+      "blueprints": {
+        "enterprise-application-platform/pages/OrganizationUsers.vue": true,
+        "enterprise-application-platform/structure.css": true,
+        "styles/shared.css": true,
+        "styles/platform-blue/style.css": true
+      },
+      "tokensExists": false,
+      "prototypesManifestExists": false
+    },
+    "validate": {
+      "exitCode": 0,
+      "result": {
+        "ok": true,
+        "files": 1,
+        "errors": [],
+        "warnings": [
+          {
+            "file": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-6b-MBbEuZ\\projects\\p7-6b-e2e\\docs\\design\\MOD-001\\design.json",
+            "path": "pages[0].toolbarActions[2]",
+            "message": "动作码「batchAssignRole」不在推荐列表（create/edit/delete/detail/batchDelete/import/export/submit/cancel/enable/disable/approve/reject/print/copy）；保留原值",
+            "expected": [
+              "create",
+              "edit",
+              "delete",
+              "detail",
+              "batchDelete",
+              "import",
+              "export",
+              "submit",
+              "cancel",
+              "enable",
+              "disable",
+              "approve",
+              "reject",
+              "print",
+              "copy"
+            ],
+            "severity": "warning"
+          }
+        ]
+      }
+    }
+  },
+  "development": {
+    "chat": {
+      "view": "development",
+      "durationMs": 234491,
+      "sessionID": "ses_e097e6b3bffeJlCFNhjh2n3tR4",
+      "meta": {
+        "type": "meta",
+        "sessionID": "ses_e097e6b3bffeJlCFNhjh2n3tR4",
+        "sessionRowId": "8d1c9df0-fc32-4088-835e-5c163a2086da",
+        "appId": "p7-6b-e2e",
+        "view": "development",
+        "module": "MOD-001",
+        "command": null,
+        "agent": "build",
+        "model": {
+          "providerID": "packycode-deepseek",
+          "id": "deepseek-flash"
+        }
+      },
+      "deltas": 48,
+      "textChars": 2533,
+      "toolEvents": 271,
+      "permissionEvents": 0,
+      "formEvents": 0,
+      "abandonedText": "",
+      "error": null,
+      "done": true,
+      "doneChars": 2409,
+      "trace": {
+        "toolCount": 0,
+        "tools": [],
+        "texts": 69,
+        "reasoning": 44,
+        "models": [],
+        "tokens": [
+          {
+            "input": 499,
+            "output": 831,
+            "reasoning": 530,
+            "cache": {
+              "read": 119680,
+              "write": 0
+            }
+          },
+          {
+            "input": 222,
+            "output": 177,
+            "reasoning": 364,
+            "cache": {
+              "read": 121344,
+              "write": 0
+            }
+          },
+          {
+            "input": 149,
+            "output": 84,
+            "reasoning": 412,
+            "cache": {
+              "read": 121984,
+              "write": 0
+            }
+          },
+          {
+            "input": 1723,
+            "output": 167,
+            "reasoning": 201,
+            "cache": {
+              "read": 122624,
+              "write": 0
+            }
+          },
+          {
+            "input": 197,
+            "output": 105,
+            "reasoning": 168,
+            "cache": {
+              "read": 124544,
+              "write": 0
+            }
+          },
+          {
+            "input": 1441,
+            "output": 1108,
+            "reasoning": 315,
+            "cache": {
+              "read": 124928,
+              "write": 0
+            }
+          }
+        ]
+      }
+    },
+    "finalText": "## 实现摘要\n\nMOD-001「组织与人员」已按蓝图 `OrganizationUsers.vue` 适配为 `OrganizationView.vue`：左侧机构树 + 右侧账号列表、同页内嵌账号弹窗；保留了 `af-page-header` / `af-split` / `af-panel` 结构与 `structure.css` 视觉类，没有改造成另一套 UI。\n\n### 页面对照表\n\n| 设计页 | 路由 | 蓝图 | 字段/列 | 操作 | 布局/配方 | 差异 |\n| --- | --- | --- | --- | --- | --- | --- |\n| `org-list` 组织与人员 | `/organizations` | `docs/design/template/enterprise-application-platform/pages/OrganizationUsers.vue` | 列：登录账号、所属员工、所属机构、岗位、角色、状态、锁定、最近登录、操作；筛选：员工姓名、工号、在职状态 | 行：编辑/启用/禁用；工具栏：新建账号、批量导入；批量：批量分配角色（勾选后显示批量条） | `tree-list`：左 `af-tree-panel` + `pm-tree`，右 `af-panel` + `pm-table`，三段式分页 10 条/页，多选 | 标题取设计页名「组织与人员」；补「岗位」列；筛选按契约三字段；分页用 `ThreePartPagination` 替代蓝图 `pm-pagination` |\n| `org-form` 新建/编辑账号 | 同页内嵌 `pm-form-dialog`（无独立路由） | 同上 | 登录账号、员工姓名、所属机构、岗位、角色、状态、锁定；分组：账号信息/归属信息/账号状态 | 保存、取消 | `dialog-form`：560px、双列、`FormSection` 三组、登录账号/员工姓名必填、锁定只读 | 蓝图无「锁定」与分组，按契约补齐；`pm-switch` 沿用蓝图字符串值写法（兼容布尔） |\n\n### 改动文件\n\n- 新增 `frontend/src/views/OrganizationView.vue`\n- 修改 `frontend/src/router/index.js`（新增 `/organizations`）\n- 修改 `frontend/src/main.js`（引入结构/风格样式）\n- 新增 `frontend/src/styles/structure.css`、`shared.css`、`platform-blue/style.css`（从 `docs/design/template` 原样复制，SHA256 已核对一致）\n- 填写 `docs/design/MOD-001/ui-check.md`（实现前 + 实现后 + 未实现项；骨架 marker 保留）\n- 未改动：需求、`design.json`、`design-brief.md`、`design-system.json`、`docs/design/template/**`、`.opencode/**`\n\n### 使用的 PageTemplates / pm-* / 偏好\n\n- PageTemplates：`RowActions`（行操作）、`ThreePartPagination`（三段分页）、`FormSection`（弹窗分组）\n- pm-*：`pm-tree`、`pm-table`、`pm-form-dialog`、`pm-input`、`pm-select`、`pm-switch`\n- `GlobalPreference` 统一导入，页面用 `computed(() => resolvePagePreferences(GlobalPreference))` 合并，未改单例\n\n### 自查结果\n\n`check-fidelity.mjs --app . --module MOD-001`：**通过 11、警告 1、失败 0**。唯一 warn 是「PNG 原型未导出」（工作台未生成，无法由代码修复）。\n\n另外对页面 `<script setup>` 抽取后执行 `node --check` 语法通过。\n\n### 偏离与未验证项\n\n1. **`v-auto-height` 施加在 `pm-table` 根元素上**（按你的要求保留 pm-table）。团队 skill 的等价写法是 `el-table v-auto-height`；宿主指令对 `pm-table`（el-table 封装）的实际高度行为未验证，若不生效需改回 `el-table`。\n2. **分页用 `ThreePartPagination` 替代蓝图 `pm-pagination`**：contract 为 `pagination.layout = three-part` 且需已选计数，故按契约取舍；如需严格保留 `pm-pagination` 可回改并接受无计数。\n3. **批量导入**只有占位提示（`TODO`），需求未定义模板/字段/接口。\n4. **批量分配角色**弹窗按「追加所选角色」最小实现（需求未定义字段与覆盖/追加口径），只作用于勾选账号。\n5. **机构节点新增/编辑/停用/删除**未实现（`tree.actionStyle: none`，brief §7 待确认）。\n6. **未截图、未启动**：`frontend` 无 `node_modules`（按要求未执行 `npm install`），`pm-*` 由宿主提供，独立 dev 无法渲染；交互（选择清理、启停、分页）未在浏览器验证。",
+    "uiCheck": {
+      "exists": true,
+      "status": "filled",
+      "file": "docs/design/MOD-001/ui-check.md"
+    },
+    "implementation": {
+      "exists": true,
+      "bytes": 17931,
+      "lines": 532,
+      "imports": [
+        "vue",
+        "element-plus",
+        "@element-plus/icons-vue",
+        "@/preferences/GlobalPreference",
+        "@/components/PageTemplates"
+      ],
+      "importsPageTemplates": true,
+      "pageTemplates": [
+        "FormSection",
+        "RowActions",
+        "ThreePartPagination"
+      ],
+      "pmTags": [
+        "pm-input",
+        "pm-tree",
+        "pm-select",
+        "pm-table",
+        "pm-form-dialog",
+        "pm-switch"
+      ],
+      "autoHeight": 2,
+      "globalPreference": true,
+      "styleHits": [
+        "visual-style-host",
+        "visual-style-platform-blue"
+      ],
+      "styleInMain": true,
+      "routerHasView": true,
+      "routerHasPath": true,
+      "styleFiles": {
+        "structure": true,
+        "shared": true,
+        "style": false
+      }
+    }
+  },
+  "fidelity": {
+    "first": {
+      "status": 200,
+      "report": {
+        "appId": "p7-6b-e2e",
+        "schemaVersion": 1,
+        "ok": true,
+        "empty": false,
+        "generatedAt": "2026-11-20T01:14:43.571Z",
+        "module": "MOD-001",
+        "modules": [
+          "MOD-001"
+        ],
+        "designSystem": {
+          "exists": true,
+          "valid": true,
+          "pack": "afcenter-app-templates-v1",
+          "applicationType": "enterprise-application-platform",
+          "style": "platform-blue",
+          "styleName": "平台蓝白",
+          "pageCount": 5,
+          "blueprintRoot": "docs/design/template"
+        },
+        "checks": [
+          {
+            "id": "design-system",
+            "label": "应用设计系统",
+            "status": "pass",
+            "evidence": "afcenter-app-templates-v1 v1.0.0 · enterprise-application-platform · platform-blue · 5 页蓝图"
+          },
+          {
+            "id": "page-contract",
+            "label": "页面契约",
+            "status": "pass",
+            "evidence": "2 页均含 recipe 与 blueprint/catalogRef"
+          },
+          {
+            "id": "blueprint-files",
+            "label": "蓝图文件",
+            "status": "pass",
+            "evidence": "2 个蓝图文件均存在（例如 docs/design/template/enterprise-application-platform/pages/OrganizationUsers.vue）"
+          },
+          {
+            "id": "implementation",
+            "label": "实现视图/路由",
+            "status": "pass",
+            "evidence": "视图匹配 2/2；路由 2 条；org-list→OrganizationView.vue、org-form→OrganizationView.vue"
+          },
+          {
+            "id": "page-templates",
+            "label": "PageTemplates",
+            "status": "pass",
+            "evidence": "已导入 PageTemplates：FormSection、RowActions、ThreePartPagination"
+          },
+          {
+            "id": "pm-components",
+            "label": "pm-* 组件",
+            "status": "pass",
+            "evidence": "6 个：pm-input、pm-tree、pm-select、pm-table、pm-form-dialog、pm-switch"
+          },
+          {
+            "id": "form-dialog",
+            "label": "表单弹窗/FormSection",
+            "status": "pass",
+            "evidence": "1 个表单页均使用 pm-form-dialog/FormSection"
+          },
+          {
+            "id": "auto-height",
+            "label": "列表 v-auto-height",
+            "status": "pass",
+            "evidence": "1 个列表页均使用 v-auto-height"
+          },
+          {
+            "id": "global-preference",
+            "label": "GlobalPreference",
+            "status": "pass",
+            "evidence": "已引用：views/OrganizationView.vue"
+          },
+          {
+            "id": "style-imports",
+            "label": "结构/风格导入",
+            "status": "pass",
+            "evidence": "命中 2 个文件（含 visual-style-*）：main.js、views/OrganizationView.vue"
+          },
+          {
+            "id": "ui-check",
+            "label": "ui-check 对照表",
+            "status": "pass",
+            "evidence": "MOD-001: 已填"
+          },
+          {
+            "id": "prototypes",
+            "label": "PNG 原型",
+            "status": "warn",
+            "evidence": "MOD-001: 未导出",
+            "hint": "PNG 未导出不影响静态一致性检查；需要视觉参考时在设计视图导出。"
+          }
+        ],
+        "summary": {
+          "pass": 11,
+          "warn": 1,
+          "fail": 0,
+          "total": 12,
+          "status": "warn"
+        }
+      }
+    },
+    "fixRound": {
+      "triggered": false,
+      "failCount": 0,
+      "warnCount": 1
+    }
+  },
+  "cleanup": {
+    "stoppedAt": "2026-11-20T01:14:43.881Z",
+    "evidenceFile": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-6b-MBbEuZ\\evidence.json"
+  },
+  "errors": [],
+  "opencode": {
+    "ready": true,
+    "starting": false,
+    "installed": true,
+    "autoStart": true,
+    "autoStartAttempted": true,
+    "host": "127.0.0.1",
+    "port": 4741,
+    "baseUrl": "http://127.0.0.1:4741",
+    "bin": "opencode.exe",
+    "version": "2.2.5",
+    "passwordCaptured": true,
+    "streamState": "open",
+    "lastEventAt": "2026-11-20T01:09:15.104Z",
+    "lastError": null,
+    "installError": null,
+    "pendingSessions": 0,
+    "readyAfterMs": 508
+  },
+  "app": {
+    "id": "p7-6b-e2e",
+    "name": "P7-6b 真实模型闭环",
+    "description": null,
+    "dir": "p7-6b-e2e",
+    "backendPort": 8081,
+    "status": "requirements",
+    "requirementTemplateId": "builtin-prd-lite",
+    "requirementTemplateName": "精简 PRD",
+    "prototypeTemplateId": "builtin-prototype-enterprise",
+    "prototypeTemplateName": "企业级专业管理",
+    "prototypeTemplateSource": "global-default",
+    "designSystem": {
+      "pack": {
+        "id": "afcenter-app-templates-v1",
+        "name": "AFCenter 应用页面模板",
+        "version": "1.0.0",
+        "source": "builtin"
+      },
+      "applicationType": {
+        "id": "enterprise-application-platform",
+        "name": "企业级应用管理平台",
+        "category": "platform",
+        "description": "面向应用、组织、用户、权限、审计和平台运行概览的企业管理页面集合。",
+        "structure": "application-types/enterprise-application-platform/structure.css",
+        "defaultStyle": "platform-blue",
+        "pageCount": 5
+      },
+      "style": {
+        "id": "platform-blue",
+        "name": "平台蓝白",
+        "className": "visual-style-platform-blue",
+        "css": "styles/platform-blue/style.css",
+        "description": "明亮蓝白、留白适中、圆角卡片和清晰的平台层级。",
+        "signature": "#1F5EFF",
+        "tokens": {
+          "primary": "#1f5eff",
+          "accent": "#22a6b3",
+          "neutral": "#64748b",
+          "background": "#f4f7fb",
+          "radius": 10,
+          "density": "compact"
+        }
+      },
+      "pageCount": 5,
+      "source": "app-default"
+    },
+    "legacyPrototypeTemplate": null,
+    "createdAt": "2026-11-20T01:09:15.572Z",
+    "updatedAt": "2026-11-20T01:09:15.572Z"
+  },
+  "appWarnings": [],
+  "finishedAt": "2026-11-20T01:14:43.580Z"
+}

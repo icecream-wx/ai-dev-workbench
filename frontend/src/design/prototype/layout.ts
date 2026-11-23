@@ -1,4 +1,5 @@
 import { findEntityInModule, parseEntityRef } from './refs'
+import { computeFieldSpan, resolveControl } from './contract-view.js'
 import type { ControlType, PageLayout, SpecEntity, SpecField, SpecPage, WfBlock } from './spec-types'
 
 /** 主键/审计字段：原型展示层不渲染（与转换器 AUDIT_FIELDS 同规则；id 主键转换时由平台自动生成） */
@@ -28,53 +29,13 @@ export function effectiveFields(page: SpecPage, entity: SpecEntity | undefined, 
   return fields
 }
 
-/** 按字段名/标签推断图片、上传类控件 */
-function inferMediaControl(field: SpecField): ControlType | undefined {
-  const text = `${field.label ?? ''}${field.name}`
-  if (/图片|图像|头像|照片|封面|logo/i.test(text)) return 'image'
-  if (/附件|文件|上传|材料/.test(text)) return 'upload'
-  return undefined
-}
-
-/** 按字段名/标签推断人员、组织类选择控件（与转换器 inferFormControl 同构） */
-function inferUserOrgControl(field: SpecField): ControlType | undefined {
-  const text = `${field.label ?? ''}${field.name}`
-  if (/负责人|经办人|处理人|审批人|人员|员工|销售员|归属|owner|assignee|handler/i.test(text)) return 'select-user'
-  if (/部门|机构|组织|org|department/i.test(text)) return 'select-org'
-  return undefined
-}
-
-export function inferControl(field: SpecField): ControlType {
-  const media = inferMediaControl(field)
-  if (media) return media
-  const userOrg = inferUserOrgControl(field)
-  if (userOrg) return userOrg
-  switch (field.type) {
-    case 'text': return 'textarea'
-    case 'number': return 'number'
-    case 'date': return 'date'
-    case 'datetime': return 'datetime'
-    case 'boolean': return 'boolean'
-    case 'enum':
-      // 少量选项（2-4）的枚举用单选框，更多选项用下拉
-      if (field.options && field.options.length >= 2 && field.options.length <= 4) return 'radio'
-      return 'select'
-    case 'ref': return 'select'
-    default: return 'input'
-  }
-}
-
-/** 字段展示时的控件（布局覆盖优先） */
+/** 字段展示时的控件：布局覆盖 > components（pm-*）> 类型/命名推断 */
 export function controlOf(field: SpecField, layout: PageLayout | undefined): ControlType {
-  return layout?.fieldOverrides?.[field.name]?.control ?? inferControl(field)
+  return resolveControl(field, layout) as ControlType
 }
 
 export function fieldSpan(field: SpecField, layout: PageLayout | undefined): number {
-  const override = layout?.fieldOverrides?.[field.name]?.span
-  if (override) return override
-  const control = controlOf(field, layout)
-  if (control === 'textarea') return 24
-  return 12
+  return computeFieldSpan(field, layout, false)
 }
 
 /** 表单分组：布局分组 + 未分组字段兜底区 */
@@ -203,7 +164,7 @@ export function anchorLabel(anchor: string, entity?: SpecEntity): string {
   if (anchor.startsWith('subtable:')) return `子表格 #${Number(anchor.slice(9)) + 1}`
   if (anchor.startsWith('block:')) return `区块 #${Number(anchor.slice(6)) + 1}`
   const map: Record<string, string> = {
-    page: '页面整体', header: '页头', search: '检索区', toolbar: '工具栏', table: '数据表格', selection: '选择列', actions: '操作列', pager: '分页',
+    page: '页面整体', header: '页头', search: '检索区', toolbar: '工具栏', tree: '树面板', table: '数据表格', selection: '选择列', actions: '操作列', pager: '分页',
     desc: '详情内容', footer: '底部操作', stats: '统计卡', board: '看板', chart: '图表', calendar: '日历', tabs: '页签'
   }
   return map[anchor] ?? anchor
@@ -244,14 +205,14 @@ export interface SubTableModel {
   hidden: boolean
 }
 
-export function subTableModels(entity: SpecEntity | undefined, layout: PageLayout | undefined, currentModuleId: string): SubTableModel[] {
+export function subTableModels(entity: SpecEntity | undefined, layout: PageLayout | undefined, currentModuleId: string, pool?: SpecEntity[]): SubTableModel[] {
   if (!entity) return []
   const overrides = layout?.subTables ?? []
   const list: SubTableModel[] = []
   for (const rel of entity.relations ?? []) {
     if (rel.type !== 'one-to-many') continue
     const { moduleId, entityId } = parseEntityRef(rel.target)
-    const target = findEntityInModule(moduleId ?? currentModuleId, entityId)
+    const target = pool?.find(item => item.id === entityId) ?? findEntityInModule(moduleId ?? currentModuleId, entityId)
     if (!target) continue
     const override = overrides.find(o => o.target === rel.target || o.target === rel.name)
     const columns = override?.columns?.length

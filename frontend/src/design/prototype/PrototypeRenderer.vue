@@ -12,7 +12,7 @@
       </div>
       <div class="wf-m-body">
         <WireframeBlocks v-if="topBlocks.length" :entries="topBlocks" :entity="entity" :rows="rows" :mobile="mobile" :module-id="moduleId" @notify="(a: string) => emit('notify', a)" />
-        <WireframeForm v-if="page.type === 'form'" :page="page" :entity="entity" :layout="layout" :mobile="mobile" :rows="rows" :module-id="moduleId" @nav="(kind, i) => emit('nav', kind, i)" @notify="(a: string) => emit('notify', a)" />
+        <WireframeForm v-if="page.type === 'form'" :page="page" :entity="entity" :layout="layout" :mobile="mobile" :rows="rows" :module-id="moduleId" :entities="entities" @nav="(kind, i) => emit('nav', kind, i)" @notify="(a: string) => emit('notify', a)" />
         <WireframeTable v-else-if="page.type === 'list'" :page="page" :entity="entity" :layout="layout" :rows="rows" :mobile="true" @nav="(kind, i) => emit('nav', kind, i)" @notify="(a: string) => emit('notify', a)" />
         <WireframeDetail v-else-if="page.type === 'detail'" :page="page" :entity="entity" :layout="layout" :row="rows[0]" @nav="(kind, i) => emit('nav', kind, i)" @notify="(a: string) => emit('notify', a)" />
         <WireframeDashboard v-else-if="page.type === 'dashboard'" :entity="entity" :layout="layout" :rows="rows" />
@@ -56,7 +56,7 @@
         </div>
       </div>
       <WireframeBlocks v-if="topBlocks.length" :entries="topBlocks" :entity="entity" :rows="rows" :module-id="moduleId" @notify="(a: string) => emit('notify', a)" />
-      <WireframeForm v-if="page.type === 'form'" :page="page" :entity="entity" :layout="layout" :mobile="mobile" :rows="rows" :module-id="moduleId" @nav="(kind, i) => emit('nav', kind, i)" @notify="(a: string) => emit('notify', a)" />
+      <WireframeForm v-if="page.type === 'form'" :page="page" :entity="entity" :layout="layout" :mobile="mobile" :rows="rows" :module-id="moduleId" :entities="entities" @nav="(kind, i) => emit('nav', kind, i)" @notify="(a: string) => emit('notify', a)" />
       <WireframeTable v-else-if="page.type === 'list'" :page="page" :entity="entity" :layout="layout" :rows="rows" @nav="(kind, i) => emit('nav', kind, i)" @notify="(a: string) => emit('notify', a)" />
       <WireframeDetail v-else-if="page.type === 'detail'" :page="page" :entity="entity" :layout="layout" :row="rows[0]" @nav="(kind, i) => emit('nav', kind, i)" @notify="(a: string) => emit('notify', a)" />
       <WireframeDashboard v-else-if="page.type === 'dashboard'" :entity="entity" :layout="layout" :rows="rows" />
@@ -160,6 +160,8 @@ const props = defineProps<{
   pages?: SpecPage[]
   /** 当前模块 id（子表格跨模块关系解析） */
   moduleId?: string
+  /** 当前模块全部实体（设计视图解析子表目标；可选） */
+  entities?: SpecEntity[]
   /** 只读模式（文档就地预览抽屉）：禁用双击批注与批注编辑动作，钉标点击仍可查看内容 */
   readonly?: boolean
 }>()

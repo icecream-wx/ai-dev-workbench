@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildServeEnv, sanitizeModel, sessionModelRef } from './runtime'
+import { buildServeEnv, assertSafeTestServePort, sanitizeModel, sessionModelRef } from './runtime'
 
 test('sanitizeModel 剔除 provider settings / apiKey', () => {
   const model = sanitizeModel({
@@ -58,4 +58,24 @@ test('buildServeEnv 不把工作台密钥传给 serve', () => {
   assert.equal(env.LLM_API_KEY, undefined)
   assert.equal(env.WORKBENCH_TOKEN, undefined)
   assert.equal(env.WB_SECRET, undefined)
+})
+
+test('assertSafeTestServePort：测试进程禁止默认 4771 真实 serve', () => {
+  assert.throws(
+    () => assertSafeTestServePort(4771, { NODE_TEST_CONTEXT: 'child-v8' }),
+    /禁止在默认端口 4771/
+  )
+  assert.throws(
+    () => assertSafeTestServePort(4771, { NODE_TEST_CONTEXT: 'child-v8', RG_ALLOW_REAL_OPENCODE: 'true' }),
+    /RG_ALLOW_REAL_OPENCODE=1/
+  )
+})
+
+test('assertSafeTestServePort：显式允许 / 非测试 / 非默认端口均放行', () => {
+  assert.doesNotThrow(() =>
+    assertSafeTestServePort(4771, { NODE_TEST_CONTEXT: 'child-v8', RG_ALLOW_REAL_OPENCODE: '1' })
+  )
+  assert.doesNotThrow(() => assertSafeTestServePort(4771, {}))
+  assert.doesNotThrow(() => assertSafeTestServePort(4771, { NODE_TEST_CONTEXT: '   ' }))
+  assert.doesNotThrow(() => assertSafeTestServePort(4799, { NODE_TEST_CONTEXT: 'child-v8' }))
 })

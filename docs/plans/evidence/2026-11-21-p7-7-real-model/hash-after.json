@@ -1,0 +1,105 @@
+{
+  "boundary": {
+    "catalog": {
+      "changed": false,
+      "added": [],
+      "removed": []
+    },
+    "opencode": {
+      "changed": false,
+      "added": [],
+      "removed": []
+    },
+    "projects": {
+      "changed": false,
+      "added": [],
+      "removed": []
+    },
+    "repo": {
+      "before": "sha256:593bfda02c1bf9d3fdbfcfadd60a847f51dfa7515d73fa9786cc6856b52c18f6",
+      "after": "sha256:593bfda02c1bf9d3fdbfcfadd60a847f51dfa7515d73fa9786cc6856b52c18f6",
+      "changed": false,
+      "files": 474
+    }
+  },
+  "catalog": {
+    "exists": true,
+    "files": 48,
+    "bytes": 665971,
+    "sha256": "sha256:8ec845e900994459e602aad8577e08231aaae433908cd5827cf202ab026872a2",
+    "entries": [
+      "builtin/.mirror.json",
+      "builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/pages/DataAccessWorkspace.vue",
+      "builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/pages/DataAssetCatalog.vue",
+      "builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/pages/DataMonitor.vue",
+      "builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/pages/DataTaskDetail.vue",
+      "builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/pages/DataTaskForm.vue",
+      "builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/pages/DataTaskList.vue",
+      "builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/pages/DataTreeTable.vue",
+      "builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/pages/DataWorkspaceMembers.vue",
+      "builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/structure.css",
+      "builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/pages/ApplicationCenter.vue",
+      "builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/pages/ApplicationForm.vue",
+      "builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/pages/AuditLogs.vue",
+      "builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/pages/OrganizationUsers.vue",
+      "builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/pages/PlatformOverview.vue",
+      "builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/structure.css",
+      "builtin/afcenter-app-templates-v1/application-types/incident-response-console/pages/IncidentDetail.vue",
+      "builtin/afcenter-app-templates-v1/application-types/incident-response-console/pages/IncidentList.vue",
+      "builtin/afcenter-app-templates-v1/application-types/incident-response-console/pages/IncidentRuleForm.vue",
+      "builtin/afcenter-app-templates-v1/application-types/incident-response-console/pages/IncidentWorkspace.vue",
+      "builtin/afcenter-app-templates-v1/application-types/incident-response-console/structure.css",
+      "builtin/afcenter-app-templates-v1/application-types/operations-management/assets/ledger-workflow.svg",
+      "builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsComponentForm.vue",
+      "builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsDashboard.vue",
+      "builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsForm.vue",
+      "builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsIssues.vue",
+      "builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsList.vue",
+      "builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsPermission.vue",
+      "builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsSchedule.vue",
+      "builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsTreeTable.vue",
+      "builtin/afcenter-app-templates-v1/application-types/operations-management/structure.css",
+      "builtin/afcenter-app-templates-v1/pack.json",
+      "builtin/afcenter-app-templates-v1/styles/classic-warm/style.css",
+      "builtin/afcenter-app-templates-v1/styles/data-cyan/style.css",
+      "builtin/afcenter-app-templates-v1/styles/high-contrast-tool/style.css",
+      "builtin/afcenter-app-templates-v1/styles/platform-blue/style.css",
+      "builtin/afcenter-app-templates-v1/styles/shared.css",
+      "component-controls.json",
+      "components.json",
+      "examples/page-contract-dialog-form.json",
+      "examples/page-contract-list.json",
+      "examples/page-contract-main-sub.json",
+      "examples/page-contract-tree-list.json",
+      "examples/spec.example.json",
+      "index.json",
+      "pages.json",
+      "recipes.json",
+      "styles.json"
+    ]
+  },
+  "opencode": {
+    "exists": true,
+    "files": 9,
+    "bytes": 78752,
+    "sha256": "sha256:c845514d153d3e791b5ffb61a5e94269392d9bd13e5572a42d5d40e388f3f421",
+    "entries": [
+      "commands/generate-design-template.md",
+      "scripts/generate.cjs",
+      "scripts/lib/css.cjs",
+      "scripts/lib/generator.cjs",
+      "scripts/lib/spec.cjs",
+      "scripts/validate.cjs",
+      "skills/adw-design-template-authoring/SKILL.md",
+      "skills/adw-design-template-authoring/references/contract-recipes.md",
+      "skills/adw-design-template-authoring/references/spec.schema.json"
+    ]
+  },
+  "projects": {
+    "exists": true,
+    "files": 0,
+    "bytes": 0,
+    "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "entries": []
+  }
+}

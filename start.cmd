@@ -96,7 +96,7 @@ if exist "%PID_FILE%" (
   if defined OLD_PID (
     tasklist /FI "PID eq !OLD_PID!" /NH 2>nul | findstr /C:"!OLD_PID!" >nul
     if not errorlevel 1 (
-      echo [workbench] already running ^(PID !OLD_PID!^). Run stop.cmd first to restart.
+      echo [workbench] already running ^(PID !OLD_PID!^). Run restart.cmd to rebuild and restart ^(or stop.cmd then start.cmd^).
       goto :exit1
     )
   )
@@ -129,9 +129,18 @@ if not exist "%ROOT%\frontend\node_modules" (
   if not "!INSTALL_RC!"=="0" goto :fail
 )
 
-echo [workbench] building backend and frontend...
-call npm run build
-if errorlevel 1 goto :fail
+echo [workbench] building backend ^(tsc^)...
+call npm run build --prefix backend
+if errorlevel 1 (
+  echo [workbench] ERROR: backend build failed ^(tsc^).
+  goto :fail
+)
+echo [workbench] building frontend ^(vite^)...
+call npm run build --prefix frontend
+if errorlevel 1 (
+  echo [workbench] ERROR: frontend build failed ^(vite^).
+  goto :fail
+)
 
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%"
 

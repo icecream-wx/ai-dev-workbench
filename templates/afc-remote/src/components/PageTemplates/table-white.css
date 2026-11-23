@@ -1,0 +1,68 @@
+.el-table.pt-table-white {
+  --el-table-header-bg-color: #fff;
+  --el-table-tr-bg-color: #fff;
+  --el-table-bg-color: #fff;
+  --pt-table-white-text-color: #4b5563;
+  --el-table-text-color: var(--pt-table-white-text-color);
+  --table-text-color: var(--pt-table-white-text-color);
+  --el-table-header-text-color: #6b7280;
+  --el-table-border-color: #f3f4f6;
+  --el-table-row-hover-bg-color: rgba(248, 250, 252, .7);
+  --el-table-current-row-bg-color: #e8f3ff;
+  --el-color-primary: #0084ff;
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+.el-table.pt-table-white th.el-table__cell {
+  padding: 12px 0;
+  font-weight: 400;
+  background-color: var(--el-table-header-bg-color) !important;
+  color: var(--el-table-header-text-color);
+  border-top: 1px solid var(--el-table-border-color);
+}
+
+.el-table.pt-table-white .el-table__header th.el-table__cell,
+.el-table.pt-table-white .el-table__header th.el-table__cell > .cell,
+.el-table.pt-table-white .el-table__header th.el-table__cell > .cell span {
+  background-color: var(--el-table-header-bg-color) !important;
+  color: var(--el-table-header-text-color);
+  font-weight: 400;
+}
+
+.el-table.pt-table-white td.el-table__cell {
+  padding: 14px 0;
+  transition: background-color .15s ease;
+}
+
+.el-table.pt-table-white .el-table__body td.el-table__cell,
+.el-table.pt-table-white .el-table__body td.el-table__cell > .cell {
+  color: var(--pt-table-white-text-color);
+}
+
+.el-table.pt-table-white .el-table__cell .cell {
+  padding-right: 12px;
+  padding-left: 12px;
+  line-height: 16px;
+}
+
+.el-table.pt-table-white .el-link {
+  --el-link-text-color: #111827;
+  --el-link-hover-text-color: #0084ff;
+  font-size: inherit;
+  font-weight: 500;
+}
+
+.el-table.pt-table-white .el-checkbox {
+  --el-checkbox-input-height: 14px;
+  --el-checkbox-input-width: 14px;
+  --el-checkbox-input-border: 1px solid #d1d5db;
+  --el-checkbox-border-radius: 4px;
+}
+
+.el-table.pt-table-white.el-table--small th.el-table__cell,
+.el-table.pt-table-white.el-table--small td.el-table__cell {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+/* Modified by AI on 2026-11-12 14:10:03 */

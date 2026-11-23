@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-11-21T13:36:10.064Z",
+  "specHash": "sha256:a6496a823628cd809858b9fc0428d84a150a0145108f39bf82b5de6b8366917c",
+  "pageCount": 3,
+  "pack": {
+    "id": "supplier-management",
+    "name": "供应商管理模板",
+    "version": "1.0.0",
+    "revision": 0,
+    "pageCount": 3
+  },
+  "sources": [
+    "operations-management"
+  ],
+  "css": {
+    "sources": [
+      "operations-management"
+    ],
+    "totalRules": 212,
+    "rules": 212,
+    "deduped": 0,
+    "atRules": 1,
+    "conflicts": [],
+    "conflictDetails": []
+  },
+  "warnings": [],
+  "errors": []
+}

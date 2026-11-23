@@ -1,0 +1,69 @@
+{
+  "app": {
+    "id": "p77-dev-real",
+    "name": "P77 开发视图真实模型",
+    "status": "requirements",
+    "createdAt": "2026-11-23T03:00:00.245Z"
+  },
+  "session": {
+    "id": "307af128-d591-458f-894c-8a879ec7c50e",
+    "opencodeSessionId": "ses_df9a760c3ffeQPTWCqSezxPj9y",
+    "agent": "build",
+    "model": {
+      "providerID": "packycode-deepseek",
+      "id": "deepseek-flash"
+    },
+    "status": "active",
+    "title": "P77 开发视图真实模型 开发 · 11-23 11:00",
+    "note": null,
+    "view": "development",
+    "createdAt": "2026-11-23T03:00:00.985Z",
+    "updatedAt": "2026-11-23T03:00:00.985Z",
+    "lastActiveAt": null
+  },
+  "state": {
+    "status": "idle",
+    "startedAt": 1795402800960,
+    "endedAt": 1795402800960,
+    "elapsedMs": 0,
+    "context": {
+      "used": 0,
+      "limit": 1048576,
+      "percent": 0,
+      "level": "ok"
+    },
+    "stats": {
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "reasoning": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0
+      },
+      "cost": 0,
+      "toolCounts": {},
+      "toolTotal": 0,
+      "failedTools": 0,
+      "messageCount": 0,
+      "partial": false,
+      "steps": 0,
+      "stepsTruncated": false,
+      "droppedSteps": 0
+    },
+    "phase": {
+      "key": "run",
+      "label": "执行",
+      "startedAt": 1795402800960,
+      "history": []
+    },
+    "steps": [],
+    "messages": [],
+    "pending": {
+      "permissions": [],
+      "forms": []
+    }
+  },
+  "defaultPrompt": "请先阅读 AGENTS.md、docs/requirements/ 与 docs/design/ 下的设计参考：docs/design/design-system.json（应用设计系统/页面库）、docs/design/<MOD>/design.json（数据模型/页面契约）、design-brief.md、tokens.json、prototypes/*.png（模板风格截图；无显式契约的旧设计为线框）以及 docs/design/template/ 下的蓝图与样式。优先级：需求 > design-system/design.json 契约 > 蓝图（布局/组件） > design-brief/tokens（视觉变量） > PNG（模板风格截图）；冲突先报告，偏离必须说明，PNG 过期时不要盲从旧图。实现前先填写 docs/design/<MOD>/ui-check.md 的对照表（软门禁，不阻断），再从蓝图复制页面到 frontend/src/views/，保留结构/样式/组件并替换 mock/接口；使用 PageTemplates、宿主 pm-* 与 src/preferences/GlobalPreference.js，禁止自造 UI 替代模板。pm-* 由 AFCenter 宿主全局提供，不重复注册；tokens/PNG 只约束 Vue3 前端，EOS 后端不吃风格。完成后请总结：实现摘要、关键文件、页面与蓝图/契约对照结果、偏离与原因、如何运行、自测结果、未解决事项。所有面向用户的文字——回复、思考/进度说明、工具说明、汇报——一律使用中文；代码、命令、标识符、文件路径除外。\n本轮目标模块：MOD-001。",
+  "readOnly": false,
+  "view": "development"
+}

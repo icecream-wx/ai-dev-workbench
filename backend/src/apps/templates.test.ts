@@ -1,16 +1,8 @@
 /**
- * 创建应用选模板 + 模板解析（#7）
+ * 应用/模板 API：创建带模板、payload 解析、非法模板 400、模板删除回退、
+ * 模板同步/引用、模块文件 API、artifacts 空状态
  *
- * 覆盖：
- * - 创建应用写入 requirement_template_id / prototype_template_id；
- * - 未提供时为 null，读取回退默认；
- * - 首次需求文档/设计项目初始化使用应用默认；
- * - 非法/不存在/QA 模板 → 400 且不创建目录/登记；
- * - 切换需求/原型模板同步应用默认；
- * - 只读解析端点优先级（design-project > app-default > global-default）且不创建文档/项目；
- * - 模板被删除时回退默认，payload/解析不 500。
- *
- * 使用临时 SQLite + 临时 projects 目录；不调用模型、不启动 opencode。
+ * 使用临时 SQLite + 临时 projects；不调用模型、不启动 opencode。
  */
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
@@ -24,15 +16,7 @@ const root = fs.mkdtempSync(path.join(os.tmpdir(), 'workbench-app-templates-'))
 const projects = path.join(root, 'projects')
 process.env.RG_DATA_DIR = path.join(root, 'data')
 process.env.RG_PROJECTS_DIR = projects
-
-interface Setup {
-  db: typeof import('../db').db
-  doc: typeof import('../requirements/doc')
-  design: typeof import('../design/service')
-  requirementTemplates: typeof import('../requirements/templates')
-  prototypeTemplates: typeof import('../design/templates')
-  resolution: typeof import('./template-resolution')
-}
+process.env.OPENCODE_AUTO_START = 'false'
 
 interface ApiResult {
   status: number
@@ -41,23 +25,7 @@ interface ApiResult {
 
 let server: Server | null = null
 let base = ''
-let setupPromise: Promise<Setup> | null = null
-
-function setup(): Promise<Setup> {
-  if (setupPromise) return setupPromise
-  setupPromise = (async () => {
-    const dbModule = await import('../db')
-    return {
-      db: dbModule.db,
-      doc: await import('../requirements/doc'),
-      design: await import('../design/service'),
-      requirementTemplates: await import('../requirements/templates'),
-      prototypeTemplates: await import('../design/templates'),
-      resolution: await import('./template-resolution')
-    }
-  })()
-  return setupPromise
-}
+let dbModule: typeof import('../db').db | null = null
 
 async function request(method: string, apiPath: string, body?: unknown): Promise<ApiResult> {
   const res = await fetch(`${base}/api${apiPath}`, {
@@ -75,259 +43,236 @@ async function request(method: string, apiPath: string, body?: unknown): Promise
   return { status: res.status, data }
 }
 
-async function createApp(input: Record<string, unknown>): Promise<ApiResult> {
-  return request('POST', '/apps', input)
-}
-
-function appPayloadOf(result: ApiResult): Record<string, unknown> {
+function appOf(result: ApiResult): Record<string, unknown> {
   const app = (result.data ?? {}).app as Record<string, unknown> | undefined
   assert.ok(app, '响应里应有 app')
   return app
 }
 
 before(async () => {
-  const context = await setup()
+  dbModule = (await import('../db')).db
   const express = (await import('express')).default
   const { apps, appsErrorHandler } = await import('./routes')
+  const { requirementTemplateRoutes, templateRoutes, templateErrorHandler } = await import('../templates/routes')
 
   const app = express()
   app.use(express.json({ limit: '8mb' }))
   app.use('/api/apps', apps)
   app.use('/api/apps', appsErrorHandler)
+  app.use('/api/requirement-templates', requirementTemplateRoutes)
+  app.use('/api/requirement-templates', templateErrorHandler)
+  app.use('/api/templates', templateRoutes)
+  app.use('/api/templates', templateErrorHandler)
 
   server = app.listen(0)
   await new Promise<void>(resolve => server?.once('listening', () => resolve()))
   const address = server.address() as AddressInfo
   base = `http://127.0.0.1:${address.port}`
-  assert.ok(context.db)
 })
 
 after(async () => {
   server?.close()
-  if (setupPromise) {
-    const { db } = await setupPromise
-    try {
-      db.close()
-    } catch {
-      // 已关闭
-    }
-  }
+  dbModule?.close()
   fs.rmSync(root, { recursive: true, force: true })
 })
 
-test('创建应用带两个模板：写入列 + payload 解析', async () => {
-  const context = await setup()
-  const result = await createApp({
+test('创建应用带模板：写入列 + payload 解析 + 工作区结构', async () => {
+  const result = await request('POST', '/apps', {
     id: 'tpl-app',
     name: '模板应用',
-    requirementTemplateId: 'builtin-prd-lite',
-    prototypeTemplateId: 'builtin-prototype-minimal'
+    requirementTemplateId: 'builtin-prd-lite'
   })
   assert.equal(result.status, 201)
-  const app = appPayloadOf(result)
+  const app = appOf(result)
   assert.equal(app.requirementTemplateId, 'builtin-prd-lite')
   assert.equal(app.requirementTemplateName, '精简 PRD')
-  assert.equal(app.prototypeTemplateId, 'builtin-prototype-minimal')
-  assert.equal(app.prototypeTemplateName, '简洁后台')
-  // 尚无设计项目 → 应用默认
-  assert.equal(app.prototypeTemplateSource, 'app-default')
-
-  const row = context.db
-    .prepare('SELECT requirement_template_id, prototype_template_id FROM apps WHERE id = ?')
-    .get('tpl-app') as { requirement_template_id: string | null; prototype_template_id: string | null }
-  assert.equal(row.requirement_template_id, 'builtin-prd-lite')
-  assert.equal(row.prototype_template_id, 'builtin-prototype-minimal')
-
-  // GET /apps/:id 与创建响应一致
-  const detail = await request('GET', '/apps/tpl-app')
-  assert.equal(detail.status, 200)
-  assert.equal(appPayloadOf(detail).requirementTemplateId, 'builtin-prd-lite')
-  assert.ok(fs.existsSync(path.join(projects, 'tpl-app')))
-})
-
-test('未带模板：列保存 null，payload/解析回退默认', async () => {
-  const context = await setup()
-  const result = await createApp({ id: 'default-app', name: '默认模板应用' })
-  assert.equal(result.status, 201)
-  const app = appPayloadOf(result)
-  assert.equal(app.requirementTemplateId, 'builtin-prd')
-  assert.equal(app.prototypeTemplateId, 'builtin-prototype-enterprise')
-  assert.equal(app.prototypeTemplateSource, 'global-default')
-
-  const row = context.db
-    .prepare('SELECT requirement_template_id, prototype_template_id FROM apps WHERE id = ?')
-    .get('default-app') as { requirement_template_id: string | null; prototype_template_id: string | null }
-  assert.equal(row.requirement_template_id, null)
-  assert.equal(row.prototype_template_id, null)
-
-  const doc = context.doc.ensureRequirementDoc('default-app')
-  assert.equal(doc.doc.templateId, 'builtin-prd')
-  const project = context.design.ensureDesignProject('default-app')
-  assert.equal(project.prototype_template_id, 'builtin-prototype-enterprise')
-})
-
-test('非默认内置模板：需求文档与设计项目按应用默认初始化，已有对象保持模板', async () => {
-  const context = await setup()
-  const doc = context.doc.ensureRequirementDoc('tpl-app')
-  assert.equal(doc.doc.templateId, 'builtin-prd-lite')
-  assert.equal(doc.template.name, '精简 PRD')
-  assert.deepEqual(
-    doc.sections.map(section => section.sectionKey),
-    doc.template.sections.map(section => section.id)
+  assert.equal((app.designSystem as { applicationType: { id: string } }).applicationType.id, 'enterprise-application-platform')
+  assert.equal(app.prototypeTemplateId, undefined, 'payload 不应再有 prototypeTemplateId')
+  assert.equal(app.prototypeTemplateName, undefined, 'payload 不应再有 prototypeTemplateName')
+  assert.equal(app.legacyPrototypeTemplate, undefined, 'payload 不应再有 legacyPrototypeTemplate')
+  assert.ok(fs.existsSync(path.join(projects, 'tpl-app', '.opencode', 'skills', 'adw-requirements-document', 'SKILL.md')))
+  // P6-2：被选中的需求模板生成一个模板 skill
+  assert.ok(
+    fs.existsSync(
+      path.join(projects, 'tpl-app', '.opencode', 'skills', 'adw-template-req-builtin-prd-lite', 'SKILL.md')
+    )
+  )
+  // P7-5a：新应用按设计系统生成设计模板 skill；不再生成旧原型模板 skill
+  assert.ok(
+    fs.existsSync(
+      path.join(
+        projects,
+        'tpl-app',
+        '.opencode',
+        'skills',
+        'adw-template-proto-enterprise-application-platform',
+        'assets',
+        'design-system.json'
+      )
+    )
+  )
+  assert.equal(
+    fs.existsSync(
+      path.join(projects, 'tpl-app', '.opencode', 'skills', 'adw-template-proto-builtin-prototype-enterprise')
+    ),
+    false
   )
 
-  const project = context.design.ensureDesignProject('tpl-app')
-  assert.equal(project.prototype_template_id, 'builtin-prototype-minimal')
+  const detail = await request('GET', '/apps/tpl-app')
+  assert.equal(detail.status, 200)
+  assert.equal(appOf(detail).requirementTemplateId, 'builtin-prd-lite')
 
-  // 已有文档/项目不被应用默认覆盖（即使应用默认已改）
-  context.db.prepare("UPDATE apps SET requirement_template_id = 'builtin-prd', prototype_template_id = 'builtin-prototype-enterprise' WHERE id = 'tpl-app'").run()
-  assert.equal(context.doc.ensureRequirementDoc('tpl-app').doc.templateId, 'builtin-prd-lite')
-  assert.equal(context.design.ensureDesignProject('tpl-app').prototype_template_id, 'builtin-prototype-minimal')
-  assert.equal(context.resolution.resolveAppTemplates('tpl-app').requirement.id, 'builtin-prd-lite')
-  assert.equal(context.resolution.resolveAppTemplates('tpl-app').prototype.id, 'builtin-prototype-minimal')
-  assert.equal(context.resolution.resolveAppTemplates('tpl-app').prototypeSource, 'design-project')
+  const templates = await request('GET', '/apps/tpl-app/templates')
+  assert.deepEqual((templates.data ?? {}).requirement, { id: 'builtin-prd-lite', name: '精简 PRD' })
+  assert.equal((templates.data ?? {}).prototype, undefined, 'templates 响应不应再有 prototype')
+})
+
+test('未带模板：需求列保存 null，payload 回退默认；设计系统始终解析', async () => {
+  const result = await request('POST', '/apps', { id: 'default-app', name: '默认模板应用' })
+  assert.equal(result.status, 201)
+  const app = appOf(result)
+  assert.equal(app.requirementTemplateId, 'builtin-prd')
+  const design = app.designSystem as { pack: { id: string }; applicationType: { id: string }; style: { id: string } }
+  assert.equal(design.pack.id, 'afcenter-app-templates-v1')
+  assert.equal(design.applicationType.id, 'enterprise-application-platform')
+  assert.equal(design.style.id, 'platform-blue')
+  const row = dbModule?.prepare('SELECT requirement_template_id FROM apps WHERE id = ?').get('default-app') as
+    | { requirement_template_id: string | null }
+    | undefined
+  assert.equal(row?.requirement_template_id, null)
+  const columns = (dbModule?.prepare('PRAGMA table_info(apps)').all() as Array<{ name: string }>).map(item => item.name)
+  assert.equal(columns.includes('prototype_template_id'), false, 'apps 不应再有 prototype_template_id 列')
 })
 
 test('非法 / QA / 不存在模板：400 且不创建目录与登记', async () => {
-  const context = await setup()
-  const qa = await createApp({ id: 'qa-app', name: 'QA 模板应用', requirementTemplateId: 'builtin-qa-test-plan' })
+  const qa = await request('POST', '/apps', { id: 'qa-app', name: 'QA', requirementTemplateId: 'builtin-qa-test-plan' })
   assert.equal(qa.status, 400)
-  assert.match(String((qa.data ?? {}).error ?? ''), /阶段|不能用于需求文档/)
+  assert.match(String((qa.data ?? {}).error ?? ''), /不能用于需求文档/)
 
-  const missingRequirement = await createApp({
+  const missingRequirement = await request('POST', '/apps', {
     id: 'missing-req-app',
     name: '不存在需求模板',
     requirementTemplateId: 'tpl-does-not-exist'
   })
   assert.equal(missingRequirement.status, 400)
 
-  const missingPrototype = await createApp({
-    id: 'missing-proto-app',
-    name: '不存在原型模板',
-    prototypeTemplateId: 'proto-does-not-exist'
-  })
-  assert.equal(missingPrototype.status, 400)
-
-  for (const id of ['qa-app', 'missing-req-app', 'missing-proto-app']) {
-    const row = context.db.prepare('SELECT 1 FROM apps WHERE id = ?').get(id)
-    assert.equal(row, undefined, `${id} 不应登记`)
+  for (const id of ['qa-app', 'missing-req-app']) {
     assert.equal(fs.existsSync(path.join(projects, id)), false, `${id} 不应创建目录`)
+    const row = dbModule?.prepare('SELECT 1 FROM apps WHERE id = ?').get(id)
+    assert.equal(row, undefined, `${id} 不应登记`)
   }
 })
 
-test('切换需求/原型模板同步应用默认，解析跟随设计项目', async () => {
-  const context = await setup()
-  context.doc.switchDocTemplate('tpl-app', 'builtin-prd')
-  let row = context.db
-    .prepare('SELECT requirement_template_id FROM apps WHERE id = ?')
-    .get('tpl-app') as { requirement_template_id: string | null }
-  assert.equal(row.requirement_template_id, 'builtin-prd')
-
-  const switched = context.design.switchProtoTemplate('tpl-app', 'builtin-prototype-enterprise')
-  assert.equal(switched.template.id, 'builtin-prototype-enterprise')
-  row = context.db
-    .prepare('SELECT prototype_template_id FROM apps WHERE id = ?')
-    .get('tpl-app') as { prototype_template_id: string | null }
-  assert.equal(row.prototype_template_id, 'builtin-prototype-enterprise')
-
-  const resolved = context.resolution.resolveAppTemplates('tpl-app')
-  assert.equal(resolved.prototype.id, 'builtin-prototype-enterprise')
-  assert.equal(resolved.prototypeSource, 'design-project')
-  const detail = await request('GET', '/apps/tpl-app')
-  assert.equal(appPayloadOf(detail).prototypeTemplateId, 'builtin-prototype-enterprise')
-  assert.equal(appPayloadOf(detail).prototypeTemplateSource, 'design-project')
-  assert.equal(appPayloadOf(detail).requirementTemplateId, 'builtin-prd')
+test('旧客户端带 prototypeTemplateId：忽略并 warning，不写入任何列', async () => {
+  const ignored = await request('POST', '/apps', {
+    id: 'ignored-proto-app',
+    name: '忽略原型模板',
+    prototypeTemplateId: 'builtin-prototype-enterprise'
+  })
+  assert.equal(ignored.status, 201)
+  assert.ok(
+    ((ignored.data?.warnings as string[]) ?? []).some(line => line.includes('prototypeTemplateId')),
+    '应提示已忽略 prototypeTemplateId'
+  )
+  assert.equal(appOf(ignored).prototypeTemplateId, undefined)
+  assert.equal(
+    fs.existsSync(path.join(projects, 'ignored-proto-app', '.opencode', 'skills', 'adw-template-proto-builtin-prototype-enterprise')),
+    false
+  )
+  assert.equal((await request('DELETE', '/apps/ignored-proto-app?confirm=true')).status, 200)
 })
 
-test('解析端点优先级：设计项目 > 应用默认 > 全局默认，且不创建项目/文档', async () => {
-  const context = await setup()
-  const created = await createApp({
-    id: 'resolve-app',
-    name: '解析优先级应用',
-    prototypeTemplateId: 'builtin-prototype-minimal'
-  })
+test('模块文件 API：新建/改名；artifacts 聚合', async () => {
+  const created = await request('POST', '/apps/tpl-app/requirements-modules', { title: '商品管理' })
   assert.equal(created.status, 201)
+  const module = (created.data ?? {}).module as { key: string; file: string }
+  assert.equal(module.key, 'MOD-001')
+  assert.ok(fs.existsSync(path.join(projects, 'tpl-app', module.file)))
 
-  // 无设计项目/需求文档：只读，不创建
-  const beforeCounts = (): { projects: number; docs: number } => ({
-    projects: (context.db.prepare('SELECT COUNT(*) AS c FROM app_design_projects WHERE app_id = ?').get('resolve-app') as { c: number }).c,
-    docs: (context.db.prepare('SELECT COUNT(*) AS c FROM app_requirement_docs WHERE app_id = ?').get('resolve-app') as { c: number }).c
-  })
-  assert.deepEqual(beforeCounts(), { projects: 0, docs: 0 })
+  const list = await request('GET', '/apps/tpl-app/requirements-modules')
+  assert.equal(list.status, 200)
+  assert.equal((list.data?.modules as unknown[]).length, 1)
 
-  const appDefault = await request('GET', '/apps/resolve-app/templates')
-  assert.equal(appDefault.status, 200)
-  const payload = appDefault.data ?? {}
-  assert.deepEqual(payload.requirement, { id: 'builtin-prd', name: '工作台标准 PRD' })
-  assert.deepEqual(payload.prototype, { id: 'builtin-prototype-minimal', name: '简洁后台' })
-  assert.equal(payload.prototypeSource, 'app-default')
-  assert.deepEqual(beforeCounts(), { projects: 0, docs: 0 })
+  const renamed = await request('PATCH', '/apps/tpl-app/requirements-modules/MOD-001', { title: '商品中心', order: 1 })
+  assert.equal(renamed.status, 200)
 
-  // 设计项目存在 → design-project 优先（即使应用默认不同）
-  context.design.ensureDesignProject('resolve-app')
-  context.db.prepare("UPDATE apps SET prototype_template_id = 'builtin-prototype-enterprise' WHERE id = 'resolve-app'").run()
-  const designProject = (await request('GET', '/apps/resolve-app/templates')).data ?? {}
-  assert.deepEqual(designProject.prototype, { id: 'builtin-prototype-minimal', name: '简洁后台' })
-  assert.equal(designProject.prototypeSource, 'design-project')
+  const artifacts = await request('GET', '/apps/tpl-app/artifacts')
+  assert.equal(artifacts.status, 200)
+  const modules = artifacts.data?.modules as Array<{ key: string; title: string; sections: unknown[] }>
+  assert.equal(modules.length, 1)
+  assert.equal(modules[0].title, '商品中心')
+  assert.equal(modules[0].sections.length, 6)
+  assert.deepEqual(artifacts.data?.errors, [])
+  assert.deepEqual(artifacts.data?.designs, [])
 
-  // 删除设计项目 → 应用默认
-  context.db.prepare('DELETE FROM app_design_projects WHERE app_id = ?').run('resolve-app')
-  const afterDelete = (await request('GET', '/apps/resolve-app/templates')).data ?? {}
-  assert.deepEqual(afterDelete.prototype, { id: 'builtin-prototype-enterprise', name: '企业级专业管理' })
-  assert.equal(afterDelete.prototypeSource, 'app-default')
+  const unknown = await request('PATCH', '/apps/tpl-app/requirements-modules/MOD-999', { title: 'x' })
+  assert.equal(unknown.status, 404)
 
-  // 应用默认也失效 → 全局默认
-  context.db.prepare('UPDATE apps SET prototype_template_id = NULL WHERE id = ?').run('resolve-app')
-  const globalDefault = (await request('GET', '/apps/resolve-app/templates')).data ?? {}
-  assert.deepEqual(globalDefault.prototype, { id: 'builtin-prototype-enterprise', name: '企业级专业管理' })
-  assert.equal(globalDefault.prototypeSource, 'global-default')
-
-  // 需求：已有文档以文档为准（应用默认此时为 null）
-  context.doc.switchDocTemplate('resolve-app', 'builtin-prd-lite')
-  const withDoc = (await request('GET', '/apps/resolve-app/templates')).data ?? {}
-  assert.deepEqual(withDoc.requirement, { id: 'builtin-prd-lite', name: '精简 PRD' })
-
-  // 未知应用 404
-  assert.equal((await request('GET', '/apps/not-found-app/templates')).status, 404)
+  const chatWithoutText = await request('POST', '/apps/tpl-app/chat', { view: 'requirements', text: '' })
+  assert.equal(chatWithoutText.status, 400)
 })
 
-test('模板被删除/无效：回退默认，不 500', async () => {
-  const context = await setup()
-  const reqTemplate = context.requirementTemplates.createTemplate({
+test('模板同步/引用接口：sync 幂等、usage 列出模块引用', async () => {
+  const custom = await request('POST', '/requirement-templates', {
+    name: '接口模板',
+    stage: 'requirements',
+    prompt: '写需求',
+    sections: [{ id: 'goals', title: '目标', level: 2, kind: 'markdown', guidance: '', required: true }]
+  })
+  assert.equal(custom.status, 201)
+  const id = ((custom.data ?? {}).template as { id: string }).id
+
+  assert.equal((await request('POST', '/apps', { id: 'sync-app', name: '同步应用', requirementTemplateId: id })).status, 201)
+  await request('POST', '/apps/sync-app/requirements-modules', { title: '模块', templateId: id })
+
+  const sync1 = await request('POST', `/templates/requirement/${id}/sync`)
+  assert.equal(sync1.status, 200)
+  assert.equal(sync1.data?.templateSkill, `adw-template-req-${id}`)
+  assert.ok(Array.isArray(sync1.data?.warnings))
+  assert.ok(
+    fs.existsSync(path.join(projects, 'sync-app', '.opencode', 'skills', `adw-template-req-${id}`, 'SKILL.md'))
+  )
+  const sync2 = await request('POST', `/templates/requirement/${id}/sync`)
+  assert.deepEqual(sync1.data?.apps, sync2.data?.apps)
+
+  const usage = await request('GET', `/templates/requirement/${id}/usage`)
+  assert.equal(usage.status, 200)
+  assert.equal((usage.data?.apps as unknown[]).length, 1)
+
+  const blocked = await request('DELETE', `/requirement-templates/${id}`)
+  assert.equal(blocked.status, 409)
+  assert.match(String((blocked.data ?? {}).error ?? ''), /仍被 1 个应用/)
+
+  const badKind = await request('POST', '/templates/nope/x/sync')
+  assert.equal(badKind.status, 400)
+  const missing = await request('POST', '/templates/requirement/missing-template/sync')
+  assert.equal(missing.status, 404)
+})
+
+test('应用默认模板被删除：解析回退默认，不 500', async () => {
+  const custom = await request('POST', '/requirement-templates', {
     name: '临时需求模板',
     stage: 'requirements',
-    category: '测试',
-    description: '',
     prompt: '测试提示词',
     sections: [{ id: 'overview', title: '概述', level: 2, kind: 'markdown', guidance: '', required: true }]
   })
-  const protoTemplate = context.prototypeTemplates.createPrototypeTemplate({ name: '临时原型模板', prompt: '测试提示词' })
+  const id = ((custom.data ?? {}).template as { id: string }).id
+  assert.equal(
+    (await request('POST', '/apps', { id: 'fallback-app', name: '回退应用', requirementTemplateId: id })).status,
+    201
+  )
 
-  const created = await createApp({
-    id: 'fallback-app',
-    name: '回退应用',
-    requirementTemplateId: reqTemplate.id,
-    prototypeTemplateId: protoTemplate.id
-  })
-  assert.equal(created.status, 201)
-  assert.equal(appPayloadOf(created).requirementTemplateId, reqTemplate.id)
-
-  // 应用默认引用不阻塞删除模板（解析时回退）
-  context.requirementTemplates.deleteTemplate(reqTemplate.id)
-  context.prototypeTemplates.deletePrototypeTemplate(protoTemplate.id)
-
+  // 无模块引用 → 允许删除；应用默认值读取时回退
+  assert.equal((await request('DELETE', `/requirement-templates/${id}`)).status, 200)
   const detail = await request('GET', '/apps/fallback-app')
   assert.equal(detail.status, 200)
-  const app = appPayloadOf(detail)
-  assert.equal(app.requirementTemplateId, 'builtin-prd')
-  assert.equal(app.requirementTemplateName, '工作台标准 PRD')
-  assert.equal(app.prototypeTemplateId, 'builtin-prototype-enterprise')
-  assert.equal(app.prototypeTemplateSource, 'global-default')
+  assert.equal(appOf(detail).requirementTemplateId, 'builtin-prd')
+})
 
-  const resolved = (await request('GET', '/apps/fallback-app/templates')).data ?? {}
-  assert.deepEqual(resolved.requirement, { id: 'builtin-prd', name: '工作台标准 PRD' })
-
-  // 首次初始化同样回退默认
-  assert.equal(context.doc.ensureRequirementDoc('fallback-app').doc.templateId, 'builtin-prd')
-  assert.equal(context.design.ensureDesignProject('fallback-app').prototype_template_id, 'builtin-prototype-enterprise')
+test('删除应用：删除登记、会话与目录', async () => {
+  const before = await request('DELETE', '/apps/sync-app')
+  assert.equal(before.status, 400)
+  assert.equal((await request('DELETE', '/apps/sync-app?confirm=true')).status, 200)
+  assert.equal(fs.existsSync(path.join(projects, 'sync-app')), false)
+  assert.equal(dbModule?.prepare('SELECT 1 FROM apps WHERE id = ?').get('sync-app'), undefined)
 })

@@ -1,0 +1,1722 @@
+[
+  {
+    "at": "2026-11-23T03:00:01.106Z",
+    "elapsedMs": 97,
+    "status": "running",
+    "messageCount": 1,
+    "toolTotal": 0,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "执行"
+  },
+  {
+    "at": "2026-11-23T03:00:04.123Z",
+    "elapsedMs": 3114,
+    "status": "running",
+    "messageCount": 3,
+    "toolTotal": 4,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:07.149Z",
+    "elapsedMs": 6140,
+    "status": "running",
+    "messageCount": 4,
+    "toolTotal": 8,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:10.178Z",
+    "elapsedMs": 9169,
+    "status": "running",
+    "messageCount": 5,
+    "toolTotal": 12,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:13.212Z",
+    "elapsedMs": 12203,
+    "status": "running",
+    "messageCount": 6,
+    "toolTotal": 16,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:16.241Z",
+    "elapsedMs": 15232,
+    "status": "running",
+    "messageCount": 7,
+    "toolTotal": 20,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:19.265Z",
+    "elapsedMs": 18256,
+    "status": "running",
+    "messageCount": 8,
+    "toolTotal": 24,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:22.292Z",
+    "elapsedMs": 21283,
+    "status": "running",
+    "messageCount": 9,
+    "toolTotal": 26,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:25.324Z",
+    "elapsedMs": 24315,
+    "status": "running",
+    "messageCount": 10,
+    "toolTotal": 29,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:28.362Z",
+    "elapsedMs": 27353,
+    "status": "running",
+    "messageCount": 11,
+    "toolTotal": 31,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:31.387Z",
+    "elapsedMs": 30378,
+    "status": "running",
+    "messageCount": 11,
+    "toolTotal": 32,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:34.422Z",
+    "elapsedMs": 33414,
+    "status": "running",
+    "messageCount": 12,
+    "toolTotal": 33,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:37.445Z",
+    "elapsedMs": 36436,
+    "status": "running",
+    "messageCount": 12,
+    "toolTotal": 33,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:40.473Z",
+    "elapsedMs": 39464,
+    "status": "running",
+    "messageCount": 12,
+    "toolTotal": 33,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:43.513Z",
+    "elapsedMs": 42504,
+    "status": "running",
+    "messageCount": 12,
+    "toolTotal": 33,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:46.548Z",
+    "elapsedMs": 45539,
+    "status": "running",
+    "messageCount": 12,
+    "toolTotal": 33,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:49.574Z",
+    "elapsedMs": 48565,
+    "status": "running",
+    "messageCount": 12,
+    "toolTotal": 33,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:52.610Z",
+    "elapsedMs": 51601,
+    "status": "running",
+    "messageCount": 13,
+    "toolTotal": 35,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:55.648Z",
+    "elapsedMs": 54639,
+    "status": "running",
+    "messageCount": 13,
+    "toolTotal": 35,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:00:58.682Z",
+    "elapsedMs": 57673,
+    "status": "running",
+    "messageCount": 13,
+    "toolTotal": 35,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:01.722Z",
+    "elapsedMs": 60713,
+    "status": "running",
+    "messageCount": 13,
+    "toolTotal": 35,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:04.767Z",
+    "elapsedMs": 63758,
+    "status": "running",
+    "messageCount": 13,
+    "toolTotal": 35,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:07.798Z",
+    "elapsedMs": 66789,
+    "status": "running",
+    "messageCount": 13,
+    "toolTotal": 35,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:10.831Z",
+    "elapsedMs": 69822,
+    "status": "running",
+    "messageCount": 13,
+    "toolTotal": 35,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:13.858Z",
+    "elapsedMs": 72849,
+    "status": "running",
+    "messageCount": 13,
+    "toolTotal": 35,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:16.906Z",
+    "elapsedMs": 75897,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:19.940Z",
+    "elapsedMs": 78931,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:22.975Z",
+    "elapsedMs": 81966,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:26.008Z",
+    "elapsedMs": 84999,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:29.039Z",
+    "elapsedMs": 88030,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:32.070Z",
+    "elapsedMs": 91061,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:35.108Z",
+    "elapsedMs": 94099,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:38.148Z",
+    "elapsedMs": 97139,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:41.174Z",
+    "elapsedMs": 100165,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:44.209Z",
+    "elapsedMs": 103200,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:47.238Z",
+    "elapsedMs": 106229,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:50.284Z",
+    "elapsedMs": 109275,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:53.317Z",
+    "elapsedMs": 112308,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 37,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:56.356Z",
+    "elapsedMs": 115347,
+    "status": "running",
+    "messageCount": 14,
+    "toolTotal": 38,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:01:59.391Z",
+    "elapsedMs": 118382,
+    "status": "running",
+    "messageCount": 15,
+    "toolTotal": 38,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:02.430Z",
+    "elapsedMs": 121421,
+    "status": "running",
+    "messageCount": 15,
+    "toolTotal": 40,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:05.473Z",
+    "elapsedMs": 124464,
+    "status": "running",
+    "messageCount": 17,
+    "toolTotal": 42,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:08.514Z",
+    "elapsedMs": 127505,
+    "status": "running",
+    "messageCount": 18,
+    "toolTotal": 43,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:11.551Z",
+    "elapsedMs": 130542,
+    "status": "running",
+    "messageCount": 19,
+    "toolTotal": 44,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:14.594Z",
+    "elapsedMs": 133585,
+    "status": "running",
+    "messageCount": 19,
+    "toolTotal": 44,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:17.635Z",
+    "elapsedMs": 136626,
+    "status": "running",
+    "messageCount": 19,
+    "toolTotal": 44,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:20.675Z",
+    "elapsedMs": 139666,
+    "status": "running",
+    "messageCount": 19,
+    "toolTotal": 44,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:23.708Z",
+    "elapsedMs": 142699,
+    "status": "running",
+    "messageCount": 19,
+    "toolTotal": 44,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:26.737Z",
+    "elapsedMs": 145728,
+    "status": "running",
+    "messageCount": 19,
+    "toolTotal": 44,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:29.767Z",
+    "elapsedMs": 148758,
+    "status": "running",
+    "messageCount": 19,
+    "toolTotal": 44,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:32.800Z",
+    "elapsedMs": 151791,
+    "status": "running",
+    "messageCount": 19,
+    "toolTotal": 44,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:35.841Z",
+    "elapsedMs": 154832,
+    "status": "running",
+    "messageCount": 19,
+    "toolTotal": 44,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:38.887Z",
+    "elapsedMs": 157878,
+    "status": "running",
+    "messageCount": 19,
+    "toolTotal": 46,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:41.927Z",
+    "elapsedMs": 160918,
+    "status": "running",
+    "messageCount": 20,
+    "toolTotal": 47,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "需求理解"
+  },
+  {
+    "at": "2026-11-23T03:02:44.959Z",
+    "elapsedMs": 163950,
+    "status": "running",
+    "messageCount": 21,
+    "toolTotal": 48,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:02:47.999Z",
+    "elapsedMs": 166990,
+    "status": "running",
+    "messageCount": 21,
+    "toolTotal": 48,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:02:51.037Z",
+    "elapsedMs": 170028,
+    "status": "running",
+    "messageCount": 22,
+    "toolTotal": 48,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:02:54.070Z",
+    "elapsedMs": 173061,
+    "status": "running",
+    "messageCount": 22,
+    "toolTotal": 48,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:02:57.106Z",
+    "elapsedMs": 176097,
+    "status": "running",
+    "messageCount": 22,
+    "toolTotal": 48,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:00.144Z",
+    "elapsedMs": 179135,
+    "status": "running",
+    "messageCount": 22,
+    "toolTotal": 48,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:03.185Z",
+    "elapsedMs": 182176,
+    "status": "running",
+    "messageCount": 22,
+    "toolTotal": 48,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:06.225Z",
+    "elapsedMs": 185216,
+    "status": "running",
+    "messageCount": 22,
+    "toolTotal": 48,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:09.257Z",
+    "elapsedMs": 188248,
+    "status": "running",
+    "messageCount": 22,
+    "toolTotal": 48,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:12.292Z",
+    "elapsedMs": 191283,
+    "status": "running",
+    "messageCount": 22,
+    "toolTotal": 50,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:15.322Z",
+    "elapsedMs": 194313,
+    "status": "running",
+    "messageCount": 23,
+    "toolTotal": 51,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:18.376Z",
+    "elapsedMs": 197367,
+    "status": "running",
+    "messageCount": 24,
+    "toolTotal": 51,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:21.408Z",
+    "elapsedMs": 200399,
+    "status": "running",
+    "messageCount": 24,
+    "toolTotal": 52,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:24.450Z",
+    "elapsedMs": 203441,
+    "status": "running",
+    "messageCount": 24,
+    "toolTotal": 52,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:27.498Z",
+    "elapsedMs": 206489,
+    "status": "running",
+    "messageCount": 24,
+    "toolTotal": 52,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:30.533Z",
+    "elapsedMs": 209524,
+    "status": "running",
+    "messageCount": 24,
+    "toolTotal": 52,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:33.571Z",
+    "elapsedMs": 212562,
+    "status": "running",
+    "messageCount": 24,
+    "toolTotal": 52,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:36.605Z",
+    "elapsedMs": 215596,
+    "status": "running",
+    "messageCount": 25,
+    "toolTotal": 52,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:39.643Z",
+    "elapsedMs": 218634,
+    "status": "running",
+    "messageCount": 25,
+    "toolTotal": 52,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:42.681Z",
+    "elapsedMs": 221672,
+    "status": "running",
+    "messageCount": 25,
+    "toolTotal": 52,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:45.716Z",
+    "elapsedMs": 224707,
+    "status": "running",
+    "messageCount": 25,
+    "toolTotal": 53,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:48.756Z",
+    "elapsedMs": 227747,
+    "status": "running",
+    "messageCount": 25,
+    "toolTotal": 53,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:51.793Z",
+    "elapsedMs": 230784,
+    "status": "running",
+    "messageCount": 26,
+    "toolTotal": 53,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:54.834Z",
+    "elapsedMs": 233825,
+    "status": "running",
+    "messageCount": 27,
+    "toolTotal": 55,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:03:57.880Z",
+    "elapsedMs": 236871,
+    "status": "running",
+    "messageCount": 28,
+    "toolTotal": 56,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:00.915Z",
+    "elapsedMs": 239906,
+    "status": "running",
+    "messageCount": 28,
+    "toolTotal": 56,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:03.969Z",
+    "elapsedMs": 242960,
+    "status": "running",
+    "messageCount": 28,
+    "toolTotal": 56,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:07.014Z",
+    "elapsedMs": 246005,
+    "status": "running",
+    "messageCount": 28,
+    "toolTotal": 56,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:10.058Z",
+    "elapsedMs": 249049,
+    "status": "running",
+    "messageCount": 29,
+    "toolTotal": 57,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:13.094Z",
+    "elapsedMs": 252085,
+    "status": "running",
+    "messageCount": 29,
+    "toolTotal": 59,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:16.126Z",
+    "elapsedMs": 255117,
+    "status": "running",
+    "messageCount": 30,
+    "toolTotal": 59,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:19.178Z",
+    "elapsedMs": 258169,
+    "status": "running",
+    "messageCount": 31,
+    "toolTotal": 60,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:22.234Z",
+    "elapsedMs": 261225,
+    "status": "running",
+    "messageCount": 32,
+    "toolTotal": 61,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:25.283Z",
+    "elapsedMs": 264274,
+    "status": "running",
+    "messageCount": 33,
+    "toolTotal": 62,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:28.323Z",
+    "elapsedMs": 267314,
+    "status": "running",
+    "messageCount": 33,
+    "toolTotal": 64,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:31.360Z",
+    "elapsedMs": 270351,
+    "status": "running",
+    "messageCount": 34,
+    "toolTotal": 65,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:34.404Z",
+    "elapsedMs": 273395,
+    "status": "running",
+    "messageCount": 35,
+    "toolTotal": 66,
+    "failedTools": 0,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:37.441Z",
+    "elapsedMs": 276432,
+    "status": "running",
+    "messageCount": 36,
+    "toolTotal": 67,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:40.491Z",
+    "elapsedMs": 279482,
+    "status": "running",
+    "messageCount": 37,
+    "toolTotal": 67,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:43.534Z",
+    "elapsedMs": 282525,
+    "status": "running",
+    "messageCount": 38,
+    "toolTotal": 68,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:46.580Z",
+    "elapsedMs": 285571,
+    "status": "running",
+    "messageCount": 38,
+    "toolTotal": 68,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:49.631Z",
+    "elapsedMs": 288622,
+    "status": "running",
+    "messageCount": 38,
+    "toolTotal": 69,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:52.668Z",
+    "elapsedMs": 291659,
+    "status": "running",
+    "messageCount": 38,
+    "toolTotal": 69,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:55.707Z",
+    "elapsedMs": 294698,
+    "status": "running",
+    "messageCount": 39,
+    "toolTotal": 70,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:04:58.757Z",
+    "elapsedMs": 297748,
+    "status": "running",
+    "messageCount": 40,
+    "toolTotal": 70,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:01.808Z",
+    "elapsedMs": 300799,
+    "status": "running",
+    "messageCount": 40,
+    "toolTotal": 70,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:04.859Z",
+    "elapsedMs": 303850,
+    "status": "running",
+    "messageCount": 40,
+    "toolTotal": 70,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:07.894Z",
+    "elapsedMs": 306885,
+    "status": "running",
+    "messageCount": 40,
+    "toolTotal": 70,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:10.931Z",
+    "elapsedMs": 309922,
+    "status": "running",
+    "messageCount": 40,
+    "toolTotal": 70,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:13.977Z",
+    "elapsedMs": 312968,
+    "status": "running",
+    "messageCount": 40,
+    "toolTotal": 70,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:17.023Z",
+    "elapsedMs": 316014,
+    "status": "running",
+    "messageCount": 40,
+    "toolTotal": 70,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:20.068Z",
+    "elapsedMs": 319059,
+    "status": "running",
+    "messageCount": 41,
+    "toolTotal": 71,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:23.121Z",
+    "elapsedMs": 322112,
+    "status": "running",
+    "messageCount": 41,
+    "toolTotal": 71,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:26.170Z",
+    "elapsedMs": 325161,
+    "status": "running",
+    "messageCount": 41,
+    "toolTotal": 71,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:29.212Z",
+    "elapsedMs": 328203,
+    "status": "running",
+    "messageCount": 42,
+    "toolTotal": 73,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:32.252Z",
+    "elapsedMs": 331243,
+    "status": "running",
+    "messageCount": 42,
+    "toolTotal": 73,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:35.304Z",
+    "elapsedMs": 334295,
+    "status": "running",
+    "messageCount": 42,
+    "toolTotal": 73,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:38.355Z",
+    "elapsedMs": 337346,
+    "status": "running",
+    "messageCount": 42,
+    "toolTotal": 73,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:41.406Z",
+    "elapsedMs": 340397,
+    "status": "running",
+    "messageCount": 43,
+    "toolTotal": 75,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:44.448Z",
+    "elapsedMs": 343439,
+    "status": "running",
+    "messageCount": 43,
+    "toolTotal": 75,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:47.494Z",
+    "elapsedMs": 346485,
+    "status": "running",
+    "messageCount": 43,
+    "toolTotal": 76,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:50.557Z",
+    "elapsedMs": 349548,
+    "status": "running",
+    "messageCount": 43,
+    "toolTotal": 76,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:53.598Z",
+    "elapsedMs": 352589,
+    "status": "running",
+    "messageCount": 45,
+    "toolTotal": 78,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:56.647Z",
+    "elapsedMs": 355638,
+    "status": "running",
+    "messageCount": 45,
+    "toolTotal": 79,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:05:59.684Z",
+    "elapsedMs": 358675,
+    "status": "running",
+    "messageCount": 46,
+    "toolTotal": 79,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:02.730Z",
+    "elapsedMs": 361721,
+    "status": "running",
+    "messageCount": 47,
+    "toolTotal": 80,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:05.791Z",
+    "elapsedMs": 364782,
+    "status": "running",
+    "messageCount": 47,
+    "toolTotal": 80,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:08.834Z",
+    "elapsedMs": 367825,
+    "status": "running",
+    "messageCount": 47,
+    "toolTotal": 81,
+    "failedTools": 1,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:11.887Z",
+    "elapsedMs": 370878,
+    "status": "running",
+    "messageCount": 48,
+    "toolTotal": 81,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:14.933Z",
+    "elapsedMs": 373924,
+    "status": "running",
+    "messageCount": 48,
+    "toolTotal": 82,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:17.986Z",
+    "elapsedMs": 376977,
+    "status": "running",
+    "messageCount": 49,
+    "toolTotal": 83,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:21.037Z",
+    "elapsedMs": 380028,
+    "status": "running",
+    "messageCount": 50,
+    "toolTotal": 83,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:24.088Z",
+    "elapsedMs": 383079,
+    "status": "running",
+    "messageCount": 50,
+    "toolTotal": 83,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:27.136Z",
+    "elapsedMs": 386127,
+    "status": "running",
+    "messageCount": 50,
+    "toolTotal": 83,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:30.182Z",
+    "elapsedMs": 389173,
+    "status": "running",
+    "messageCount": 50,
+    "toolTotal": 83,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:33.229Z",
+    "elapsedMs": 392220,
+    "status": "running",
+    "messageCount": 50,
+    "toolTotal": 83,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:36.282Z",
+    "elapsedMs": 395273,
+    "status": "running",
+    "messageCount": 51,
+    "toolTotal": 84,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:39.320Z",
+    "elapsedMs": 398311,
+    "status": "running",
+    "messageCount": 51,
+    "toolTotal": 84,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:42.367Z",
+    "elapsedMs": 401358,
+    "status": "running",
+    "messageCount": 51,
+    "toolTotal": 84,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:45.421Z",
+    "elapsedMs": 404412,
+    "status": "running",
+    "messageCount": 51,
+    "toolTotal": 84,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:48.469Z",
+    "elapsedMs": 407460,
+    "status": "running",
+    "messageCount": 51,
+    "toolTotal": 85,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:51.531Z",
+    "elapsedMs": 410522,
+    "status": "running",
+    "messageCount": 52,
+    "toolTotal": 86,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:54.572Z",
+    "elapsedMs": 413564,
+    "status": "running",
+    "messageCount": 53,
+    "toolTotal": 86,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:06:57.626Z",
+    "elapsedMs": 416617,
+    "status": "running",
+    "messageCount": 53,
+    "toolTotal": 86,
+    "failedTools": 2,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:00.672Z",
+    "elapsedMs": 419663,
+    "status": "running",
+    "messageCount": 54,
+    "toolTotal": 87,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:03.721Z",
+    "elapsedMs": 422712,
+    "status": "running",
+    "messageCount": 55,
+    "toolTotal": 88,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:06.776Z",
+    "elapsedMs": 425767,
+    "status": "running",
+    "messageCount": 56,
+    "toolTotal": 89,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:09.835Z",
+    "elapsedMs": 428826,
+    "status": "running",
+    "messageCount": 57,
+    "toolTotal": 90,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:12.891Z",
+    "elapsedMs": 431882,
+    "status": "running",
+    "messageCount": 58,
+    "toolTotal": 91,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:15.941Z",
+    "elapsedMs": 434932,
+    "status": "running",
+    "messageCount": 58,
+    "toolTotal": 92,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:18.985Z",
+    "elapsedMs": 437976,
+    "status": "running",
+    "messageCount": 59,
+    "toolTotal": 92,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:22.035Z",
+    "elapsedMs": 441026,
+    "status": "running",
+    "messageCount": 59,
+    "toolTotal": 92,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:25.090Z",
+    "elapsedMs": 444081,
+    "status": "running",
+    "messageCount": 59,
+    "toolTotal": 92,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:28.140Z",
+    "elapsedMs": 447131,
+    "status": "running",
+    "messageCount": 59,
+    "toolTotal": 93,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:31.197Z",
+    "elapsedMs": 450188,
+    "status": "running",
+    "messageCount": 60,
+    "toolTotal": 93,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:34.247Z",
+    "elapsedMs": 453238,
+    "status": "running",
+    "messageCount": 61,
+    "toolTotal": 94,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:37.298Z",
+    "elapsedMs": 456289,
+    "status": "running",
+    "messageCount": 62,
+    "toolTotal": 95,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:40.359Z",
+    "elapsedMs": 459350,
+    "status": "running",
+    "messageCount": 62,
+    "toolTotal": 96,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:43.407Z",
+    "elapsedMs": 462398,
+    "status": "running",
+    "messageCount": 64,
+    "toolTotal": 97,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:46.454Z",
+    "elapsedMs": 465445,
+    "status": "running",
+    "messageCount": 65,
+    "toolTotal": 98,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:49.504Z",
+    "elapsedMs": 468495,
+    "status": "running",
+    "messageCount": 65,
+    "toolTotal": 99,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:52.563Z",
+    "elapsedMs": 471554,
+    "status": "running",
+    "messageCount": 66,
+    "toolTotal": 100,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:55.640Z",
+    "elapsedMs": 474631,
+    "status": "running",
+    "messageCount": 67,
+    "toolTotal": 103,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:07:58.692Z",
+    "elapsedMs": 477683,
+    "status": "running",
+    "messageCount": 68,
+    "toolTotal": 103,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:01.737Z",
+    "elapsedMs": 480728,
+    "status": "running",
+    "messageCount": 68,
+    "toolTotal": 103,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:04.802Z",
+    "elapsedMs": 483793,
+    "status": "running",
+    "messageCount": 68,
+    "toolTotal": 104,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:07.877Z",
+    "elapsedMs": 486868,
+    "status": "running",
+    "messageCount": 69,
+    "toolTotal": 105,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:10.928Z",
+    "elapsedMs": 489919,
+    "status": "running",
+    "messageCount": 70,
+    "toolTotal": 105,
+    "failedTools": 3,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:13.978Z",
+    "elapsedMs": 492969,
+    "status": "running",
+    "messageCount": 70,
+    "toolTotal": 106,
+    "failedTools": 4,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:17.025Z",
+    "elapsedMs": 496016,
+    "status": "running",
+    "messageCount": 71,
+    "toolTotal": 106,
+    "failedTools": 4,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:20.073Z",
+    "elapsedMs": 499064,
+    "status": "running",
+    "messageCount": 71,
+    "toolTotal": 106,
+    "failedTools": 4,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:23.128Z",
+    "elapsedMs": 502119,
+    "status": "running",
+    "messageCount": 71,
+    "toolTotal": 107,
+    "failedTools": 4,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:26.183Z",
+    "elapsedMs": 505174,
+    "status": "running",
+    "messageCount": 73,
+    "toolTotal": 108,
+    "failedTools": 4,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:29.235Z",
+    "elapsedMs": 508226,
+    "status": "running",
+    "messageCount": 73,
+    "toolTotal": 108,
+    "failedTools": 4,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:32.289Z",
+    "elapsedMs": 511280,
+    "status": "running",
+    "messageCount": 73,
+    "toolTotal": 108,
+    "failedTools": 4,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:35.339Z",
+    "elapsedMs": 514330,
+    "status": "succeeded",
+    "messageCount": 74,
+    "toolTotal": 108,
+    "failedTools": 4,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:38.400Z",
+    "elapsedMs": 517391,
+    "status": "succeeded",
+    "messageCount": 74,
+    "toolTotal": 108,
+    "failedTools": 4,
+    "pending": 0,
+    "phase": "实现"
+  },
+  {
+    "at": "2026-11-23T03:08:41.448Z",
+    "elapsedMs": 520439,
+    "status": "succeeded",
+    "messageCount": 74,
+    "toolTotal": 108,
+    "failedTools": 4,
+    "pending": 0,
+    "phase": "实现"
+  }
+]

@@ -1,4 +1,4 @@
-/** 开发会话视图类型（与 backend/src/dev 对齐） */
+/** 会话视图类型（与 backend/src/dev、backend/src/sessions 对齐） */
 export interface DevToolOutput {
   text: string
   truncated: boolean
@@ -50,7 +50,7 @@ export interface DevSessionMessage {
   id: string
   type: string
   created: number | null
-  /** I-09a：compaction 等系统提示的种类（不当作 assistant 文本） */
+  /** compaction 等系统提示的种类（不当作 assistant 文本） */
   kind?: 'compaction' | 'compaction-failed'
   text?: string
   reasoning?: string
@@ -68,7 +68,7 @@ export interface DevSessionMessage {
 
 export type DevContextLevel = 'ok' | 'warn' | 'danger' | 'unknown'
 
-/** I-09a：会话上下文健康度（按模型上下文上限的百分比） */
+/** 会话上下文健康度（按模型上下文上限的百分比） */
 export interface DevContextUsage {
   used: number
   limit: number | null
@@ -94,6 +94,7 @@ export interface DevProgress {
     stepsTruncated: boolean
     droppedSteps: number
   }
+  /** 本轮执行阶段文案（如“执行中”），与“开发阶段/PhaseBar”无关 */
   phase: { key: string; label: string; startedAt: number | null; history: Array<{ key: string; label: string; startedAt: number | null; endedAt: number | null }> }
   steps: DevStep[]
   messages: DevSessionMessage[]
@@ -156,87 +157,17 @@ export interface DevSessionState extends DevProgress {
   pending: DevPending
 }
 
-// ---- U7：开发阶段（与 backend/src/dev/phases.ts 对齐） ----
+/** 视图：需求 / 设计 / 开发（每视图一个活跃会话 + 历史） */
+export type AppView = 'requirements' | 'design' | 'development'
 
-export type DevPhaseStatus = 'not_started' | 'in_progress' | 'completed' | 'skipped'
-
-export type DevPhaseKind = 'base' | 'module' | 'epic' | 'other' | 'pageSets' | 'all'
-
-export type DevPhaseSummarySource = 'model' | 'fallback' | 'none'
-
-/** 阶段轻量引用（会话/开发状态里展示；`order` 为可执行阶段 1-based） */
-export interface DevPhaseRef {
-  id: string
-  key: string
-  title: string
-  order: number
-  status: DevPhaseStatus
-  /** M6b：kind / 模块归属 */
-  kind: DevPhaseKind
-  moduleId: string | null
-  moduleKey: string | null
-  moduleTitle: string | null
-  /** M6b：父模块 key（模块内 Epic/other/pageSets/all）；应用级/模块行为 null */
-  parentKey: string | null
-}
-
-export interface DevPhaseScope {
-  kind: DevPhaseKind
-  storyIds: string[]
-  pageSetCodes: string[]
-  pageCodes: string[]
-  note?: string
-}
-
-/** 阶段对应会话摘要（active 优先，否则最新创建） */
-export interface DevPhaseSessionSummary {
-  id: string
-  title: string | null
-  displayTitle: string
-  status: string
-  createdAt: string
-}
-
-export interface DevPhaseView extends DevPhaseRef {
-  goal: string
-  scope: DevPhaseScope
-  summary: string | null
-  summarySource: DevPhaseSummarySource | null
-  startedAt: string | null
-  completedAt: string | null
-  handoffVersion: number
-  changeSetId: string | null
-  createdAt: string
-  updatedAt: string
-  session: DevPhaseSessionSummary | null
-  sessionCount: number
-}
-
-export interface DevPhasesResponse {
-  handoffVersion: number | null
-  changeSet: { id: string; seq: number; title: string; status: string } | null
-  /** 最新交接包可生成阶段且尚未生成 */
-  canGenerate: boolean
-  generated: boolean
-  phases: DevPhaseView[]
-  /** M6b：模块里程碑分组 */
-  modules: DevPhaseModuleSummary[]
-  modulePhaseCount: number
-}
-
-/** M6b：模块里程碑汇总（状态由子阶段派生） */
-export interface DevPhaseModuleSummary {
-  id: string
-  key: string
-  moduleId: string | null
-  title: string
-  order: number
-  status: DevPhaseStatus
-  total: number
-  completed: number
-  skipped: number
-  inProgress: number
-}
+/**
+ * 会话视图：应用三视图 + 模板工作室（`template`）。
+ *
+ * - 应用 chat/model 路由仍只接受 `AppView`（三值）；
+ * - 工作室（P7-7b）会话 `view='template'`，复用同一套会话/时间线；
+ * - `view-helpers.js` 的 3 视图映射不受影响（应用侧仍按三视图渲染）。
+ */
+export type SessionView = AppView | 'template'
 
 export interface DevSessionInfo {
   id: string
@@ -246,17 +177,13 @@ export interface DevSessionInfo {
   status: string
   title: string | null
   note: string | null
-  changeSetId: string | null
-  handoffVersion: number | null
-  handoffHash: string | null
+  view: SessionView
   createdAt: string
   updatedAt: string
   lastActiveAt: string | null
-  /** U7：阶段会话标签；旧会话为 null */
-  phase: DevPhaseRef | null
 }
 
-/** I-10 左侧会话列表项 */
+/** 左侧会话列表项 */
 export interface DevSessionListItem {
   id: string
   opencodeSessionId: string
@@ -266,42 +193,62 @@ export interface DevSessionListItem {
   opencodeTitle: string | null
   status: string
   model: { providerID: string; id: string; variant?: string | null } | null
+  view: SessionView
   createdAt: string
   updatedAt: string
   lastActiveAt: string | null
-  changeSetId: string | null
-  changeSetSeq: number | null
-  changeSetTitle: string | null
-  changeSetStatus: string | null
-  handoffVersion: number | null
-  handoffHash: string | null
   opencodeExists: boolean | null
   active: boolean
-  /** U7：阶段会话标签（旧会话均为 null） */
-  phaseId: string | null
-  phaseKey: string | null
-  phaseTitle: string | null
-  phaseOrder: number | null
-  phaseStatus: string | null
-  /** M6b：阶段所属模块 */
-  phaseKind: string | null
-  phaseModuleId: string | null
-  phaseModuleKey: string | null
-  phaseModuleTitle: string | null
-  phaseParentKey: string | null
 }
 
 export interface DevSessionListResponse {
   sessions: DevSessionListItem[]
   activeSessionId: string | null
-  handoffVersion: number | null
+  view: SessionView
 }
 
-export interface HandoffSummary {
-  version: number
-  hash: string
-  createdAt: string
-  changeSet?: { id: string; seq: number; title: string; status: string } | null
+export type FidelityStatus = 'pass' | 'warn' | 'fail'
+
+export interface FidelityCheck {
+  id: string
+  label: string
+  status: FidelityStatus
+  evidence: string
+  hint?: string
+}
+
+export interface FidelitySummary {
+  pass: number
+  warn: number
+  fail: number
+  total: number
+  status: FidelityStatus
+}
+
+export interface FidelityDesignSystem {
+  exists: boolean
+  valid?: boolean
+  pack?: string
+  applicationType?: string
+  style?: string
+  styleName?: string
+  pageCount: number
+  blueprintRoot?: string
+}
+
+/** P7-6a：设计一致性静态检查报告（只读） */
+export interface DesignFidelityReport {
+  appId: string
+  schemaVersion: number
+  ok: boolean
+  empty: boolean
+  reason?: string
+  generatedAt: string
+  module: string | null
+  modules: string[]
+  designSystem: FidelityDesignSystem
+  checks: FidelityCheck[]
+  summary: FidelitySummary
 }
 
 export interface DevStateResponse {
@@ -309,24 +256,12 @@ export interface DevStateResponse {
     id: string
     name: string
     status: string
-    completedAt: string | null
-    handoff: HandoffSummary | null
+    createdAt: string
   }
   session: DevSessionInfo | null
   state: DevSessionState | null
   defaultPrompt: string
-  handoffReady: boolean
   readOnly: boolean
+  view: SessionView
   staleSession?: boolean
-  /** U7：最新交接包的阶段摘要（未生成时为空数组） */
-  phases: DevPhaseRef[]
-}
-
-/** U7：开始阶段返回开发状态 + 顶层阶段详情 */
-export type DevPhaseStartResponse = DevStateResponse & { phase: DevPhaseView }
-
-/** U7：完成阶段返回阶段详情 + 非阻塞提示（摘要失败等） */
-export interface DevPhaseCompleteResponse {
-  phase: DevPhaseView
-  warnings: string[]
 }

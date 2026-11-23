@@ -1,0 +1,8 @@
+{
+  "app.name": "{{APP_ID}}",
+  "afcenter.server": "localhost:18081",
+  "afcenter.client.hostname": "localhost",
+  "afcenter.client.port": 18081,
+  "webpack.dev.hostname": "localhost",
+  "webpack.dev.port": 4002
+}

@@ -1,0 +1,307 @@
+{
+  "ok": true,
+  "adaptedPages": [
+    {
+      "id": "supplier-list",
+      "type": "list",
+      "recipe": "list",
+      "entityId": "supplier"
+    },
+    {
+      "id": "org-tree",
+      "type": "list",
+      "recipe": "tree-list",
+      "entityId": "supplier"
+    },
+    {
+      "id": "supplier-form",
+      "type": "form",
+      "recipe": "dialog-form",
+      "entityId": "supplier"
+    },
+    {
+      "id": "supplier-dashboard",
+      "type": "dashboard",
+      "recipe": "dashboard",
+      "entityId": "supplier"
+    },
+    {
+      "id": "supplier-detail",
+      "type": "detail",
+      "recipe": "detail",
+      "entityId": "supplier"
+    }
+  ],
+  "results": [
+    {
+      "name": "adaptDesign 页面数",
+      "ok": true,
+      "value": 5
+    },
+    {
+      "name": "adaptDesign 实体字段数",
+      "ok": true,
+      "value": 10
+    },
+    {
+      "name": "list: resolveContractRecipe",
+      "ok": true,
+      "value": "list"
+    },
+    {
+      "name": "list: buildColumns",
+      "ok": true,
+      "value": {
+        "columns": [
+          {
+            "prop": "code",
+            "label": "供应商编码",
+            "minWidth": 130
+          },
+          {
+            "prop": "name",
+            "label": "供应商名称",
+            "minWidth": 130
+          },
+          {
+            "prop": "status",
+            "label": "状态",
+            "width": 110,
+            "scope": "status"
+          },
+          {
+            "prop": "owner",
+            "label": "负责人",
+            "minWidth": 130
+          },
+          {
+            "prop": "amount",
+            "label": "年度金额",
+            "width": 120
+          },
+          {
+            "prop": "createdAt",
+            "label": "创建时间",
+            "width": 165
+          }
+        ],
+        "skipped": [
+          "ghostColumn"
+        ]
+      }
+    },
+    {
+      "name": "list: buildFilters",
+      "ok": true,
+      "value": {
+        "fields": [
+          {
+            "name": "name",
+            "label": "供应商名称",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "label": "状态",
+            "type": "enum",
+            "options": [
+              "启用",
+              "停用",
+              "草稿"
+            ]
+          },
+          {
+            "name": "org",
+            "label": "所属机构",
+            "type": "string"
+          }
+        ],
+        "skipped": [
+          "unknownField"
+        ]
+      }
+    },
+    {
+      "name": "list: buildToolbar",
+      "ok": true,
+      "value": {
+        "heading": [
+          "import"
+        ],
+        "batch": [
+          "batchDelete"
+        ],
+        "hasCreate": true
+      }
+    },
+    {
+      "name": "list: buildRowActions",
+      "ok": true,
+      "value": [
+        {
+          "code": "edit",
+          "label": "编辑"
+        },
+        {
+          "code": "delete",
+          "label": "删除"
+        },
+        {
+          "code": "detail",
+          "label": "详情"
+        }
+      ]
+    },
+    {
+      "name": "list: selectionEnabled",
+      "ok": true,
+      "value": true
+    },
+    {
+      "name": "list: pageSizeOf",
+      "ok": true,
+      "value": 10
+    },
+    {
+      "name": "tree-list: resolveContractRecipe",
+      "ok": true,
+      "value": "tree-list"
+    },
+    {
+      "name": "tree-list: buildTreeRows（重复行）",
+      "ok": true,
+      "value": {
+        "titleField": "org",
+        "nodes": [
+          {
+            "id": "tree-0",
+            "label": "总部",
+            "children": [
+              {
+                "id": "tree-1",
+                "label": "华东事业部"
+              },
+              {
+                "id": "tree-2",
+                "label": "华南事业部"
+              },
+              {
+                "id": "tree-3",
+                "label": "研发中心"
+              }
+            ]
+          },
+          {
+            "id": "tree-1",
+            "label": "华东事业部"
+          },
+          {
+            "id": "tree-2",
+            "label": "华南事业部"
+          },
+          {
+            "id": "tree-3",
+            "label": "研发中心"
+          }
+        ],
+        "flat": false,
+        "note": ""
+      }
+    },
+    {
+      "name": "tree-list: buildTreeRows（去重行）",
+      "ok": true,
+      "value": {
+        "titleField": "org",
+        "nodes": [
+          {
+            "id": "tree-0",
+            "label": "总部",
+            "children": [
+              {
+                "id": "tree-1",
+                "label": "华东事业部"
+              },
+              {
+                "id": "tree-2",
+                "label": "华南事业部"
+              },
+              {
+                "id": "tree-3",
+                "label": "研发中心"
+              }
+            ]
+          }
+        ],
+        "flat": false,
+        "note": ""
+      }
+    },
+    {
+      "name": "dialog-form: resolveContractRecipe",
+      "ok": true,
+      "value": "dialog-form"
+    },
+    {
+      "name": "dialog-form: buildForm",
+      "ok": true,
+      "value": {
+        "dialog": true,
+        "columns": 2,
+        "width": 900,
+        "groupCount": 2,
+        "groups": [
+          {
+            "title": "基本信息",
+            "fields": [
+              "name",
+              "code",
+              "status",
+              "org"
+            ]
+          },
+          {
+            "title": "扩展信息",
+            "fields": [
+              "owner",
+              "amount",
+              "enabled"
+            ]
+          }
+        ],
+        "skipped": [
+          "missingField"
+        ]
+      }
+    },
+    {
+      "name": "dashboard: resolveContractRecipe",
+      "ok": true,
+      "value": "dashboard"
+    },
+    {
+      "name": "dashboard: buildDashboardModel",
+      "ok": true,
+      "value": {
+        "metricCount": 3,
+        "chartType": "pie",
+        "columnCount": 6
+      }
+    },
+    {
+      "name": "detail: resolveContractRecipe",
+      "ok": true,
+      "value": "detail"
+    },
+    {
+      "name": "detail: buildDetailModel",
+      "ok": true,
+      "value": {
+        "fieldCount": 10,
+        "hasHero": true,
+        "timelineCount": 1,
+        "statusClass": "status-success"
+      }
+    }
+  ]
+}

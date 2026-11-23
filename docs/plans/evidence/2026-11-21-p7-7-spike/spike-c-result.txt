@@ -1,0 +1,55 @@
+[spike-c] JSON 写入 C:\Users\icecream\AppData\Local\Temp\workbench-p7-7-spike\spike-c-catalog.json
+[spike-c] pack=afcenter-app-templates-v1 应用类型=4 风格=4 页面=25 组件并集=39
+[spike-c] 每类型页面数：enterprise-application-platform=5 / operations-management=8 / data-governance-workbench=8 / incident-response-console=4
+[spike-c] componentMap=14 pageRecipes=8
+[spike-c] 契约控件可映射=13/39
+[spike-c] 未映射（容器/无控件语义）：pm-auto-number, pm-calendar, pm-card, pm-datepick-range, pm-dialog, pm-divider, pm-echarts, pm-fold, pm-fold-group, pm-form-dialog, pm-html, pm-lookup, pm-markdown, pm-number-range, pm-pagination, pm-richtext, pm-search, pm-select-position, pm-sheet, pm-split, pm-steps, pm-table, pm-time-select, pm-toolbar, pm-toolbar-item, pm-tree
+[spike-c] 组件引用（tag refs / 页面数）：
+  pm-auto-number	1	1	container
+  pm-calendar	1	1	container
+  pm-card	5	1	container
+  pm-checkbox	1	1	control
+  pm-datepick-range	1	1	container
+  pm-datepicker	7	7	control
+  pm-dialog	4	4	container
+  pm-divider	3	2	container
+  pm-echarts	6	6	container
+  pm-fold	3	1	container
+  pm-fold-group	1	1	container
+  pm-form-dialog	17	14	container
+  pm-html	1	1	container
+  pm-image	1	1	control
+  pm-input	41	19	control
+  pm-lookup	1	1	container
+  pm-markdown	1	1	container
+  pm-number	4	2	control
+  pm-number-range	1	1	container
+  pm-pagination	15	12	container
+  pm-radio	3	3	control
+  pm-richtext	3	3	container
+  pm-search	18	13	container
+  pm-select	97	24	control
+  pm-select-org	1	1	control
+  pm-select-position	1	1	container
+  pm-select-tree	1	1	control
+  pm-select-user	1	1	control
+  pm-sheet	1	1	container
+  pm-split	1	1	container
+  pm-steps	6	6	container
+  pm-switch	16	8	control
+  pm-table	21	18	container
+  pm-textarea	14	12	control
+  pm-time-select	1	1	container
+  pm-toolbar	21	9	container
+  pm-toolbar-item	52	9	container
+  pm-tree	4	4	container
+  pm-upload	3	3	control
+[spike-c] 用法片段样例：
+  pm-auto-number: <pm-auto-number size="default" v-model="form.code" readonly />
+  pm-calendar: <pm-calendar :data="calendarData" :options="calendarOptions" pk-field="id" />
+  pm-card: <pm-card class="layout-card tabs-card">
+  pm-checkbox: <pm-checkbox size="default" v-model="form.channels" :settings="channelSettings" />
+  pm-datepick-range: <pm-datepick-range size="default" v-model="form.activeStart" v-model:value2="form.activeEnd" type="date" value-format="YYYY-MM-DD" />
+  pm-datepicker: <pm-datepicker size="default" v-model="form.publishAt" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" placeholder="立即发布" />
+  pm-dialog: <pm-dialog v-model="detailVisible" title="审计日志详情" width="600px">
+  pm-divider: <pm-divider content-position="left" title-text="子表格" />

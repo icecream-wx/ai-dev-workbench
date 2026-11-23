@@ -1,0 +1,676 @@
+{
+  "view": "template",
+  "draft": {
+    "id": "supplier-management",
+    "name": "供应商管理模板",
+    "status": "draft",
+    "style": "data-cyan",
+    "baseApplicationType": "enterprise-application-platform",
+    "version": null,
+    "publishedVersion": null,
+    "createdAt": "2026-11-21T13:31:34.027Z",
+    "updatedAt": "2026-11-21T13:31:34.027Z",
+    "pageCount": 0,
+    "hasPack": false,
+    "hasSpec": true,
+    "validation": {
+      "ok": false,
+      "errors": [
+        {
+          "code": "page-count",
+          "path": "pages",
+          "message": "页面数必须在 1—40 之间（当前 0）"
+        }
+      ],
+      "warnings": []
+    }
+  },
+  "sessions": [
+    {
+      "id": "2dc19c6d-3a19-477a-b370-77fae44ca644",
+      "opencodeSessionId": "ses_e01b1e215ffeDTbGvNcy7LmAGv",
+      "title": "供应商管理模板 · 模板工作室",
+      "note": null,
+      "displayTitle": "供应商管理模板 · 模板工作室",
+      "opencodeTitle": "供应商管理模板 · 模板工作室",
+      "status": "active",
+      "model": {
+        "providerID": "packycode-deepseek",
+        "id": "deepseek-flash"
+      },
+      "view": "template",
+      "createdAt": "2026-11-21T13:31:34.758Z",
+      "updatedAt": "2026-11-21T13:31:34.986Z",
+      "lastActiveAt": "2026-11-21T13:31:34.986Z",
+      "opencodeExists": true,
+      "active": true
+    }
+  ],
+  "activeSessionId": "2dc19c6d-3a19-477a-b370-77fae44ca644",
+  "defaultPrompt": "当前模板/草稿：supplier-management。\n请先读 AGENTS.md 与 catalog（index/pages/components/styles/recipes），了解可用的页面、组件与风格，\n再读取 drafts/supplier-management/spec.json（若存在）。\n先复述你理解的业务目标与页面清单（reference / contract），只问真正阻塞的问题（≤3 个）；确认后写 spec.json。\n只写 spec.json（可选 notes.md）；不要发布。所有面向用户的文字使用中文。",
+  "spec": {
+    "schemaVersion": 1,
+    "id": "supplier-management",
+    "name": "供应商管理模板",
+    "description": "",
+    "baseApplicationType": "enterprise-application-platform",
+    "style": "data-cyan",
+    "pages": []
+  },
+  "specError": null,
+  "validation": {
+    "ok": false,
+    "errors": [
+      {
+        "code": "page-count",
+        "path": "pages",
+        "message": "页面数必须在 1—40 之间（当前 0）"
+      }
+    ],
+    "warnings": []
+  },
+  "readOnly": false,
+  "session": {
+    "id": "2dc19c6d-3a19-477a-b370-77fae44ca644",
+    "opencodeSessionId": "ses_e01b1e215ffeDTbGvNcy7LmAGv",
+    "agent": "build",
+    "model": {
+      "providerID": "packycode-deepseek",
+      "id": "deepseek-flash"
+    },
+    "status": "active",
+    "title": "供应商管理模板 · 模板工作室",
+    "note": null,
+    "view": "template",
+    "createdAt": "2026-11-21T13:31:34.758Z",
+    "updatedAt": "2026-11-21T13:31:34.986Z",
+    "lastActiveAt": "2026-11-21T13:31:34.986Z"
+  },
+  "state": {
+    "status": "succeeded",
+    "startedAt": 1795267894765,
+    "endedAt": 1795267903517,
+    "elapsedMs": 8752,
+    "context": {
+      "used": 31441,
+      "limit": 1048576,
+      "percent": 0.029984474182128906,
+      "level": "ok"
+    },
+    "stats": {
+      "tokens": {
+        "input": 29532,
+        "output": 714,
+        "reasoning": 65,
+        "cacheRead": 75008,
+        "cacheWrite": 0
+      },
+      "cost": 0,
+      "toolCounts": {
+        "read": 10
+      },
+      "toolTotal": 10,
+      "failedTools": 0,
+      "messageCount": 6,
+      "partial": false,
+      "steps": 1,
+      "stepsTruncated": false,
+      "droppedSteps": 0
+    },
+    "phase": {
+      "key": "analysis",
+      "label": "需求理解",
+      "startedAt": 1795267896347,
+      "history": [
+        {
+          "key": "analysis",
+          "label": "需求理解",
+          "startedAt": 1795267896347,
+          "endedAt": 1795267903516
+        }
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "kind": "tools",
+        "title": "需求理解",
+        "phase": "analysis",
+        "status": "completed",
+        "startedAt": 1795267896347,
+        "endedAt": 1795267903516,
+        "durationMs": 7169,
+        "toolCount": 10,
+        "targets": [
+          "AGENTS.md",
+          "catalog/index.json",
+          "catalog/pages.json",
+          "catalog/styles.json",
+          "catalog/recipes.json",
+          "catalog/components.json"
+        ],
+        "items": [
+          {
+            "type": "tool",
+            "id": "call_00_ET_xSuNhU1UC9fDKQQOqrtk3771",
+            "messageId": "msg_1fe4e1ec1001va6M3WLO24N26X",
+            "name": "read",
+            "status": "completed",
+            "target": "AGENTS.md",
+            "input": {
+              "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\AGENTS.md"
+            },
+            "output": {
+              "text": "Read file C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\AGENTS.md, lines 1-45\n1: # 设计模板编写工作室\n2: \n3: 你是「设计模板工作室」的编写 agent：根据用户需求，读取现有模板知识，写出一份可发布的设计模板草稿。\n4: 你**不写模板包**，也不发布；模板包由确定性生成器从 `spec.json` 产出，发布只能由用户点击「发布」。\n5: \n6: ## 读取顺序\n7: \n8: 1. 本文件 `AGENTS.md`；\n9: 2. `catalog/index.json`（来源 pack/版本/计数）；\n10: 3. `catalog/pages.json`、`catalog/components.json`、`catalog/styles.json`、`catalog/recipes.json`；\n11: 4. `catalog/builtin/` 中 `readPath` / `structureReadPath` 指向的蓝图与结构样式；\n12: 5. 当前草稿 `drafts/<packId>/spec.json`（若有）、`drafts/<packId>/generation.json`、`drafts/<packId>/notes.md`；\n13: 6. 用户消息。\n14: \n15: **不要拼仓库路径**（`templates/design-system/**` 不在当前 location 内）；只能使用 catalog 给出的 `readPath`。\n16: \n17: ## 只允许写\n18: \n19: - `drafts/<packId>/spec.json`\n20: - `drafts/<packId>/notes.md`（可选）\n21: \n22: **禁止**修改 `catalog/**`、`drafts/<packId>/pack/**`、`.opencode/**`、仓库源码、`projects/**` 或任何应用工作区。\n23: 权限层也会阻止越界写入；被阻止时请告诉用户只能改 spec.json。\n24: \n25: ## 不发布\n26: \n27: 发布只能由用户点击「发布」；你只负责生成、校验、解释错误与给出建议。\n28: \n29: ## 引用规则\n30: \n31: - `source.pack` 固定 `afcenter-app-templates-v1`；`applicationType`/`pageId` 必须来自 `catalog/pages.json` 的真实条目；\n32: - `contract` 页的列/查询/表单/树/子表字段必须来自该页 `sampleEntity.fields`（子表来自 `sampleSubEntities`）；\n33: - 不发明页面 id、组件名、风格 id；风格只能选 catalog 中的 1 套。\n34: \n35: ## 生成与校验\n36: \n37: - 生成：`node .opencode/scripts/generate.cjs --draft <packId>`\n38: - 预检：`node .opencode/scripts/validate.cjs --draft <packId>`\n39: \n40: 预检不是发布依据；发布时后端会重新做权威校验。生成后把 `errors`/`warnings` 用中文汇报，并提示用户预览/发布。\n41: \n42: ## 汇报（中文）\n43: \n44: 完成后汇报：页面清单（reference / contract）、风格、生成/校验结果（errors/warnings）、未实现项、发布前待确认。\n45: 所有面向用户的文字（回复、思考/进度说明、工具说明、汇报）一律使用中文。",
+              "truncated": false,
+              "originalChars": 1665,
+              "keptChars": 1665,
+              "mode": "head",
+              "exit": null
+            },
+            "diff": null,
+            "error": null,
+            "time": {
+              "created": 1795267896347,
+              "ran": 1795267896508,
+              "completed": 1795267896513
+            },
+            "durationMs": 166
+          },
+          {
+            "type": "tool",
+            "id": "call_01_ET_03YqcmmKVNPkJSA9KEBu1102",
+            "messageId": "msg_1fe4e1ec1001va6M3WLO24N26X",
+            "name": "read",
+            "status": "completed",
+            "target": "catalog/index.json",
+            "input": {
+              "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog\\index.json"
+            },
+            "output": {
+              "text": "Read file C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog\\index.json, lines 1-22\n1: {\n2:   \"schemaVersion\": 1,\n3:   \"generatedAt\": \"2026-11-21T13:31:34.150Z\",\n4:   \"source\": {\n5:     \"pack\": \"afcenter-app-templates-v1\",\n6:     \"version\": \"1.0.0\"\n7:   },\n8:   \"sourceHash\": \"sha256:9d64f83ccb77ab23d32d1e2f054cde385366ac74e3c42529def9bd57d6ef4893\",\n9:   \"counts\": {\n10:     \"applicationTypes\": 4,\n11:     \"pages\": 25,\n12:     \"components\": 39,\n13:     \"styles\": 4,\n14:     \"recipes\": 8\n15:   },\n16:   \"controls\": {\n17:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n18:     \"keys\": 20,\n19:     \"mappable\": 13,\n20:     \"components\": 39\n21:   }\n22: }",
+              "truncated": false,
+              "originalChars": 725,
+              "keptChars": 725,
+              "mode": "head",
+              "exit": null
+            },
+            "diff": null,
+            "error": null,
+            "time": {
+              "created": 1795267896509,
+              "ran": 1795267896677,
+              "completed": 1795267896683
+            },
+            "durationMs": 174
+          },
+          {
+            "type": "tool",
+            "id": "call_00_ET_OFpaNXJnAqMPei7Fb1xJ6095",
+            "messageId": "msg_1fe4e2573001D7ZZ4rsIhXVnMv",
+            "name": "read",
+            "status": "completed",
+            "target": "catalog/pages.json",
+            "input": {
+              "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog\\pages.json"
+            },
+            "output": {
+              "text": "Read file C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog\\pages.json, lines 1-715\n1: [\n2:   {\n3:     \"catalogRef\": \"enterprise-application-platform/overview\",\n4:     \"pack\": \"afcenter-app-templates-v1\",\n5:     \"packVersion\": \"1.0.0\",\n6:     \"applicationType\": \"enterprise-application-platform\",\n7:     \"applicationTypeName\": \"企业级应用管理平台\",\n8:     \"pageId\": \"overview\",\n9:     \"name\": \"管理驾驶舱\",\n10:     \"kind\": \"blueprint\",\n11:     \"type\": \"dashboard\",\n12:     \"recipe\": \"dashboard\",\n13:     \"description\": \"组织、用户、应用和资源的统一运行概览。\",\n14:     \"blueprint\": \"application-types/enterprise-application-platform/pages/PlatformOverview.vue\",\n15:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/pages/PlatformOverview.vue\",\n16:     \"components\": [\n17:       \"pm-echarts\",\n18:       \"pm-select\",\n19:       \"pm-table\"\n20:     ],\n21:     \"structure\": \"application-types/enterprise-application-platform/structure.css\",\n22:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/structure.css\",\n23:     \"assets\": []\n24:   },\n25:   {\n26:     \"catalogRef\": \"enterprise-application-platform/applications\",\n27:     \"pack\": \"afcenter-app-templates-v1\",\n28:     \"packVersion\": \"1.0.0\",\n29:     \"applicationType\": \"enterprise-application-platform\",\n30:     \"applicationTypeName\": \"企业级应用管理平台\",\n31:     \"pageId\": \"applications\",\n32:     \"name\": \"应用中心\",\n33:     \"kind\": \"blueprint\",\n34:     \"type\": \"list\",\n35:     \"recipe\": \"list\",\n36:     \"description\": \"统一管理平台应用、运行状态和负责人。\",\n37:     \"blueprint\": \"application-types/enterprise-application-platform/pages/ApplicationCenter.vue\",\n38:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/pages/ApplicationCenter.vue\",\n39:     \"components\": [\n40:       \"pm-form-dialog\",\n41:       \"pm-input\",\n42:       \"pm-pagination\",\n43:       \"pm-radio\",\n44:       \"pm-select\",\n45:       \"pm-table\",\n46:       \"pm-textarea\"\n47:     ],\n48:     \"structure\": \"application-types/enterprise-application-platform/structure.css\",\n49:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/structure.css\",\n50:     \"assets\": []\n51:   },\n52:   {\n53:     \"catalogRef\": \"enterprise-application-platform/application-form\",\n54:     \"pack\": \"afcenter-app-templates-v1\",\n55:     \"packVersion\": \"1.0.0\",\n56:     \"applicationType\": \"enterprise-application-platform\",\n57:     \"applicationTypeName\": \"企业级应用管理平台\",\n58:     \"pageId\": \"application-form\",\n59:     \"name\": \"注册应用\",\n60:     \"kind\": \"blueprint\",\n61:     \"type\": \"form\",\n62:     \"recipe\": \"wizard\",\n63:     \"description\": \"创建应用身份并配置环境与授权范围。\",\n64:     \"blueprint\": \"application-types/enterprise-application-platform/pages/ApplicationForm.vue\",\n65:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/pages/ApplicationForm.vue\",\n66:     \"components\": [\n67:       \"pm-input\",\n68:       \"pm-select\",\n69:       \"pm-steps\",\n70:       \"pm-switch\",\n71:       \"pm-textarea\"\n72:     ],\n73:     \"structure\": \"application-types/enterprise-application-platform/structure.css\",\n74:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/structure.css\",\n75:     \"assets\": []\n76:   },\n77:   {\n78:     \"catalogRef\": \"enterprise-application-platform/organization\",\n79:     \"pack\": \"afcenter-app-templates-v1\",\n80:     \"packVersion\": \"1.0.0\",\n81:     \"applicationType\": \"enterprise-application-platform\",\n82:     \"applicationTypeName\": \"企业级应用管理平台\",\n83:     \"pageId\": \"organization\",\n84:     \"name\": \"组织与用户\",\n85:     \"kind\": \"blueprint\",\n86:     \"type\": \"tree-list\",\n87:     \"recipe\": \"tree-list\",\n88:     \"description\": \"维护组织机构、账号、岗位与角色关联。\",\n89:     \"blueprint\": \"application-types/enterprise-application-platform/pages/OrganizationUsers.vue\",\n90:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/pages/OrganizationUsers.vue\",\n91:     \"components\": [\n92:       \"pm-form-dialog\",\n93:       \"pm-input\",\n94:       \"pm-pagination\",\n95:       \"pm-select\",\n96:       \"pm-switch\",\n97:       \"pm-table\",\n98:       \"pm-tree\"\n99:     ],\n100:     \"structure\": \"application-types/enterprise-application-platform/structure.css\",\n101:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/structure.css\",\n102:     \"assets\": []\n103:   },\n104:   {\n105:     \"catalogRef\": \"enterprise-application-platform/audit\",\n106:     \"pack\": \"afcenter-app-templates-v1\",\n107:     \"packVersion\": \"1.0.0\",\n108:     \"applicationType\": \"enterprise-application-platform\",\n109:     \"applicationTypeName\": \"企业级应用管理平台\",\n110:     \"pageId\": \"audit\",\n111:     \"name\": \"审计日志\",\n112:     \"kind\": \"blueprint\",\n113:     \"type\": \"list\",\n114:     \"recipe\": \"list\",\n115:     \"description\": \"查询平台操作、访问和安全事件记录。\",\n116:     \"blueprint\": \"application-types/enterprise-application-platform/pages/AuditLogs.vue\",\n117:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/pages/AuditLogs.vue\",\n118:     \"components\": [\n119:       \"pm-dialog\",\n120:       \"pm-input\",\n121:       \"pm-pagination\",\n122:       \"pm-select\",\n123:       \"pm-table\"\n124:     ],\n125:     \"structure\": \"application-types/enterprise-application-platform/structure.css\",\n126:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/enterprise-application-platform/structure.css\",\n127:     \"assets\": []\n128:   },\n129:   {\n130:     \"catalogRef\": \"operations-management/treeTable\",\n131:     \"pack\": \"afcenter-app-templates-v1\",\n132:     \"packVersion\": \"1.0.0\",\n133:     \"applicationType\": \"operations-management\",\n134:     \"applicationTypeName\": \"运营管理后台\",\n135:     \"pageId\": \"treeTable\",\n136:     \"name\": \"运营组织台账\",\n137:     \"kind\": \"blueprint\",\n138:     \"type\": \"tree-list\",\n139:     \"recipe\": \"tree-list\",\n140:     \"description\": \"组织档案树与岗位人员台账联动，支持批量调整和编制核验。\",\n141:     \"blueprint\": \"application-types/operations-management/pages/OperationsTreeTable.vue\",\n142:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsTreeTable.vue\",\n143:     \"components\": [\n144:       \"pm-form-dialog\",\n145:       \"pm-input\",\n146:       \"pm-number\",\n147:       \"pm-pagination\",\n148:       \"pm-search\",\n149:       \"pm-select\",\n150:       \"pm-table\",\n151:       \"pm-toolbar\",\n152:       \"pm-toolbar-item\",\n153:       \"pm-tree\"\n154:     ],\n155:     \"structure\": \"application-types/operations-management/structure.css\",\n156:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/structure.css\",\n157:     \"assets\": [\n158:       \"application-types/operations-management/assets/ledger-workflow.svg\"\n159:     ]\n160:   },\n161:   {\n162:     \"catalogRef\": \"operations-management/list\",\n163:     \"pack\": \"afcenter-app-templates-v1\",\n164:     \"packVersion\": \"1.0.0\",\n165:     \"applicationType\": \"operations-management\",\n166:     \"applicationTypeName\": \"运营管理后台\",\n167:     \"pageId\": \"list\",\n168:     \"name\": \"通知公告管理\",\n169:     \"kind\": \"blueprint\",\n170:     \"type\": \"list\",\n171:     \"recipe\": \"list\",\n172:     \"description\": \"行内筛选、边框表格、批量操作与紧凑分页。\",\n173:     \"blueprint\": \"application-types/operations-management/pages/OperationsList.vue\",\n174:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsList.vue\",\n175:     \"components\": [\n176:       \"pm-form-dialog\",\n177:       \"pm-input\",\n178:       \"pm-pagination\",\n179:       \"pm-search\",\n180:       \"pm-select\",\n181:       \"pm-table\",\n182:       \"pm-toolbar\",\n183:       \"pm-toolbar-item\"\n184:     ],\n185:     \"structure\": \"application-types/operations-management/structure.css\",\n186:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/structure.css\",\n187:     \"assets\": [\n188:       \"application-types/operations-management/assets/ledger-workflow.svg\"\n189:     ]\n190:   },\n191:   {\n192:     \"catalogRef\": \"operations-management/form\",\n193:     \"pack\": \"afcenter-app-templates-v1\",\n194:     \"packVersion\": \"1.0.0\",\n195:     \"applicationType\": \"operations-management\",\n196:     \"applicationTypeName\": \"运营管理后台\",\n197:     \"pageId\": \"form\",\n198:     \"name\": \"新建运营公告\",\n199:     \"kind\": \"blueprint\",\n200:     \"type\": \"form\",\n201:     \"recipe\": \"page-form\",\n202:     \"description\": \"分组表单、富文本编辑与附件上传。\",\n203:     \"blueprint\": \"application-types/operations-management/pages/OperationsForm.vue\",\n204:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsForm.vue\",\n205:     \"components\": [\n206:       \"pm-datepicker\",\n207:       \"pm-input\",\n208:       \"pm-richtext\",\n209:       \"pm-select\",\n210:       \"pm-switch\",\n211:       \"pm-toolbar\",\n212:       \"pm-toolbar-item\",\n213:       \"pm-upload\"\n214:     ],\n215:     \"structure\": \"application-types/operations-management/structure.css\",\n216:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/structure.css\",\n217:     \"assets\": [\n218:       \"application-types/operations-management/assets/ledger-workflow.svg\"\n219:     ]\n220:   },\n221:   {\n222:     \"catalogRef\": \"operations-management/permission\",\n223:     \"pack\": \"afcenter-app-templates-v1\",\n224:     \"packVersion\": \"1.0.0\",\n225:     \"applicationType\": \"operations-management\",\n226:     \"applicationTypeName\": \"运营管理后台\",\n227:     \"pageId\": \"permission\",\n228:     \"name\": \"部门权限\",\n229:     \"kind\": \"blueprint\",\n230:     \"type\": \"permission\",\n231:     \"recipe\": \"tree-list\",\n232:     \"description\": \"组织索引与菜单、数据范围权限协同维护。\",\n233:     \"blueprint\": \"application-types/operations-management/pages/OperationsPermission.vue\",\n234:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsPermission.vue\",\n235:     \"components\": [\n236:       \"pm-form-dialog\",\n237:       \"pm-input\",\n238:       \"pm-search\",\n239:       \"pm-select\",\n240:       \"pm-switch\",\n241:       \"pm-table\",\n242:       \"pm-toolbar\",\n243:       \"pm-toolbar-item\"\n244:     ],\n245:     \"structure\": \"application-types/operations-management/structure.css\",\n246:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/structure.css\",\n247:     \"assets\": [\n248:       \"application-types/operations-management/assets/ledger-workflow.svg\"\n249:     ]\n250:   },\n251:   {\n252:     \"catalogRef\": \"operations-management/components\",\n253:     \"pack\": \"afcenter-app-templates-v1\",\n254:     \"packVersion\": \"1.0.0\",\n255:     \"applicationType\": \"operations-management\",\n256:     \"applicationTypeName\": \"运营管理后台\",\n257:     \"pageId\": \"components\",\n258:     \"name\": \"运营活动配置\",\n259:     \"kind\": \"blueprint\",\n260:     \"type\": \"form\",\n261:     \"recipe\": \"page-form\",\n262:     \"description\": \"输入、选择、上传、图片和组织类组件完整示例。\",\n263:     \"blueprint\": \"application-types/operations-management/pages/OperationsComponentForm.vue\",\n264:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsComponentForm.vue\",\n265:     \"components\": [\n266:       \"pm-auto-number\",\n267:       \"pm-checkbox\",\n268:       \"pm-datepick-range\",\n269:       \"pm-datepicker\",\n270:       \"pm-divider\",\n271:       \"pm-image\",\n272:       \"pm-input\",\n273:       \"pm-lookup\",\n274:       \"pm-number\",\n275:       \"pm-number-range\",\n276:       \"pm-radio\",\n277:       \"pm-richtext\",\n278:       \"pm-select\",\n279:       \"pm-select-org\",\n280:       \"pm-select-position\",\n281:       \"pm-select-tree\",\n282:       \"pm-select-user\",\n283:       \"pm-switch\",\n284:       \"pm-table\",\n285:       \"pm-textarea\",\n286:       \"pm-time-select\",\n287:       \"pm-toolbar\",\n288:       \"pm-toolbar-item\",\n289:       \"pm-upload\"\n290:     ],\n291:     \"structure\": \"application-types/operations-management/structure.css\",\n292:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/structure.css\",\n293:     \"assets\": [\n294:       \"application-types/operations-management/assets/ledger-workflow.svg\"\n295:     ]\n296:   },\n297:   {\n298:     \"catalogRef\": \"operations-management/dashboard\",\n299:     \"pack\": \"afcenter-app-templates-v1\",\n300:     \"packVersion\": \"1.0.0\",\n301:     \"applicationType\": \"operations-management\",\n302:     \"applicationTypeName\": \"运营管理后台\",\n303:     \"pageId\": \"dashboard\",\n304:     \"name\": \"运营简报\",\n305:     \"kind\": \"blueprint\",\n306:     \"type\": \"dashboard\",\n307:     \"recipe\": \"dashboard\",\n308:     \"description\": \"经营指标、工单趋势与今日运营待办。\",\n309:     \"blueprint\": \"application-types/operations-management/pages/OperationsDashboard.vue\",\n310:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsDashboard.vue\",\n311:     \"components\": [\n312:       \"pm-datepicker\",\n313:       \"pm-echarts\",\n314:       \"pm-form-dialog\",\n315:       \"pm-input\",\n316:       \"pm-pagination\",\n317:       \"pm-search\",\n318:       \"pm-select\",\n319:       \"pm-steps\",\n320:       \"pm-table\",\n321:       \"pm-textarea\",\n322:       \"pm-toolbar\",\n323:       \"pm-toolbar-item\"\n324:     ],\n325:     \"structure\": \"application-types/operations-management/structure.css\",\n326:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/structure.css\",\n327:     \"assets\": [\n328:       \"application-types/operations-management/assets/ledger-workflow.svg\"\n329:     ]\n330:   },\n331:   {\n332:     \"catalogRef\": \"operations-management/schedule\",\n333:     \"pack\": \"afcenter-app-templates-v1\",\n334:     \"packVersion\": \"1.0.0\",\n335:     \"applicationType\": \"operations-management\",\n336:     \"applicationTypeName\": \"运营管理后台\",\n337:     \"pageId\": \"schedule\",\n338:     \"name\": \"客服排班\",\n339:     \"kind\": \"blueprint\",\n340:     \"type\": \"list\",\n341:     \"recipe\": \"list\",\n342:     \"description\": \"班组、班次和排班确认状态集中维护。\",\n343:     \"blueprint\": \"application-types/operations-management/pages/OperationsSchedule.vue\",\n344:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsSchedule.vue\",\n345:     \"components\": [\n346:       \"pm-datepicker\",\n347:       \"pm-echarts\",\n348:       \"pm-form-dialog\",\n349:       \"pm-input\",\n350:       \"pm-pagination\",\n351:       \"pm-search\",\n352:       \"pm-select\",\n353:       \"pm-steps\",\n354:       \"pm-table\",\n355:       \"pm-textarea\",\n356:       \"pm-toolbar\",\n357:       \"pm-toolbar-item\"\n358:     ],\n359:     \"structure\": \"application-types/operations-management/structure.css\",\n360:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/structure.css\",\n361:     \"assets\": [\n362:       \"application-types/operations-management/assets/ledger-workflow.svg\"\n363:     ]\n364:   },\n365:   {\n366:     \"catalogRef\": \"operations-management/issues\",\n367:     \"pack\": \"afcenter-app-templates-v1\",\n368:     \"packVersion\": \"1.0.0\",\n369:     \"applicationType\": \"operations-management\",\n370:     \"applicationTypeName\": \"运营管理后台\",\n371:     \"pageId\": \"issues\",\n372:     \"name\": \"订单异常处理\",\n373:     \"kind\": \"blueprint\",\n374:     \"type\": \"workflow\",\n375:     \"recipe\": \"detail\",\n376:     \"description\": \"确认、处置和复核三阶段异常处理流程。\",\n377:     \"blueprint\": \"application-types/operations-management/pages/OperationsIssues.vue\",\n378:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsIssues.vue\",\n379:     \"components\": [\n380:       \"pm-datepicker\",\n381:       \"pm-echarts\",\n382:       \"pm-form-dialog\",\n383:       \"pm-input\",\n384:       \"pm-pagination\",\n385:       \"pm-search\",\n386:       \"pm-select\",\n387:       \"pm-steps\",\n388:       \"pm-table\",\n389:       \"pm-textarea\",\n390:       \"pm-toolbar\",\n391:       \"pm-toolbar-item\"\n392:     ],\n393:     \"structure\": \"application-types/operations-management/structure.css\",\n394:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/structure.css\",\n395:     \"assets\": [\n396:       \"application-types/operations-management/assets/ledger-workflow.svg\"\n397:     ]\n398:   },\n399:   {\n400:     \"catalogRef\": \"data-governance-workbench/treeTable\",\n401:     \"pack\": \"afcenter-app-templates-v1\",\n402:     \"packVersion\": \"1.0.0\",\n403:     \"applicationType\": \"data-governance-workbench\",\n404:     \"applicationTypeName\": \"数据分析与治理工作台\",\n405:     \"pageId\": \"treeTable\",\n406:     \"name\": \"数据域资产检索\",\n407:     \"kind\": \"blueprint\",\n408:     \"type\": \"tree-list\",\n409:     \"recipe\": \"tree-list\",\n410:     \"description\": \"数据域树与资产网格联动，支持多级表头、排序与资产检查。\",\n411:     \"blueprint\": \"application-types/data-governance-workbench/pages/DataTreeTable.vue\",\n412:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/pages/DataTreeTable.vue\",\n413:     \"components\": [\n414:       \"pm-dialog\",\n415:       \"pm-pagination\",\n416:       \"pm-search\",\n417:       \"pm-select\",\n418:       \"pm-table\",\n419:       \"pm-tree\"\n420:     ],\n421:     \"structure\": \"application-types/data-governance-workbench/structure.css\",\n422:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/structure.css\",\n423:     \"assets\": []\n424:   },\n425:   {\n426:     \"catalogRef\": \"data-governance-workbench/list\",\n427:     \"pack\": \"afcenter-app-templates-v1\",\n428:     \"packVersion\": \"1.0.0\",\n429:     \"applicationType\": \"data-governance-workbench\",\n430:     \"applicationTypeName\": \"数据分析与治理工作台\",\n431:     \"pageId\": \"list\",\n432:     \"name\": \"分析任务队列\",\n433:     \"kind\": \"blueprint\",\n434:     \"type\": \"workspace\",\n435:     \"recipe\": \"list\",\n436:     \"description\": \"运行指标、组合搜索、任务进度与资源侧栏协同展示。\",\n437:     \"blueprint\": \"application-types/data-governance-workbench/pages/DataTaskList.vue\",\n438:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/pages/DataTaskList.vue\",\n439:     \"components\": [\n440:       \"pm-datepicker\",\n441:       \"pm-dialog\",\n442:       \"pm-form-dialog\",\n443:       \"pm-pagination\",\n444:       \"pm-radio\",\n445:       \"pm-search\",\n446:       \"pm-select\",\n447:       \"pm-table\"\n448:     ],\n449:     \"structure\": \"application-types/data-governance-workbench/structure.css\",\n450:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/structure.css\",\n451:     \"assets\": []\n452:   },\n453:   {\n454:     \"catalogRef\": \"data-governance-workbench/form\",\n455:     \"pack\": \"afcenter-app-templates-v1\",\n456:     \"packVersion\": \"1.0.0\",\n457:     \"applicationType\": \"data-governance-workbench\",\n458:     \"applicationTypeName\": \"数据分析与治理工作台\",\n459:     \"pageId\": \"form\",\n460:     \"name\": \"新建分析任务\",\n461:     \"kind\": \"blueprint\",\n462:     \"type\": \"form\",\n463:     \"recipe\": \"wizard\",\n464:     \"description\": \"从分析目标、数据范围到运行策略与发布确认的完整流程。\",\n465:     \"blueprint\": \"application-types/data-governance-workbench/pages/DataTaskForm.vue\",\n466:     \"readPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/pages/DataTaskForm.vue\",\n467:     \"components\": [\n468:       \"pm-datepicker\",\n469:       \"pm-input\",\n470:       \"pm-select\",\n471:       \"pm-steps\",\n472:       \"pm-switch\",\n473:       \"pm-textarea\"\n474:     ],\n475:     \"structure\": \"application-types/data-governance-workbench/structure.css\",\n476:     \"structureReadPath\": \"catalog/builtin/afcenter-app-templates-v1/application-types/data-governance-workbench/structure.css\",\n477:     \"assets\": []\n478:   },\n479:   {\n480:     \"catalogRef\": \"data-governance-workbench/dataset\",\n481:     \"pack\": \"afcenter-app-templates-v1\",\n482:     \"packVersion\": \"1.0.0\",\n483:     \"applicationType\": \"data-governance-workbench\",\n484:     \"applicationTypeName\": \"数据分析与治理工作台\",\n485:     \"pageId\": \"dataset\",\n486:     \"name\": \"数据资产目录\",\n487:     \"kind\":",
+              "truncated": true,
+              "originalChars": 29694,
+              "keptChars": 20000,
+              "mode": "head",
+              "exit": null
+            },
+            "diff": null,
+            "error": null,
+            "time": {
+              "created": 1795267897862,
+              "ran": 1795267898086,
+              "completed": 1795267898092
+            },
+            "durationMs": 230
+          },
+          {
+            "type": "tool",
+            "id": "call_01_ET_z3GpzWPlJaRZ8oHmfYWP4977",
+            "messageId": "msg_1fe4e2573001D7ZZ4rsIhXVnMv",
+            "name": "read",
+            "status": "completed",
+            "target": "catalog/styles.json",
+            "input": {
+              "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog\\styles.json"
+            },
+            "output": {
+              "text": "Read file C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog\\styles.json, lines 1-66\n1: [\n2:   {\n3:     \"id\": \"platform-blue\",\n4:     \"name\": \"平台蓝白\",\n5:     \"className\": \"visual-style-platform-blue\",\n6:     \"description\": \"明亮蓝白、留白适中、圆角卡片和清晰的平台层级。\",\n7:     \"signature\": \"#1F5EFF\",\n8:     \"css\": \"styles/platform-blue/style.css\",\n9:     \"tokens\": {\n10:       \"primary\": \"#1f5eff\",\n11:       \"accent\": \"#22a6b3\",\n12:       \"neutral\": \"#64748b\",\n13:       \"background\": \"#f4f7fb\",\n14:       \"radius\": 10,\n15:       \"density\": \"compact\"\n16:     }\n17:   },\n18:   {\n19:     \"id\": \"classic-warm\",\n20:     \"name\": \"经典暖色\",\n21:     \"className\": \"visual-style-classic-warm\",\n22:     \"description\": \"暖橙棕、高信息密度、明确边界和稳重的管理后台气质。\",\n23:     \"signature\": \"#C2542A\",\n24:     \"css\": \"styles/classic-warm/style.css\",\n25:     \"tokens\": {\n26:       \"primary\": \"#c2542a\",\n27:       \"accent\": \"#8f684f\",\n28:       \"neutral\": \"#7d766c\",\n29:       \"background\": \"#f3efe8\",\n30:       \"radius\": 5,\n31:       \"density\": \"compact\"\n32:     }\n33:   },\n34:   {\n35:     \"id\": \"data-cyan\",\n36:     \"name\": \"数据蓝青\",\n37:     \"className\": \"visual-style-data-cyan\",\n38:     \"description\": \"蓝青冷色、卡片层次、轻网格和偏数据科技的视觉表达。\",\n39:     \"signature\": \"#145FBA\",\n40:     \"css\": \"styles/data-cyan/style.css\",\n41:     \"tokens\": {\n42:       \"primary\": \"#145fba\",\n43:       \"accent\": \"#07858d\",\n44:       \"neutral\": \"#66758a\",\n45:       \"background\": \"#f3f7fb\",\n46:       \"radius\": 12,\n47:       \"density\": \"compact\"\n48:     }\n49:   },\n50:   {\n51:     \"id\": \"high-contrast-tool\",\n52:     \"name\": \"高对比工具风\",\n53:     \"className\": \"visual-style-high-contrast-tool\",\n54:     \"description\": \"芥末黄与黑色、方正块面、清晰边框和强工具感。\",\n55:     \"signature\": \"#F5C518\",\n56:     \"css\": \"styles/high-contrast-tool/style.css\",\n57:     \"tokens\": {\n58:       \"primary\": \"#f5c518\",\n59:       \"accent\": \"#5d5540\",\n60:       \"neutral\": \"#6d685d\",\n61:       \"background\": \"#f7f6f2\",\n62:       \"radius\": 2,\n63:       \"density\": \"compact\"\n64:     }\n65:   }\n66: ]",
+              "truncated": false,
+              "originalChars": 2015,
+              "keptChars": 2015,
+              "mode": "head",
+              "exit": null
+            },
+            "diff": null,
+            "error": null,
+            "time": {
+              "created": 1795267898087,
+              "ran": 1795267898250,
+              "completed": 1795267898255
+            },
+            "durationMs": 168
+          },
+          {
+            "type": "tool",
+            "id": "call_00_eIyTzGfky5ZG2qgXmz928241",
+            "messageId": "msg_1fe4e2b96001pzvgPsTPsSnweX",
+            "name": "read",
+            "status": "completed",
+            "target": "catalog/recipes.json",
+            "input": {
+              "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog\\recipes.json"
+            },
+            "output": {
+              "text": "Read file C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog\\recipes.json, lines 1-87\n1: [\n2:   {\n3:     \"recipe\": \"list\",\n4:     \"label\": \"列表台账\",\n5:     \"templateComponents\": [\n6:       \"BusinessListPage\",\n7:       \"QueryPanel\",\n8:       \"RowActions\",\n9:       \"ThreePartPagination\"\n10:     ],\n11:     \"contractPreviewSupported\": true,\n12:     \"examplePage\": \"enterprise-application-platform/applications\"\n13:   },\n14:   {\n15:     \"recipe\": \"tree-list\",\n16:     \"label\": \"树表台账\",\n17:     \"templateComponents\": [\n18:       \"TreeListPage\",\n19:       \"TreePanel\",\n20:       \"QueryPanel\",\n21:       \"RowActions\"\n22:     ],\n23:     \"contractPreviewSupported\": true,\n24:     \"examplePage\": \"enterprise-application-platform/organization\"\n25:   },\n26:   {\n27:     \"recipe\": \"dialog-form\",\n28:     \"label\": \"弹窗表单\",\n29:     \"templateComponents\": [\n30:       \"pm-form-dialog\",\n31:       \"FormSection\"\n32:     ],\n33:     \"contractPreviewSupported\": true,\n34:     \"examplePage\": \"\"\n35:   },\n36:   {\n37:     \"recipe\": \"page-form\",\n38:     \"label\": \"页面表单\",\n39:     \"templateComponents\": [\n40:       \"StandardFormPage\",\n41:       \"FormSection\"\n42:     ],\n43:     \"contractPreviewSupported\": true,\n44:     \"examplePage\": \"operations-management/form\"\n45:   },\n46:   {\n47:     \"recipe\": \"main-sub\",\n48:     \"label\": \"主子表\",\n49:     \"templateComponents\": [\n50:       \"StandardFormPage\",\n51:       \"FormSection\",\n52:       \"el-tabs\"\n53:     ],\n54:     \"contractPreviewSupported\": true,\n55:     \"examplePage\": \"data-governance-workbench/advanced\"\n56:   },\n57:   {\n58:     \"recipe\": \"detail\",\n59:     \"label\": \"详情页\",\n60:     \"templateComponents\": [\n61:       \"detail sections\",\n62:       \"related lists\"\n63:     ],\n64:     \"contractPreviewSupported\": true,\n65:     \"examplePage\": \"operations-management/issues\"\n66:   },\n67:   {\n68:     \"recipe\": \"dashboard\",\n69:     \"label\": \"驾驶舱\",\n70:     \"templateComponents\": [\n71:       \"metric cards\",\n72:       \"pm-echarts\"\n73:     ],\n74:     \"contractPreviewSupported\": true,\n75:     \"examplePage\": \"enterprise-application-platform/overview\"\n76:   },\n77:   {\n78:     \"recipe\": \"wizard\",\n79:     \"label\": \"分步表单\",\n80:     \"templateComponents\": [\n81:       \"pm-steps\",\n82:       \"FormSection\"\n83:     ],\n84:     \"contractPreviewSupported\": true,\n85:     \"examplePage\": \"enterprise-application-platform/application-form\"\n86:   }\n87: ]",
+              "truncated": false,
+              "originalChars": 2397,
+              "keptChars": 2397,
+              "mode": "head",
+              "exit": null
+            },
+            "diff": null,
+            "error": null,
+            "time": {
+              "created": 1795267899544,
+              "ran": 1795267899709,
+              "completed": 1795267899713
+            },
+            "durationMs": 169
+          },
+          {
+            "type": "tool",
+            "id": "call_01_BrKYVQPI3F57eTp13lKC1846",
+            "messageId": "msg_1fe4e2b96001pzvgPsTPsSnweX",
+            "name": "read",
+            "status": "completed",
+            "target": "catalog/components.json",
+            "input": {
+              "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog\\components.json"
+            },
+            "output": {
+              "text": "Read file C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog\\components.json, lines 1-858\n1: [\n2:   {\n3:     \"name\": \"pm-auto-number\",\n4:     \"category\": \"container\",\n5:     \"tagReferences\": 1,\n6:     \"pageReferences\": 1,\n7:     \"pages\": [\n8:       \"operations-management/components\"\n9:     ],\n10:     \"contractControl\": null,\n11:     \"contractSupported\": false,\n12:     \"componentMapTypes\": [],\n13:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n14:     \"snippets\": [\n15:       \"<pm-auto-number size=\\\"default\\\" v-model=\\\"form.code\\\" readonly />\"\n16:     ],\n17:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n18:   },\n19:   {\n20:     \"name\": \"pm-calendar\",\n21:     \"category\": \"container\",\n22:     \"tagReferences\": 1,\n23:     \"pageReferences\": 1,\n24:     \"pages\": [\n25:       \"data-governance-workbench/advanced\"\n26:     ],\n27:     \"contractControl\": null,\n28:     \"contractSupported\": false,\n29:     \"componentMapTypes\": [],\n30:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n31:     \"snippets\": [\n32:       \"<pm-calendar :data=\\\"calendarData\\\" :options=\\\"calendarOptions\\\" pk-field=\\\"id\\\" />\"\n33:     ],\n34:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n35:   },\n36:   {\n37:     \"name\": \"pm-card\",\n38:     \"category\": \"container\",\n39:     \"tagReferences\": 5,\n40:     \"pageReferences\": 1,\n41:     \"pages\": [\n42:       \"incident-response-console/layout\"\n43:     ],\n44:     \"contractControl\": null,\n45:     \"contractSupported\": false,\n46:     \"componentMapTypes\": [],\n47:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n48:     \"snippets\": [\n49:       \"<pm-card class=\\\"layout-card tabs-card\\\">\",\n50:       \"<pm-card class=\\\"layout-card fold-card\\\">\",\n51:       \"<pm-card class=\\\"layout-card split-card\\\">\"\n52:     ],\n53:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n54:   },\n55:   {\n56:     \"name\": \"pm-checkbox\",\n57:     \"category\": \"control\",\n58:     \"tagReferences\": 1,\n59:     \"pageReferences\": 1,\n60:     \"pages\": [\n61:       \"operations-management/components\"\n62:     ],\n63:     \"contractControl\": \"checkbox\",\n64:     \"contractSupported\": true,\n65:     \"componentMapTypes\": [],\n66:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n67:     \"snippets\": [\n68:       \"<pm-checkbox size=\\\"default\\\" v-model=\\\"form.channels\\\" :settings=\\\"channelSettings\\\" />\"\n69:     ],\n70:     \"notes\": \"契约页可用 components.<字段>='pm-checkbox' 指定\"\n71:   },\n72:   {\n73:     \"name\": \"pm-datepick-range\",\n74:     \"category\": \"container\",\n75:     \"tagReferences\": 1,\n76:     \"pageReferences\": 1,\n77:     \"pages\": [\n78:       \"operations-management/components\"\n79:     ],\n80:     \"contractControl\": null,\n81:     \"contractSupported\": false,\n82:     \"componentMapTypes\": [],\n83:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n84:     \"snippets\": [\n85:       \"<pm-datepick-range size=\\\"default\\\" v-model=\\\"form.activeStart\\\" v-model:value2=\\\"form.activeEnd\\\" type=\\\"date\\\" value-format=\\\"YYYY-MM-DD\\\" />\"\n86:     ],\n87:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n88:   },\n89:   {\n90:     \"name\": \"pm-datepicker\",\n91:     \"category\": \"control\",\n92:     \"tagReferences\": 7,\n93:     \"pageReferences\": 7,\n94:     \"pages\": [\n95:       \"operations-management/form\",\n96:       \"operations-management/components\",\n97:       \"operations-management/dashboard\",\n98:       \"operations-management/schedule\",\n99:       \"operations-management/issues\",\n100:       \"data-governance-workbench/list\",\n101:       \"data-governance-workbench/form\"\n102:     ],\n103:     \"contractControl\": \"date\",\n104:     \"contractSupported\": true,\n105:     \"componentMapTypes\": [\n106:       \"date\",\n107:       \"datetime\"\n108:     ],\n109:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n110:     \"snippets\": [\n111:       \"<pm-datepicker size=\\\"default\\\" v-model=\\\"form.startAt\\\" type=\\\"datetime\\\" value-format=\\\"YYYY-MM-DD HH:mm:ss\\\" />\"\n112:     ],\n113:     \"notes\": \"契约页可用 components.<字段>='pm-datepicker' 指定\"\n114:   },\n115:   {\n116:     \"name\": \"pm-dialog\",\n117:     \"category\": \"container\",\n118:     \"tagReferences\": 4,\n119:     \"pageReferences\": 4,\n120:     \"pages\": [\n121:       \"enterprise-application-platform/audit\",\n122:       \"data-governance-workbench/treeTable\",\n123:       \"data-governance-workbench/list\",\n124:       \"data-governance-workbench/monitor\"\n125:     ],\n126:     \"contractControl\": null,\n127:     \"contractSupported\": false,\n128:     \"componentMapTypes\": [],\n129:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n130:     \"snippets\": [\n131:       \"<pm-dialog v-model=\\\"logVisible\\\" title=\\\"实例诊断日志\\\" width=\\\"680px\\\">\"\n132:     ],\n133:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n134:   },\n135:   {\n136:     \"name\": \"pm-divider\",\n137:     \"category\": \"container\",\n138:     \"tagReferences\": 3,\n139:     \"pageReferences\": 2,\n140:     \"pages\": [\n141:       \"operations-management/components\",\n142:       \"incident-response-console/layout\"\n143:     ],\n144:     \"contractControl\": null,\n145:     \"contractSupported\": false,\n146:     \"componentMapTypes\": [],\n147:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n148:     \"snippets\": [\n149:       \"<pm-divider content-position=\\\"left\\\" title-text=\\\"处置操作\\\" />\",\n150:       \"<pm-divider content-position=\\\"left\\\" title-text=\\\"处置备注\\\" />\"\n151:     ],\n152:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n153:   },\n154:   {\n155:     \"name\": \"pm-echarts\",\n156:     \"category\": \"container\",\n157:     \"tagReferences\": 6,\n158:     \"pageReferences\": 6,\n159:     \"pages\": [\n160:       \"enterprise-application-platform/overview\",\n161:       \"operations-management/dashboard\",\n162:       \"operations-management/schedule\",\n163:       \"operations-management/issues\",\n164:       \"data-governance-workbench/monitor\",\n165:       \"data-governance-workbench/advanced\"\n166:     ],\n167:     \"contractControl\": null,\n168:     \"contractSupported\": false,\n169:     \"componentMapTypes\": [],\n170:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n171:     \"snippets\": [\n172:       \"<pm-echarts :option=\\\"qualityChartOption\\\" height=\\\"184px\\\" />\"\n173:     ],\n174:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n175:   },\n176:   {\n177:     \"name\": \"pm-fold\",\n178:     \"category\": \"container\",\n179:     \"tagReferences\": 3,\n180:     \"pageReferences\": 1,\n181:     \"pages\": [\n182:       \"incident-response-console/layout\"\n183:     ],\n184:     \"contractControl\": null,\n185:     \"contractSupported\": false,\n186:     \"componentMapTypes\": [],\n187:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n188:     \"snippets\": [\n189:       \"<pm-fold name=\\\"1\\\" title=\\\"基础信息\\\">\",\n190:       \"<pm-fold name=\\\"2\\\" title=\\\"检测条件\\\">\",\n191:       \"<pm-fold name=\\\"3\\\" title=\\\"响应动作\\\">\"\n192:     ],\n193:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n194:   },\n195:   {\n196:     \"name\": \"pm-fold-group\",\n197:     \"category\": \"container\",\n198:     \"tagReferences\": 1,\n199:     \"pageReferences\": 1,\n200:     \"pages\": [\n201:       \"incident-response-console/layout\"\n202:     ],\n203:     \"contractControl\": null,\n204:     \"contractSupported\": false,\n205:     \"componentMapTypes\": [],\n206:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n207:     \"snippets\": [\n208:       \"<pm-fold-group accordion>\"\n209:     ],\n210:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n211:   },\n212:   {\n213:     \"name\": \"pm-form-dialog\",\n214:     \"category\": \"container\",\n215:     \"tagReferences\": 17,\n216:     \"pageReferences\": 14,\n217:     \"pages\": [\n218:       \"enterprise-application-platform/applications\",\n219:       \"enterprise-application-platform/organization\",\n220:       \"operations-management/treeTable\",\n221:       \"operations-management/list\",\n222:       \"operations-management/permission\",\n223:       \"operations-management/dashboard\",\n224:       \"operations-management/schedule\",\n225:       \"operations-management/issues\",\n226:       \"data-governance-workbench/list\",\n227:       \"data-governance-workbench/dataset\",\n228:       \"data-governance-workbench/detail\",\n229:       \"data-governance-workbench/members\",\n230:       \"incident-response-console/list\",\n231:       \"incident-response-console/detail\"\n232:     ],\n233:     \"contractControl\": null,\n234:     \"contractSupported\": false,\n235:     \"componentMapTypes\": [],\n236:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n237:     \"snippets\": [\n238:       \"<pm-form-dialog v-model:dialog-visible=\\\"handleVisible\\\" title=\\\"处置异常事件\\\" width=\\\"520px\\\" ok-text=\\\"提交处置\\\" @submit=\\\"submitHandle\\\">\"\n239:     ],\n240:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n241:   },\n242:   {\n243:     \"name\": \"pm-html\",\n244:     \"category\": \"container\",\n245:     \"tagReferences\": 1,\n246:     \"pageReferences\": 1,\n247:     \"pages\": [\n248:       \"data-governance-workbench/advanced\"\n249:     ],\n250:     \"contractControl\": null,\n251:     \"contractSupported\": false,\n252:     \"componentMapTypes\": [],\n253:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n254:     \"snippets\": [\n255:       \"<pm-html :html=\\\"htmlContent\\\" />\"\n256:     ],\n257:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n258:   },\n259:   {\n260:     \"name\": \"pm-image\",\n261:     \"category\": \"control\",\n262:     \"tagReferences\": 1,\n263:     \"pageReferences\": 1,\n264:     \"pages\": [\n265:       \"operations-management/components\"\n266:     ],\n267:     \"contractControl\": \"image\",\n268:     \"contractSupported\": true,\n269:     \"componentMapTypes\": [],\n270:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n271:     \"snippets\": [\n272:       \"<pm-image :img-url=\\\"coverImage\\\" img-width=\\\"100%\\\" img-height=\\\"116px\\\" style=\\\"width:100%;height:116px\\\" />\"\n273:     ],\n274:     \"notes\": \"契约页可用 components.<字段>='pm-image' 指定\"\n275:   },\n276:   {\n277:     \"name\": \"pm-input\",\n278:     \"category\": \"control\",\n279:     \"tagReferences\": 41,\n280:     \"pageReferences\": 19,\n281:     \"pages\": [\n282:       \"enterprise-application-platform/applications\",\n283:       \"enterprise-application-platform/application-form\",\n284:       \"enterprise-application-platform/organization\",\n285:       \"enterprise-application-platform/audit\",\n286:       \"operations-management/treeTable\",\n287:       \"operations-management/list\",\n288:       \"operations-management/form\",\n289:       \"operations-management/permission\",\n290:       \"operations-management/components\",\n291:       \"operations-management/dashboard\",\n292:       \"operations-management/schedule\",\n293:       \"operations-management/issues\",\n294:       \"data-governance-workbench/form\",\n295:       \"data-governance-workbench/dataset\",\n296:       \"data-governance-workbench/advanced\",\n297:       \"data-governance-workbench/detail\",\n298:       \"data-governance-workbench/members\",\n299:       \"incident-response-console/list\",\n300:       \"incident-response-console/form\"\n301:     ],\n302:     \"contractControl\": \"input\",\n303:     \"contractSupported\": true,\n304:     \"componentMapTypes\": [\n305:       \"string\"\n306:     ],\n307:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n308:     \"snippets\": [\n309:       \"<pm-input size=\\\"default\\\" v-model=\\\"form.name\\\" placeholder=\\\"例：订单金额异常波动检测\\\" />\",\n310:       \"<pm-input size=\\\"default\\\" v-model=\\\"form.code\\\" placeholder=\\\"ORDER-AMOUNT-001\\\" />\",\n311:       \"<pm-input size=\\\"default\\\" v-model=\\\"form.threshold\\\">\"\n312:     ],\n313:     \"notes\": \"契约页可用 components.<字段>='pm-input' 指定\"\n314:   },\n315:   {\n316:     \"name\": \"pm-lookup\",\n317:     \"category\": \"container\",\n318:     \"tagReferences\": 1,\n319:     \"pageReferences\": 1,\n320:     \"pages\": [\n321:       \"operations-management/components\"\n322:     ],\n323:     \"contractControl\": null,\n324:     \"contractSupported\": false,\n325:     \"componentMapTypes\": [],\n326:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n327:     \"snippets\": [\n328:       \"<pm-lookup size=\\\"default\\\" v-model=\\\"form.plan\\\" :selected=\\\"selectedPlan\\\" entity=\\\"marketingPlan\\\" value-field=\\\"id\\\" label-field=\\\"name\\\" />\"\n329:     ],\n330:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n331:   },\n332:   {\n333:     \"name\": \"pm-markdown\",\n334:     \"category\": \"container\",\n335:     \"tagReferences\": 1,\n336:     \"pageReferences\": 1,\n337:     \"pages\": [\n338:       \"data-governance-workbench/advanced\"\n339:     ],\n340:     \"contractControl\": null,\n341:     \"contractSupported\": false,\n342:     \"componentMapTypes\": [],\n343:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n344:     \"snippets\": [\n345:       \"<pm-markdown :model-value=\\\"markdownContent\\\" />\"\n346:     ],\n347:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n348:   },\n349:   {\n350:     \"name\": \"pm-number\",\n351:     \"category\": \"control\",\n352:     \"tagReferences\": 4,\n353:     \"pageReferences\": 2,\n354:     \"pages\": [\n355:       \"operations-management/treeTable\",\n356:       \"operations-management/components\"\n357:     ],\n358:     \"contractControl\": \"number\",\n359:     \"contractSupported\": true,\n360:     \"componentMapTypes\": [\n361:       \"number\",\n362:       \"decimal\"\n363:     ],\n364:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n365:     \"snippets\": [\n366:       \"<pm-number size=\\\"default\\\" v-model=\\\"form.stock\\\" :min=\\\"0\\\" :max=\\\"999\\\" />\",\n367:       \"<pm-number size=\\\"default\\\" v-model=\\\"form.target\\\" :min=\\\"0\\\" />\",\n368:       \"<pm-number size=\\\"default\\\" v-model=\\\"form.budget\\\" :precision=\\\"2\\\" prefix-value=\\\"¥\\\" />\"\n369:     ],\n370:     \"notes\": \"契约页可用 components.<字段>='pm-number' 指定\"\n371:   },\n372:   {\n373:     \"name\": \"pm-number-range\",\n374:     \"category\": \"container\",\n375:     \"tagReferences\": 1,\n376:     \"pageReferences\": 1,\n377:     \"pages\": [\n378:       \"operations-management/components\"\n379:     ],\n380:     \"contractControl\": null,\n381:     \"contractSupported\": false,\n382:     \"componentMapTypes\": [],\n383:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n384:     \"snippets\": [\n385:       \"<pm-number-range size=\\\"default\\\" v-model=\\\"form.minDiscount\\\" v-model:value2=\\\"form.maxDiscount\\\" placeholder=\\\"最低折扣\\\" placeholder2=\\\"最高折扣\\\" />\"\n386:     ],\n387:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n388:   },\n389:   {\n390:     \"name\": \"pm-pagination\",\n391:     \"category\": \"container\",\n392:     \"tagReferences\": 15,\n393:     \"pageReferences\": 12,\n394:     \"pages\": [\n395:       \"enterprise-application-platform/applications\",\n396:       \"enterprise-application-platform/organization\",\n397:       \"enterprise-application-platform/audit\",\n398:       \"operations-management/treeTable\",\n399:       \"operations-management/list\",\n400:       \"operations-management/dashboard\",\n401:       \"operations-management/schedule\",\n402:       \"operations-management/issues\",\n403:       \"data-governance-workbench/treeTable\",\n404:       \"data-governance-workbench/list\",\n405:       \"data-governance-workbench/monitor\",\n406:       \"incident-response-console/list\"\n407:     ],\n408:     \"contractControl\": null,\n409:     \"contractSupported\": false,\n410:     \"componentMapTypes\": [],\n411:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n412:     \"snippets\": [\n413:       \"<pm-pagination v-model:current-page=\\\"currentPage\\\" background layout=\\\"prev, pager, next\\\" :page-size=\\\"pageSize\\\" :total=\\\"filteredRows.length\\\" />\"\n414:     ],\n415:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n416:   },\n417:   {\n418:     \"name\": \"pm-radio\",\n419:     \"category\": \"control\",\n420:     \"tagReferences\": 3,\n421:     \"pageReferences\": 3,\n422:     \"pages\": [\n423:       \"enterprise-application-platform/applications\",\n424:       \"operations-management/components\",\n425:       \"data-governance-workbench/list\"\n426:     ],\n427:     \"contractControl\": \"radio\",\n428:     \"contractSupported\": true,\n429:     \"componentMapTypes\": [],\n430:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n431:     \"snippets\": [\n432:       \"<pm-radio size=\\\"default\\\" v-model=\\\"viewMode\\\" :settings=\\\"viewModeSettings\\\" option-type=\\\"button\\\" />\"\n433:     ],\n434:     \"notes\": \"契约页可用 components.<字段>='pm-radio' 指定\"\n435:   },\n436:   {\n437:     \"name\": \"pm-richtext\",\n438:     \"category\": \"container\",\n439:     \"tagReferences\": 3,\n440:     \"pageReferences\": 3,\n441:     \"pages\": [\n442:       \"operations-management/form\",\n443:       \"operations-management/components\",\n444:       \"data-governance-workbench/advanced\"\n445:     ],\n446:     \"contractControl\": null,\n447:     \"contractSupported\": false,\n448:     \"componentMapTypes\": [],\n449:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n450:     \"snippets\": [\n451:       \"<pm-richtext v-model=\\\"richContent\\\" />\"\n452:     ],\n453:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n454:   },\n455:   {\n456:     \"name\": \"pm-search\",\n457:     \"category\": \"container\",\n458:     \"tagReferences\": 18,\n459:     \"pageReferences\": 13,\n460:     \"pages\": [\n461:       \"operations-management/treeTable\",\n462:       \"operations-management/list\",\n463:       \"operations-management/permission\",\n464:       \"operations-management/dashboard\",\n465:       \"operations-management/schedule\",\n466:       \"operations-management/issues\",\n467:       \"data-governance-workbench/treeTable\",\n468:       \"data-governance-workbench/list\",\n469:       \"data-governance-workbench/dataset\",\n470:       \"data-governance-workbench/advanced\",\n471:       \"data-governance-workbench/detail\",\n472:       \"data-governance-workbench/members\",\n473:       \"incident-response-console/list\"\n474:     ],\n475:     \"contractControl\": null,\n476:     \"contractSupported\": false,\n477:     \"componentMapTypes\": [],\n478:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n479:     \"snippets\": [\n480:       \"<pm-search v-model:query=\\\"searchQuery\\\" default-prop=\\\"keyword\\\" placeholder=\\\"搜索事件 / 规则 / 操作人\\\" @search=\\\"currentPage=1\\\">\"\n481:     ],\n482:     \"notes\": \"容器/展示组件：由 ContractPage 固定结构渲染，不可在契约中指定\"\n483:   },\n484:   {\n485:     \"name\": \"pm-select\",\n486:     \"category\": \"control\",\n487:     \"tagReferences\": 97,\n488:     \"pageReferences\": 24,\n489:     \"pages\": [\n490:       \"enterprise-application-platform/overview\",\n491:       \"enterprise-application-platform/applications\",\n492:       \"enterprise-application-platform/application-form\",\n493:       \"enterprise-application-platform/organization\",\n494:       \"enterprise-application-platform/audit\",\n495:       \"operations-management/treeTable\",\n496:       \"operations-management/list\",\n497:       \"operations-management/form\",\n498:       \"operations-management/permission\",\n499:       \"operations-management/components\",\n500:       \"operations-management/dashboard\",\n501:       \"operations-management/schedule\",\n502:       \"operations-management/issues\",\n503:       \"data-governance-workbench/treeTable\",\n504:       \"data-governance-workbench/list\",\n505:       \"data-governance-workbench/form\",\n506:       \"data-governance-workbench/dataset\",\n507:       \"data-governance-workbench/monitor\",\n508:       \"data-governance-workbench/advanced\",\n509:       \"data-governance-workbench/detail\",\n510:       \"data-governance-workbench/members\",\n511:       \"incident-response-console/list\",\n512:       \"incident-response-console/form\",\n513:       \"incident-response-console/detail\"\n514:     ],\n515:     \"contractControl\": \"select\",\n516:     \"contractSupported\": true,\n517:     \"componentMapTypes\": [\n518:       \"enum\"\n519:     ],\n520:     \"mappingSource\": \"templates/design-system/component-controls.json\",\n521:     \"snippets\": [\n522:       \"<pm-select size=\\\"default\\\" v-model=\\\"handler.method\\\" :options=\\\"methodOptions\\\" style=\\\"width:100%\\\" />\"\n523:     ],\n524:     \"notes\": \"契约页可用 components.<字段>='pm-select' 指定\"\n525:   },\n526:   {\n527:     \"name\": \"pm-select-org\",\n528:     \"category\": \"control\",\n529:     \"tagReferences\": 1,\n530:     \"pageReferences\": 1,\n531:     \"pages\": [\n532:       \"operatio",
+              "truncated": true,
+              "originalChars": 32194,
+              "keptChars": 20000,
+              "mode": "head",
+              "exit": null
+            },
+            "diff": null,
+            "error": null,
+            "time": {
+              "created": 1795267899710,
+              "ran": 1795267899947,
+              "completed": 1795267899952
+            },
+            "durationMs": 242
+          },
+          {
+            "type": "tool",
+            "id": "call_00_gaHqSsxNzQWLQEPpxlmN4268",
+            "messageId": "msg_1fe4e3237001qxLsHokrZ7MQT1",
+            "name": "read",
+            "status": "completed",
+            "target": "catalog",
+            "input": {
+              "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog"
+            },
+            "output": {
+              "text": "Read directory C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog, entries 1-8\nbuiltin\\\nexamples\\\ncomponent-controls.json\ncomponents.json\nindex.json\npages.json\nrecipes.json\nstyles.json",
+              "truncated": false,
+              "originalChars": 234,
+              "keptChars": 234,
+              "mode": "head",
+              "exit": null
+            },
+            "diff": null,
+            "error": null,
+            "time": {
+              "created": 1795267901457,
+              "ran": 1795267901614,
+              "completed": 1795267901619
+            },
+            "durationMs": 162
+          },
+          {
+            "type": "tool",
+            "id": "call_01_wiLeKoBffPguAKBtrcoc9022",
+            "messageId": "msg_1fe4e3237001qxLsHokrZ7MQT1",
+            "name": "read",
+            "status": "completed",
+            "target": "drafts",
+            "input": {
+              "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\drafts"
+            },
+            "output": {
+              "text": "Read directory C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\drafts, entries 1-1\nsupplier-management\\",
+              "truncated": false,
+              "originalChars": 148,
+              "keptChars": 148,
+              "mode": "head",
+              "exit": null
+            },
+            "diff": null,
+            "error": null,
+            "time": {
+              "created": 1795267901615,
+              "ran": 1795267901779,
+              "completed": 1795267901784
+            },
+            "durationMs": 169
+          },
+          {
+            "type": "tool",
+            "id": "call_00_ET_81qy0JjWDpW1EwKrgHOZ0863",
+            "messageId": "msg_1fe4e395e001zR4GQZhhkfBDj4",
+            "name": "read",
+            "status": "completed",
+            "target": "catalog/component-controls.json",
+            "input": {
+              "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog\\component-controls.json"
+            },
+            "output": {
+              "text": "Read file C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\catalog\\component-controls.json, lines 1-22\n1: {\n2:   \"pm-input\": \"input\",\n3:   \"pm-input-text\": \"input\",\n4:   \"pm-textarea\": \"textarea\",\n5:   \"pm-input-number\": \"number\",\n6:   \"pm-number\": \"number\",\n7:   \"pm-switch\": \"boolean\",\n8:   \"pm-date\": \"date\",\n9:   \"pm-datepicker\": \"date\",\n10:   \"pm-date-picker\": \"date\",\n11:   \"pm-datetimepicker\": \"datetime\",\n12:   \"pm-datetime-picker\": \"datetime\",\n13:   \"pm-select\": \"select\",\n14:   \"pm-select-user\": \"select-user\",\n15:   \"pm-select-org\": \"select-org\",\n16:   \"pm-select-tree\": \"select\",\n17:   \"pm-radio\": \"radio\",\n18:   \"pm-checkbox\": \"checkbox\",\n19:   \"pm-upload\": \"upload\",\n20:   \"pm-image\": \"image\",\n21:   \"pm-image-upload\": \"image\"\n22: }",
+              "truncated": false,
+              "originalChars": 790,
+              "keptChars": 790,
+              "mode": "head",
+              "exit": null
+            },
+            "diff": null,
+            "error": null,
+            "time": {
+              "created": 1795267903154,
+              "ran": 1795267903343,
+              "completed": 1795267903348
+            },
+            "durationMs": 194
+          },
+          {
+            "type": "tool",
+            "id": "call_01_ET_ZMO2N3kEMziCHRMLRGXw6345",
+            "messageId": "msg_1fe4e395e001zR4GQZhhkfBDj4",
+            "name": "read",
+            "status": "completed",
+            "target": "drafts/supplier-management",
+            "input": {
+              "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\drafts\\supplier-management"
+            },
+            "output": {
+              "text": "Read directory C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-zzjhmC\\data\\design-system\\_workshop\\drafts\\supplier-management, entries 1-2\ndraft.json\nspec.json",
+              "truncated": false,
+              "originalChars": 168,
+              "keptChars": 168,
+              "mode": "head",
+              "exit": null
+            },
+            "diff": null,
+            "error": null,
+            "time": {
+              "created": 1795267903344,
+              "ran": 1795267903511,
+              "completed": 1795267903516
+            },
+            "durationMs": 172
+          }
+        ]
+      }
+    ],
+    "messages": [
+      {
+        "id": "msg_1fe4e1eb30016NixXOvtev2E27",
+        "type": "user",
+        "created": 1795267894972,
+        "text": "当前工作室：设计模板编写。\n当前模板/草稿：supplier-management（显示名 供应商管理模板）。\n只允许写 drafts/supplier-management/spec.json 与 drafts/supplier-management/notes.md；其它文件只读，禁止修改。\n先读 AGENTS.md 与 catalog（index/pages/components/styles/recipes），再读 spec.json（若存在）。\n引用必须来自 catalog 的真实 id；contract 页字段必须来自 sampleEntity.fields。\n生成用 node .opencode/scripts/generate.cjs --draft supplier-management；不要发布；生成后把 errors/warnings 用中文汇报。\n所有面向用户的文字使用中文。\n\n用户消息：\n做一个“供应商管理”设计模板：供应商列表（reference 运营管理的 list）、供应商新建/编辑（contract dialog-form）、供应商详情（contract detail）；风格数据蓝青。\n先读 AGENTS.md 与 catalog，复述方案后直接写 spec.json；不要提问，按合理默认继续；只写 spec.json（可选 notes.md），不要发布；写完后运行生成脚本并汇报 errors/warnings。"
+      },
+      {
+        "id": "msg_1fe4e1ec1001va6M3WLO24N26X",
+        "type": "assistant",
+        "created": 1795267894991,
+        "text": "I'll start by reading the workshop instructions and catalog files.",
+        "tools": [
+          {
+            "id": "call_00_ET_xSuNhU1UC9fDKQQOqrtk3771",
+            "name": "read",
+            "status": "completed",
+            "title": null,
+            "target": "AGENTS.md",
+            "durationMs": 166
+          },
+          {
+            "id": "call_01_ET_03YqcmmKVNPkJSA9KEBu1102",
+            "name": "read",
+            "status": "completed",
+            "title": null,
+            "target": "catalog/index.json",
+            "durationMs": 174
+          }
+        ],
+        "agent": "build",
+        "model": {
+          "id": "deepseek-flash",
+          "providerID": "packycode-deepseek",
+          "variant": "default"
+        },
+        "finish": "tool-calls",
+        "error": null,
+        "cost": 0,
+        "tokens": {
+          "input": 8357,
+          "output": 151,
+          "reasoning": 0,
+          "cache": {
+            "read": 1536,
+            "write": 0
+          }
+        },
+        "time": {
+          "created": 1795267894991,
+          "streamed": 1795267896680,
+          "completed": 1795267896685
+        }
+      },
+      {
+        "id": "msg_1fe4e2573001D7ZZ4rsIhXVnMv",
+        "type": "assistant",
+        "created": 1795267896694,
+        "text": "",
+        "tools": [
+          {
+            "id": "call_00_ET_OFpaNXJnAqMPei7Fb1xJ6095",
+            "name": "read",
+            "status": "completed",
+            "title": null,
+            "target": "catalog/pages.json",
+            "durationMs": 230
+          },
+          {
+            "id": "call_01_ET_z3GpzWPlJaRZ8oHmfYWP4977",
+            "name": "read",
+            "status": "completed",
+            "title": null,
+            "target": "catalog/styles.json",
+            "durationMs": 168
+          }
+        ],
+        "agent": "build",
+        "model": {
+          "id": "deepseek-flash",
+          "providerID": "packycode-deepseek",
+          "variant": "default"
+        },
+        "finish": "tool-calls",
+        "error": null,
+        "cost": 0,
+        "tokens": {
+          "input": 1160,
+          "output": 142,
+          "reasoning": 0,
+          "cache": {
+            "read": 9984,
+            "write": 0
+          }
+        },
+        "time": {
+          "created": 1795267896694,
+          "streamed": 1795267898254,
+          "completed": 1795267898257
+        }
+      },
+      {
+        "id": "msg_1fe4e2b96001pzvgPsTPsSnweX",
+        "type": "assistant",
+        "created": 1795267898265,
+        "text": "",
+        "reasoning": "Now read recipes.json, components.json, and existing draft spec.",
+        "tools": [
+          {
+            "id": "call_00_eIyTzGfky5ZG2qgXmz928241",
+            "name": "read",
+            "status": "completed",
+            "title": null,
+            "target": "catalog/recipes.json",
+            "durationMs": 169
+          },
+          {
+            "id": "call_01_BrKYVQPI3F57eTp13lKC1846",
+            "name": "read",
+            "status": "completed",
+            "title": null,
+            "target": "catalog/components.json",
+            "durationMs": 242
+          }
+        ],
+        "agent": "build",
+        "model": {
+          "id": "deepseek-flash",
+          "providerID": "packycode-deepseek",
+          "variant": "default"
+        },
+        "finish": "tool-calls",
+        "error": null,
+        "cost": 0,
+        "tokens": {
+          "input": 9683,
+          "output": 142,
+          "reasoning": 13,
+          "cache": {
+            "read": 11264,
+            "write": 0
+          }
+        },
+        "time": {
+          "created": 1795267898265,
+          "streamed": 1795267899950,
+          "completed": 1795267899953
+        }
+      },
+      {
+        "id": "msg_1fe4e3237001qxLsHokrZ7MQT1",
+        "type": "assistant",
+        "created": 1795267899962,
+        "text": "",
+        "reasoning": "Now read the draft spec if exists, and the generation.json. Also need sampleEntity.fields — where are those? Probably in catalog pages? Not in pages.json above. Maybe there's another catalog file (entities.json). Let me look at catalog dir.",
+        "tools": [
+          {
+            "id": "call_00_gaHqSsxNzQWLQEPpxlmN4268",
+            "name": "read",
+            "status": "completed",
+            "title": null,
+            "target": "catalog",
+            "durationMs": 162
+          },
+          {
+            "id": "call_01_wiLeKoBffPguAKBtrcoc9022",
+            "name": "read",
+            "status": "completed",
+            "title": null,
+            "target": "drafts",
+            "durationMs": 169
+          }
+        ],
+        "agent": "build",
+        "model": {
+          "id": "deepseek-flash",
+          "providerID": "packycode-deepseek",
+          "variant": "default"
+        },
+        "finish": "tool-calls",
+        "error": null,
+        "cost": 0,
+        "tokens": {
+          "input": 10123,
+          "output": 135,
+          "reasoning": 52,
+          "cache": {
+            "read": 20992,
+            "write": 0
+          }
+        },
+        "time": {
+          "created": 1795267899962,
+          "streamed": 1795267901781,
+          "completed": 1795267901784
+        }
+      },
+      {
+        "id": "msg_1fe4e395e001zR4GQZhhkfBDj4",
+        "type": "assistant",
+        "created": 1795267901793,
+        "text": "",
+        "tools": [
+          {
+            "id": "call_00_ET_81qy0JjWDpW1EwKrgHOZ0863",
+            "name": "read",
+            "status": "completed",
+            "title": null,
+            "target": "catalog/component-controls.json",
+            "durationMs": 194
+          },
+          {
+            "id": "call_01_ET_ZMO2N3kEMziCHRMLRGXw6345",
+            "name": "read",
+            "status": "completed",
+            "title": null,
+            "target": "drafts/supplier-management",
+            "durationMs": 172
+          }
+        ],
+        "agent": "build",
+        "model": {
+          "id": "deepseek-flash",
+          "providerID": "packycode-deepseek",
+          "variant": "default"
+        },
+        "finish": "tool-calls",
+        "error": null,
+        "cost": 0,
+        "tokens": {
+          "input": 209,
+          "output": 144,
+          "reasoning": 0,
+          "cache": {
+            "read": 31232,
+            "write": 0
+          }
+        },
+        "time": {
+          "created": 1795267901793,
+          "streamed": 1795267903514,
+          "completed": 1795267903517
+        }
+      }
+    ],
+    "pending": {
+      "permissions": [],
+      "forms": []
+    }
+  }
+}

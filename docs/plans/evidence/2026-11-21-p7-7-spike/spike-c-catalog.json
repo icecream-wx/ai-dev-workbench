@@ -1,0 +1,1223 @@
+{
+  "scannedAt": "2026-11-21T10:31:48.078Z",
+  "pack": {
+    "id": "afcenter-app-templates-v1",
+    "name": "AFCenter 应用页面模板",
+    "version": "1.0.0",
+    "schemaVersion": 1,
+    "defaultApplicationType": "enterprise-application-platform",
+    "defaultStyle": "platform-blue"
+  },
+  "applicationTypeCount": 4,
+  "styleCount": 4,
+  "styles": [
+    {
+      "id": "platform-blue",
+      "name": "平台蓝白",
+      "className": "visual-style-platform-blue",
+      "css": "styles/platform-blue/style.css"
+    },
+    {
+      "id": "classic-warm",
+      "name": "经典暖色",
+      "className": "visual-style-classic-warm",
+      "css": "styles/classic-warm/style.css"
+    },
+    {
+      "id": "data-cyan",
+      "name": "数据蓝青",
+      "className": "visual-style-data-cyan",
+      "css": "styles/data-cyan/style.css"
+    },
+    {
+      "id": "high-contrast-tool",
+      "name": "高对比工具风",
+      "className": "visual-style-high-contrast-tool",
+      "css": "styles/high-contrast-tool/style.css"
+    }
+  ],
+  "pageCount": 25,
+  "appTypeSummary": [
+    {
+      "id": "enterprise-application-platform",
+      "name": "企业级应用管理平台",
+      "pages": 5,
+      "structure": "application-types/enterprise-application-platform/structure.css",
+      "defaultStyle": "platform-blue"
+    },
+    {
+      "id": "operations-management",
+      "name": "运营管理后台",
+      "pages": 8,
+      "structure": "application-types/operations-management/structure.css",
+      "defaultStyle": "classic-warm"
+    },
+    {
+      "id": "data-governance-workbench",
+      "name": "数据分析与治理工作台",
+      "pages": 8,
+      "structure": "application-types/data-governance-workbench/structure.css",
+      "defaultStyle": "data-cyan"
+    },
+    {
+      "id": "incident-response-console",
+      "name": "轻量监控与处置工具台",
+      "pages": 4,
+      "structure": "application-types/incident-response-console/structure.css",
+      "defaultStyle": "high-contrast-tool"
+    }
+  ],
+  "recipes": [
+    "list",
+    "tree-list",
+    "dialog-form",
+    "page-form",
+    "main-sub",
+    "detail",
+    "dashboard",
+    "wizard"
+  ],
+  "recipeUsage": {
+    "dashboard": 3,
+    "list": 8,
+    "wizard": 2,
+    "tree-list": 4,
+    "page-form": 3,
+    "detail": 3,
+    "main-sub": 2
+  },
+  "componentMap": {
+    "string": "pm-input",
+    "text": "pm-textarea",
+    "number": "pm-number",
+    "decimal": "pm-number",
+    "boolean": "pm-switch",
+    "date": "pm-datepicker",
+    "datetime": "pm-datepicker",
+    "enum": "pm-select",
+    "ref": "pm-select-entity",
+    "ref:user": "pm-select-user",
+    "ref:org": "pm-select-org",
+    "ref:position": "pm-select-position",
+    "ref:tree": "pm-select-tree",
+    "upload": "pm-upload"
+  },
+  "componentCount": 39,
+  "components": [
+    {
+      "component": "pm-auto-number",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "operations-management/components"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-auto-number size=\"default\" v-model=\"form.code\" readonly />"
+    },
+    {
+      "component": "pm-calendar",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "data-governance-workbench/advanced"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-calendar :data=\"calendarData\" :options=\"calendarOptions\" pk-field=\"id\" />"
+    },
+    {
+      "component": "pm-card",
+      "tagReferences": 5,
+      "pageReferences": 1,
+      "pages": [
+        "incident-response-console/layout"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-card class=\"layout-card tabs-card\">"
+    },
+    {
+      "component": "pm-checkbox",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "operations-management/components"
+      ],
+      "contractControl": "pm-checkbox",
+      "contractSupported": true,
+      "snippet": "<pm-checkbox size=\"default\" v-model=\"form.channels\" :settings=\"channelSettings\" />"
+    },
+    {
+      "component": "pm-datepick-range",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "operations-management/components"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-datepick-range size=\"default\" v-model=\"form.activeStart\" v-model:value2=\"form.activeEnd\" type=\"date\" value-format=\"YYYY-MM-DD\" />"
+    },
+    {
+      "component": "pm-datepicker",
+      "tagReferences": 7,
+      "pageReferences": 7,
+      "pages": [
+        "operations-management/form",
+        "operations-management/components",
+        "operations-management/dashboard",
+        "operations-management/schedule",
+        "operations-management/issues",
+        "data-governance-workbench/list",
+        "data-governance-workbench/form"
+      ],
+      "contractControl": "pm-datepicker",
+      "contractSupported": true,
+      "snippet": "<pm-datepicker size=\"default\" v-model=\"form.publishAt\" type=\"datetime\" value-format=\"YYYY-MM-DD HH:mm:ss\" placeholder=\"立即发布\" />"
+    },
+    {
+      "component": "pm-dialog",
+      "tagReferences": 4,
+      "pageReferences": 4,
+      "pages": [
+        "enterprise-application-platform/audit",
+        "data-governance-workbench/treeTable",
+        "data-governance-workbench/list",
+        "data-governance-workbench/monitor"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-dialog v-model=\"detailVisible\" title=\"审计日志详情\" width=\"600px\">"
+    },
+    {
+      "component": "pm-divider",
+      "tagReferences": 3,
+      "pageReferences": 2,
+      "pages": [
+        "operations-management/components",
+        "incident-response-console/layout"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-divider content-position=\"left\" title-text=\"子表格\" />"
+    },
+    {
+      "component": "pm-echarts",
+      "tagReferences": 6,
+      "pageReferences": 6,
+      "pages": [
+        "enterprise-application-platform/overview",
+        "operations-management/dashboard",
+        "operations-management/schedule",
+        "operations-management/issues",
+        "data-governance-workbench/monitor",
+        "data-governance-workbench/advanced"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-echarts :option=\"growthChartOption\" height=\"270px\" />"
+    },
+    {
+      "component": "pm-fold",
+      "tagReferences": 3,
+      "pageReferences": 1,
+      "pages": [
+        "incident-response-console/layout"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-fold name=\"1\" title=\"基础信息\">"
+    },
+    {
+      "component": "pm-fold-group",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "incident-response-console/layout"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-fold-group accordion>"
+    },
+    {
+      "component": "pm-form-dialog",
+      "tagReferences": 17,
+      "pageReferences": 14,
+      "pages": [
+        "enterprise-application-platform/applications",
+        "enterprise-application-platform/organization",
+        "operations-management/treeTable",
+        "operations-management/list",
+        "operations-management/permission",
+        "operations-management/dashboard",
+        "operations-management/schedule",
+        "operations-management/issues",
+        "data-governance-workbench/list",
+        "data-governance-workbench/dataset",
+        "data-governance-workbench/detail",
+        "data-governance-workbench/members",
+        "incident-response-console/list",
+        "incident-response-console/detail"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-form-dialog v-model:dialog-visible=\"editVisible\" title=\"编辑应用\" width=\"540px\" @submit=\"save\">"
+    },
+    {
+      "component": "pm-html",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "data-governance-workbench/advanced"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-html :html=\"htmlContent\" />"
+    },
+    {
+      "component": "pm-image",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "operations-management/components"
+      ],
+      "contractControl": "pm-image",
+      "contractSupported": true,
+      "snippet": "<pm-image :img-url=\"coverImage\" img-width=\"100%\" img-height=\"116px\" style=\"width:100%;height:116px\" />"
+    },
+    {
+      "component": "pm-input",
+      "tagReferences": 41,
+      "pageReferences": 19,
+      "pages": [
+        "enterprise-application-platform/applications",
+        "enterprise-application-platform/application-form",
+        "enterprise-application-platform/organization",
+        "enterprise-application-platform/audit",
+        "operations-management/treeTable",
+        "operations-management/list",
+        "operations-management/form",
+        "operations-management/permission",
+        "operations-management/components",
+        "operations-management/dashboard",
+        "operations-management/schedule",
+        "operations-management/issues",
+        "data-governance-workbench/form",
+        "data-governance-workbench/dataset",
+        "data-governance-workbench/advanced",
+        "data-governance-workbench/detail",
+        "data-governance-workbench/members",
+        "incident-response-console/list",
+        "incident-response-console/form"
+      ],
+      "contractControl": "pm-input",
+      "contractSupported": true,
+      "snippet": "<pm-input size=\"default\" v-model=\"filters.keyword\" clearable placeholder=\"名称或编码\" />"
+    },
+    {
+      "component": "pm-lookup",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "operations-management/components"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-lookup size=\"default\" v-model=\"form.plan\" :selected=\"selectedPlan\" entity=\"marketingPlan\" value-field=\"id\" label-field=\"name\" />"
+    },
+    {
+      "component": "pm-markdown",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "data-governance-workbench/advanced"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-markdown :model-value=\"markdownContent\" />"
+    },
+    {
+      "component": "pm-number",
+      "tagReferences": 4,
+      "pageReferences": 2,
+      "pages": [
+        "operations-management/treeTable",
+        "operations-management/components"
+      ],
+      "contractControl": "pm-number",
+      "contractSupported": true,
+      "snippet": "<pm-number size=\"default\" v-model=\"editor.load\" :min=\"0\" :max=\"100\" suffix-value=\"%\" />"
+    },
+    {
+      "component": "pm-number-range",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "operations-management/components"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-number-range size=\"default\" v-model=\"form.minDiscount\" v-model:value2=\"form.maxDiscount\" placeholder=\"最低折扣\" placeholder2=\"最高折扣\" />"
+    },
+    {
+      "component": "pm-pagination",
+      "tagReferences": 15,
+      "pageReferences": 12,
+      "pages": [
+        "enterprise-application-platform/applications",
+        "enterprise-application-platform/organization",
+        "enterprise-application-platform/audit",
+        "operations-management/treeTable",
+        "operations-management/list",
+        "operations-management/dashboard",
+        "operations-management/schedule",
+        "operations-management/issues",
+        "data-governance-workbench/treeTable",
+        "data-governance-workbench/list",
+        "data-governance-workbench/monitor",
+        "incident-response-console/list"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-pagination background layout=\"prev, pager, next\""
+    },
+    {
+      "component": "pm-radio",
+      "tagReferences": 3,
+      "pageReferences": 3,
+      "pages": [
+        "enterprise-application-platform/applications",
+        "operations-management/components",
+        "data-governance-workbench/list"
+      ],
+      "contractControl": "pm-radio",
+      "contractSupported": true,
+      "snippet": "<pm-radio size=\"default\" v-model=\"viewMode\" :settings=\"viewModeSettings\" option-type=\"button\" />"
+    },
+    {
+      "component": "pm-richtext",
+      "tagReferences": 3,
+      "pageReferences": 3,
+      "pages": [
+        "operations-management/form",
+        "operations-management/components",
+        "data-governance-workbench/advanced"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-richtext v-model=\"form.content\" />"
+    },
+    {
+      "component": "pm-search",
+      "tagReferences": 18,
+      "pageReferences": 13,
+      "pages": [
+        "operations-management/treeTable",
+        "operations-management/list",
+        "operations-management/permission",
+        "operations-management/dashboard",
+        "operations-management/schedule",
+        "operations-management/issues",
+        "data-governance-workbench/treeTable",
+        "data-governance-workbench/list",
+        "data-governance-workbench/dataset",
+        "data-governance-workbench/advanced",
+        "data-governance-workbench/detail",
+        "data-governance-workbench/members",
+        "incident-response-console/list"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-search v-model:query=\"treeQuery\" default-prop=\"keyword\" placeholder=\"搜索组织名称\" />"
+    },
+    {
+      "component": "pm-select",
+      "tagReferences": 97,
+      "pageReferences": 24,
+      "pages": [
+        "enterprise-application-platform/overview",
+        "enterprise-application-platform/applications",
+        "enterprise-application-platform/application-form",
+        "enterprise-application-platform/organization",
+        "enterprise-application-platform/audit",
+        "operations-management/treeTable",
+        "operations-management/list",
+        "operations-management/form",
+        "operations-management/permission",
+        "operations-management/components",
+        "operations-management/dashboard",
+        "operations-management/schedule",
+        "operations-management/issues",
+        "data-governance-workbench/treeTable",
+        "data-governance-workbench/list",
+        "data-governance-workbench/form",
+        "data-governance-workbench/dataset",
+        "data-governance-workbench/monitor",
+        "data-governance-workbench/advanced",
+        "data-governance-workbench/detail",
+        "data-governance-workbench/members",
+        "incident-response-console/list",
+        "incident-response-console/form",
+        "incident-response-console/detail"
+      ],
+      "contractControl": "pm-select",
+      "contractSupported": true,
+      "snippet": "<pm-select size=\"default\" v-model=\"tenant\" :options=\"tenantOptions\" style=\"width:160px\" />"
+    },
+    {
+      "component": "pm-select-org",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "operations-management/components"
+      ],
+      "contractControl": "pm-select-org",
+      "contractSupported": true,
+      "snippet": "<pm-select-org size=\"default\" v-model=\"form.org\" :selected=\"selectedOrg\" clearable />"
+    },
+    {
+      "component": "pm-select-position",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "operations-management/components"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-select-position size=\"default\" v-model=\"form.position\" :entity-model=\"selectedPosition\" clearable />"
+    },
+    {
+      "component": "pm-select-tree",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "operations-management/components"
+      ],
+      "contractControl": "pm-select-tree",
+      "contractSupported": true,
+      "snippet": "<pm-select-tree size=\"default\" v-model=\"form.category\" :settings=\"categoryTreeSettings\" placeholder=\"请选择活动分类\" />"
+    },
+    {
+      "component": "pm-select-user",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "operations-management/components"
+      ],
+      "contractControl": "pm-select-user",
+      "contractSupported": true,
+      "snippet": "<pm-select-user size=\"default\" v-model=\"form.owner\" :selected=\"selectedOwner\" clearable show-code />"
+    },
+    {
+      "component": "pm-sheet",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "data-governance-workbench/advanced"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-sheet :sheet-config=\"sheetConfig\" style=\"height:300px\" />"
+    },
+    {
+      "component": "pm-split",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "incident-response-console/layout"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-split v-model=\"splitRatio\" style=\"min-height:260px\">"
+    },
+    {
+      "component": "pm-steps",
+      "tagReferences": 6,
+      "pageReferences": 6,
+      "pages": [
+        "enterprise-application-platform/application-form",
+        "operations-management/dashboard",
+        "operations-management/schedule",
+        "operations-management/issues",
+        "data-governance-workbench/form",
+        "data-governance-workbench/advanced"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-steps v-model=\"activeStep\" :options=\"steps\" is-align-center />"
+    },
+    {
+      "component": "pm-switch",
+      "tagReferences": 16,
+      "pageReferences": 8,
+      "pages": [
+        "enterprise-application-platform/application-form",
+        "enterprise-application-platform/organization",
+        "operations-management/form",
+        "operations-management/permission",
+        "operations-management/components",
+        "data-governance-workbench/form",
+        "data-governance-workbench/advanced",
+        "incident-response-console/form"
+      ],
+      "contractControl": "pm-switch",
+      "contractSupported": true,
+      "snippet": "<pm-switch size=\"default\" :model-value=\"String(form.enabled)\""
+    },
+    {
+      "component": "pm-table",
+      "tagReferences": 21,
+      "pageReferences": 18,
+      "pages": [
+        "enterprise-application-platform/overview",
+        "enterprise-application-platform/applications",
+        "enterprise-application-platform/organization",
+        "enterprise-application-platform/audit",
+        "operations-management/treeTable",
+        "operations-management/list",
+        "operations-management/permission",
+        "operations-management/components",
+        "operations-management/dashboard",
+        "operations-management/schedule",
+        "operations-management/issues",
+        "data-governance-workbench/treeTable",
+        "data-governance-workbench/list",
+        "data-governance-workbench/monitor",
+        "data-governance-workbench/advanced",
+        "incident-response-console/list",
+        "incident-response-console/layout",
+        "incident-response-console/detail"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-table :table-data=\"apps\" :columns=\"columns\">"
+    },
+    {
+      "component": "pm-textarea",
+      "tagReferences": 14,
+      "pageReferences": 12,
+      "pages": [
+        "enterprise-application-platform/applications",
+        "enterprise-application-platform/application-form",
+        "operations-management/components",
+        "operations-management/dashboard",
+        "operations-management/schedule",
+        "operations-management/issues",
+        "data-governance-workbench/form",
+        "data-governance-workbench/advanced",
+        "incident-response-console/list",
+        "incident-response-console/form",
+        "incident-response-console/layout",
+        "incident-response-console/detail"
+      ],
+      "contractControl": "pm-textarea",
+      "contractSupported": true,
+      "snippet": "<pm-textarea size=\"default\" v-model=\"editor.description\" :rows=\"3\" />"
+    },
+    {
+      "component": "pm-time-select",
+      "tagReferences": 1,
+      "pageReferences": 1,
+      "pages": [
+        "operations-management/components"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-time-select size=\"default\" v-model=\"form.publishTime\" placeholder=\"选择发布时间\" />"
+    },
+    {
+      "component": "pm-toolbar",
+      "tagReferences": 21,
+      "pageReferences": 9,
+      "pages": [
+        "operations-management/treeTable",
+        "operations-management/list",
+        "operations-management/form",
+        "operations-management/permission",
+        "operations-management/components",
+        "operations-management/dashboard",
+        "operations-management/schedule",
+        "operations-management/issues",
+        "incident-response-console/layout"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-toolbar class=\"ledger-actions\" :bordered=\"false\">"
+    },
+    {
+      "component": "pm-toolbar-item",
+      "tagReferences": 52,
+      "pageReferences": 9,
+      "pages": [
+        "operations-management/treeTable",
+        "operations-management/list",
+        "operations-management/form",
+        "operations-management/permission",
+        "operations-management/components",
+        "operations-management/dashboard",
+        "operations-management/schedule",
+        "operations-management/issues",
+        "incident-response-console/layout"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-toolbar-item :icon=\"Download\" @click=\"exportLedger\">"
+    },
+    {
+      "component": "pm-tree",
+      "tagReferences": 4,
+      "pageReferences": 4,
+      "pages": [
+        "enterprise-application-platform/organization",
+        "operations-management/treeTable",
+        "data-governance-workbench/treeTable",
+        "data-governance-workbench/advanced"
+      ],
+      "contractControl": null,
+      "contractSupported": false,
+      "snippet": "<pm-tree v-model=\"currentOrg\" :data=\"filteredOrgTree\""
+    },
+    {
+      "component": "pm-upload",
+      "tagReferences": 3,
+      "pageReferences": 3,
+      "pages": [
+        "operations-management/form",
+        "operations-management/components",
+        "data-governance-workbench/advanced"
+      ],
+      "contractControl": "pm-upload",
+      "contractSupported": true,
+      "snippet": "<pm-upload v-model=\"form.attachmentIds\" multiple list-type=\"list\" :headers=\"{}\" />"
+    }
+  ],
+  "contractControlCoverage": {
+    "mappedComponents": 13,
+    "unmappedComponents": [
+      "pm-auto-number",
+      "pm-calendar",
+      "pm-card",
+      "pm-datepick-range",
+      "pm-dialog",
+      "pm-divider",
+      "pm-echarts",
+      "pm-fold",
+      "pm-fold-group",
+      "pm-form-dialog",
+      "pm-html",
+      "pm-lookup",
+      "pm-markdown",
+      "pm-number-range",
+      "pm-pagination",
+      "pm-richtext",
+      "pm-search",
+      "pm-select-position",
+      "pm-sheet",
+      "pm-split",
+      "pm-steps",
+      "pm-table",
+      "pm-time-select",
+      "pm-toolbar",
+      "pm-toolbar-item",
+      "pm-tree"
+    ],
+    "contractControlKeys": [
+      "pm-checkbox",
+      "pm-date",
+      "pm-date-picker",
+      "pm-datepicker",
+      "pm-datetime-picker",
+      "pm-datetimepicker",
+      "pm-image",
+      "pm-image-upload",
+      "pm-input",
+      "pm-input-number",
+      "pm-input-text",
+      "pm-number",
+      "pm-radio",
+      "pm-select",
+      "pm-select-org",
+      "pm-select-tree",
+      "pm-select-user",
+      "pm-switch",
+      "pm-textarea",
+      "pm-upload"
+    ]
+  },
+  "pagesSummary": [
+    {
+      "applicationType": "enterprise-application-platform",
+      "pageId": "overview",
+      "pageName": "管理驾驶舱",
+      "recipe": "dashboard",
+      "componentCount": 3,
+      "components": [
+        "pm-echarts",
+        "pm-select",
+        "pm-table"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "enterprise-application-platform",
+      "pageId": "applications",
+      "pageName": "应用中心",
+      "recipe": "list",
+      "componentCount": 7,
+      "components": [
+        "pm-form-dialog",
+        "pm-input",
+        "pm-pagination",
+        "pm-radio",
+        "pm-select",
+        "pm-table",
+        "pm-textarea"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "enterprise-application-platform",
+      "pageId": "application-form",
+      "pageName": "注册应用",
+      "recipe": "wizard",
+      "componentCount": 5,
+      "components": [
+        "pm-input",
+        "pm-select",
+        "pm-steps",
+        "pm-switch",
+        "pm-textarea"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "enterprise-application-platform",
+      "pageId": "organization",
+      "pageName": "组织与用户",
+      "recipe": "tree-list",
+      "componentCount": 7,
+      "components": [
+        "pm-form-dialog",
+        "pm-input",
+        "pm-pagination",
+        "pm-select",
+        "pm-switch",
+        "pm-table",
+        "pm-tree"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "enterprise-application-platform",
+      "pageId": "audit",
+      "pageName": "审计日志",
+      "recipe": "list",
+      "componentCount": 5,
+      "components": [
+        "pm-dialog",
+        "pm-input",
+        "pm-pagination",
+        "pm-select",
+        "pm-table"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "operations-management",
+      "pageId": "treeTable",
+      "pageName": "运营组织台账",
+      "recipe": "tree-list",
+      "componentCount": 10,
+      "components": [
+        "pm-form-dialog",
+        "pm-input",
+        "pm-number",
+        "pm-pagination",
+        "pm-search",
+        "pm-select",
+        "pm-table",
+        "pm-toolbar",
+        "pm-toolbar-item",
+        "pm-tree"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "operations-management",
+      "pageId": "list",
+      "pageName": "通知公告管理",
+      "recipe": "list",
+      "componentCount": 8,
+      "components": [
+        "pm-form-dialog",
+        "pm-input",
+        "pm-pagination",
+        "pm-search",
+        "pm-select",
+        "pm-table",
+        "pm-toolbar",
+        "pm-toolbar-item"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "operations-management",
+      "pageId": "form",
+      "pageName": "新建运营公告",
+      "recipe": "page-form",
+      "componentCount": 8,
+      "components": [
+        "pm-datepicker",
+        "pm-input",
+        "pm-richtext",
+        "pm-select",
+        "pm-switch",
+        "pm-toolbar",
+        "pm-toolbar-item",
+        "pm-upload"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "operations-management",
+      "pageId": "permission",
+      "pageName": "部门权限",
+      "recipe": "tree-list",
+      "componentCount": 8,
+      "components": [
+        "pm-form-dialog",
+        "pm-input",
+        "pm-search",
+        "pm-select",
+        "pm-switch",
+        "pm-table",
+        "pm-toolbar",
+        "pm-toolbar-item"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "operations-management",
+      "pageId": "components",
+      "pageName": "运营活动配置",
+      "recipe": "page-form",
+      "componentCount": 24,
+      "components": [
+        "pm-auto-number",
+        "pm-checkbox",
+        "pm-datepick-range",
+        "pm-datepicker",
+        "pm-divider",
+        "pm-image",
+        "pm-input",
+        "pm-lookup",
+        "pm-number",
+        "pm-number-range",
+        "pm-radio",
+        "pm-richtext",
+        "pm-select",
+        "pm-select-org",
+        "pm-select-position",
+        "pm-select-tree",
+        "pm-select-user",
+        "pm-switch",
+        "pm-table",
+        "pm-textarea",
+        "pm-time-select",
+        "pm-toolbar",
+        "pm-toolbar-item",
+        "pm-upload"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "operations-management",
+      "pageId": "dashboard",
+      "pageName": "运营简报",
+      "recipe": "dashboard",
+      "componentCount": 12,
+      "components": [
+        "pm-datepicker",
+        "pm-echarts",
+        "pm-form-dialog",
+        "pm-input",
+        "pm-pagination",
+        "pm-search",
+        "pm-select",
+        "pm-steps",
+        "pm-table",
+        "pm-textarea",
+        "pm-toolbar",
+        "pm-toolbar-item"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "operations-management",
+      "pageId": "schedule",
+      "pageName": "客服排班",
+      "recipe": "list",
+      "componentCount": 12,
+      "components": [
+        "pm-datepicker",
+        "pm-echarts",
+        "pm-form-dialog",
+        "pm-input",
+        "pm-pagination",
+        "pm-search",
+        "pm-select",
+        "pm-steps",
+        "pm-table",
+        "pm-textarea",
+        "pm-toolbar",
+        "pm-toolbar-item"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "operations-management",
+      "pageId": "issues",
+      "pageName": "订单异常处理",
+      "recipe": "detail",
+      "componentCount": 12,
+      "components": [
+        "pm-datepicker",
+        "pm-echarts",
+        "pm-form-dialog",
+        "pm-input",
+        "pm-pagination",
+        "pm-search",
+        "pm-select",
+        "pm-steps",
+        "pm-table",
+        "pm-textarea",
+        "pm-toolbar",
+        "pm-toolbar-item"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "data-governance-workbench",
+      "pageId": "treeTable",
+      "pageName": "数据域资产检索",
+      "recipe": "tree-list",
+      "componentCount": 6,
+      "components": [
+        "pm-dialog",
+        "pm-pagination",
+        "pm-search",
+        "pm-select",
+        "pm-table",
+        "pm-tree"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "data-governance-workbench",
+      "pageId": "list",
+      "pageName": "分析任务队列",
+      "recipe": "list",
+      "componentCount": 8,
+      "components": [
+        "pm-datepicker",
+        "pm-dialog",
+        "pm-form-dialog",
+        "pm-pagination",
+        "pm-radio",
+        "pm-search",
+        "pm-select",
+        "pm-table"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "data-governance-workbench",
+      "pageId": "form",
+      "pageName": "新建分析任务",
+      "recipe": "wizard",
+      "componentCount": 6,
+      "components": [
+        "pm-datepicker",
+        "pm-input",
+        "pm-select",
+        "pm-steps",
+        "pm-switch",
+        "pm-textarea"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "data-governance-workbench",
+      "pageId": "dataset",
+      "pageName": "数据资产目录",
+      "recipe": "list",
+      "componentCount": 4,
+      "components": [
+        "pm-form-dialog",
+        "pm-input",
+        "pm-search",
+        "pm-select"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "data-governance-workbench",
+      "pageId": "monitor",
+      "pageName": "调度监控中心",
+      "recipe": "dashboard",
+      "componentCount": 5,
+      "components": [
+        "pm-dialog",
+        "pm-echarts",
+        "pm-pagination",
+        "pm-select",
+        "pm-table"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "data-governance-workbench",
+      "pageId": "advanced",
+      "pageName": "数据接入工作区",
+      "recipe": "main-sub",
+      "componentCount": 15,
+      "components": [
+        "pm-calendar",
+        "pm-echarts",
+        "pm-html",
+        "pm-input",
+        "pm-markdown",
+        "pm-richtext",
+        "pm-search",
+        "pm-select",
+        "pm-sheet",
+        "pm-steps",
+        "pm-switch",
+        "pm-table",
+        "pm-textarea",
+        "pm-tree",
+        "pm-upload"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "data-governance-workbench",
+      "pageId": "detail",
+      "pageName": "任务运行详情",
+      "recipe": "detail",
+      "componentCount": 4,
+      "components": [
+        "pm-form-dialog",
+        "pm-input",
+        "pm-search",
+        "pm-select"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "data-governance-workbench",
+      "pageId": "members",
+      "pageName": "工作区成员",
+      "recipe": "list",
+      "componentCount": 4,
+      "components": [
+        "pm-form-dialog",
+        "pm-input",
+        "pm-search",
+        "pm-select"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "incident-response-console",
+      "pageId": "list",
+      "pageName": "异常事件列表",
+      "recipe": "list",
+      "componentCount": 7,
+      "components": [
+        "pm-form-dialog",
+        "pm-input",
+        "pm-pagination",
+        "pm-search",
+        "pm-select",
+        "pm-table",
+        "pm-textarea"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "incident-response-console",
+      "pageId": "form",
+      "pageName": "新建异常规则",
+      "recipe": "page-form",
+      "componentCount": 4,
+      "components": [
+        "pm-input",
+        "pm-select",
+        "pm-switch",
+        "pm-textarea"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "incident-response-console",
+      "pageId": "layout",
+      "pageName": "处置工作区布局",
+      "recipe": "main-sub",
+      "componentCount": 9,
+      "components": [
+        "pm-card",
+        "pm-divider",
+        "pm-fold",
+        "pm-fold-group",
+        "pm-split",
+        "pm-table",
+        "pm-textarea",
+        "pm-toolbar",
+        "pm-toolbar-item"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    },
+    {
+      "applicationType": "incident-response-console",
+      "pageId": "detail",
+      "pageName": "异常事件详情",
+      "recipe": "detail",
+      "componentCount": 4,
+      "components": [
+        "pm-form-dialog",
+        "pm-select",
+        "pm-table",
+        "pm-textarea"
+      ],
+      "onlyDeclared": [],
+      "onlyScanned": []
+    }
+  ],
+  "missingBlueprints": []
+}

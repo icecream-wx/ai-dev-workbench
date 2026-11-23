@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "status": "local-reference",
+  "entry": "src/components/PageTemplates/index.js",
+  "documentation": "src/components/PageTemplates/docs/README.md",
+  "playground": "src/components/PageTemplates/examples/Playground.vue",
+  "templates": [
+    {
+      "id": "tree-list",
+      "component": "TreeListPage",
+      "capabilities": [
+        "左树右表",
+        "分栏拖拽",
+        "复用列表模板",
+        "树与列表联动"
+      ],
+      "source": "src/components/PageTemplates/TreeListPage.vue",
+      "recipe": "src/components/PageTemplates/examples/TreeListExample.vue",
+      "preferenceBinding": "preference 接收有效 GlobalPreference，内部解析 list 偏好",
+      "slots": [
+        "tree",
+        "query",
+        "header",
+        "summary",
+        "filters",
+        "selection",
+        "actions",
+        "tools",
+        "default",
+        "pagination"
+      ],
+      "businessResponsibilities": [
+        "树数据与选择",
+        "接口",
+        "分页状态",
+        "选择状态",
+        "权限",
+        "业务按钮"
+      ]
+    },
+    {
+      "id": "standard-list",
+      "component": "BusinessListPage",
+      "capabilities": [
+        "查询列表",
+        "分页",
+        "操作栏",
+        "新增编辑入口"
+      ],
+      "source": "src/components/PageTemplates/ListPage.vue",
+      "recipe": "src/components/PageTemplates/examples/ListExample.vue",
+      "preferenceBinding": "resolvePagePreferences(GlobalPreference).list",
+      "slots": [
+        "header",
+        "summary",
+        "filters",
+        "selection",
+        "actions",
+        "tools",
+        "default",
+        "pagination"
+      ],
+      "businessResponsibilities": [
+        "接口",
+        "分页状态",
+        "选择状态",
+        "权限",
+        "业务按钮"
+      ]
+    },
+    {
+      "id": "standard-form",
+      "component": "StandardFormPage",
+      "capabilities": [
+        "新增表单",
+        "编辑表单",
+        "字段分组",
+        "单双列"
+      ],
+      "source": "src/components/PageTemplates/FormPage.vue",
+      "recipe": "src/components/PageTemplates/examples/FormExample.vue",
+      "preferenceBinding": "resolvePagePreferences(GlobalPreference).formPage",
+      "slots": [
+        "header",
+        "feedback",
+        "default",
+        "actions"
+      ],
+      "businessResponsibilities": [
+        "数据模型",
+        "校验",
+        "回显",
+        "保存",
+        "取消与离开确认"
+      ]
+    }
+  ],
+  "appearance": {
+    "source": "src/components/PageTemplates/appearance.css",
+    "values": [
+      "platform",
+      "blue",
+      "editorial"
+    ],
+    "default": "platform",
+    "binding": "TreeListPage.appearance；纯列表使用 .pt-appearance[data-appearance] 容器",
+    "isGlobalPreference": false
+  },
+  "blocks": [
+    {
+      "component": "TreePanel",
+      "source": "src/components/PageTemplates/TreePanel.vue",
+      "preferencePaths": [
+        "blocks.treePanel.actionStyle",
+        "blocks.treePanel.selectionStyle"
+      ],
+      "slots": [
+        "default(keyword, selectionStyle, isFlat)",
+        "footer"
+      ],
+      "responsibility": "仅偏好布局外壳；页面直接生成 el-tree、节点模板、搜索过滤及操作逻辑"
+    },
+    {
+      "component": "QueryPanel",
+      "source": "src/components/PageTemplates/QueryPanel.vue",
+      "preferencePaths": [
+        "blocks.queryPanel.mode",
+        "blocks.queryPanel.defaultExpanded"
+      ]
+    },
+    {
+      "component": "RowActions",
+      "source": "src/components/PageTemplates/RowActions.vue",
+      "preferencePaths": [
+        "blocks.rowActions.mode"
+      ]
+    },
+    {
+      "component": "ThreePartPagination",
+      "source": "src/components/PageTemplates/ThreePartPagination.vue",
+      "preferencePaths": [
+        "templates.list.paginationLayout",
+        "tableConfig.pageSizes"
+      ]
+    },
+    {
+      "component": "FormSection",
+      "source": "src/components/PageTemplates/FormSection.vue",
+      "preferencePaths": [
+        "templates.form.columns"
+      ]
+    }
+  ]
+}

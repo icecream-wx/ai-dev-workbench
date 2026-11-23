@@ -1,0 +1,56 @@
+[
+  {
+    "type": "document",
+    "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-spike\\ws-a2\\opencode.json",
+    "info": {
+      "$schema": "https://opencode.ai/config.json",
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "edit",
+          "resource": "drafts/**/spec.json",
+          "effect": "allow"
+        },
+        {
+          "action": "edit",
+          "resource": "drafts/**/notes.md",
+          "effect": "allow"
+        },
+        {
+          "action": "read",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "ask"
+        },
+        {
+          "action": "shell",
+          "resource": "node .opencode/scripts/*",
+          "effect": "allow"
+        },
+        {
+          "action": "external_directory",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "skill",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "skill",
+          "resource": "adw-design-template-authoring",
+          "effect": "allow"
+        }
+      ]
+    }
+  }
+]

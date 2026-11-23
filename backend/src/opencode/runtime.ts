@@ -61,6 +61,19 @@ export interface OpencodeSession {
   [key: string]: unknown
 }
 
+export interface OpencodeSkill {
+  id: string
+  name?: string
+  description?: string
+  location?: string
+  enabled?: boolean
+}
+
+export interface OpencodeCommand {
+  name: string
+  description?: string
+}
+
 export interface CreateSessionInput {
   directory: string
   title?: string
@@ -184,6 +197,39 @@ export function buildServeEnv(source: NodeJS.ProcessEnv = process.env): NodeJS.P
   return env
 }
 
+/** 工作台默认（真实实例）serve 端口；测试进程禁止隐式使用 */
+export const DEFAULT_SERVE_PORT = 4771
+
+export interface ServePortGuardEnv {
+  /** node:test 子进程标记（如 `child-v8`）；普通进程/脚本通常不存在 */
+  NODE_TEST_CONTEXT?: string
+  /** 显式允许测试进程启动真实默认端口 serve（只应给真实实例验收脚本） */
+  RG_ALLOW_REAL_OPENCODE?: string
+}
+
+/**
+ * 测试进程启动 serve 的端口守卫（P7-7b-2a）。
+ *
+ * 背景：单测里若漏 stub `opencode.ensureStarted`，会真的拉起本机 4771 的真实 serve
+ * （P7-7b-1 期间发生过一次）。规则：
+ * - 非测试进程（无 `NODE_TEST_CONTEXT`）→ 无操作；
+ * - 测试进程 + 非默认端口 → 无操作（e2e/smoke 用临时端口）；
+ * - 测试进程 + 默认端口 4771 → 拒绝，除非 `RG_ALLOW_REAL_OPENCODE=1`。
+ *
+ * @throws 测试进程试图在默认端口启动真实 serve 时
+ */
+export function assertSafeTestServePort(port: number, env: ServePortGuardEnv = process.env): void {
+  const context = typeof env.NODE_TEST_CONTEXT === 'string' ? env.NODE_TEST_CONTEXT.trim() : ''
+  if (!context) return
+  if (port !== DEFAULT_SERVE_PORT) return
+  if (env.RG_ALLOW_REAL_OPENCODE === '1') return
+  throw new Error(
+    `测试进程（NODE_TEST_CONTEXT=${context}）禁止在默认端口 ${DEFAULT_SERVE_PORT} 启动真实 opencode serve。` +
+      '请改用独立的 OPENCODE_PORT（参考其它 *.test.ts / e2e 脚本）；' +
+      '确需真实 serve 的验收脚本请显式设置 RG_ALLOW_REAL_OPENCODE=1。'
+  )
+}
+
 export function sanitizeModel(raw: unknown): OpencodeModel | null {
   if (!raw || typeof raw !== 'object') return null
   const model = raw as Record<string, unknown>
@@ -291,6 +337,8 @@ export class OpencodeRuntime {
 
   async ensureStarted(): Promise<void> {
     if (this.ready) return
+    // P7-7b-2a：测试进程不得隐式拉起默认端口的真实 serve
+    assertSafeTestServePort(config.opencode.port)
     if (!this.startPromise) {
       this.startPromise = this.start().finally(() => {
         this.startPromise = null
@@ -392,6 +440,8 @@ export class OpencodeRuntime {
 
   async start(): Promise<void> {
     if (this.ready) return
+    // P7-7b-2a：即使直接调用 start()（绕过 ensureStarted）也要守住测试端口
+    assertSafeTestServePort(config.opencode.port)
     this.stopping = false
     this.lastError = null
     this.stderrTail = []
@@ -621,11 +671,68 @@ export class OpencodeRuntime {
       .filter((agent): agent is OpencodeAgent => Boolean(agent))
   }
 
-  /** 让 opencode 重新加载 location 配置（新建应用的 .opencode/agents 可能需要） */
+  /** 让 opencode 重新加载 location 配置（新建应用的 .opencode/skills 可能需要） */
   async reloadLocations(): Promise<void> {
     await this.ensureStarted()
     const result = await this.client.request('POST', '/api/location/reload')
     if (!result.ok) throw this.httpError('重载 opencode 配置', result.status, result.text)
+  }
+
+  /**
+   * 项目级 skills（P0 已确认 `GET /api/skill`）。
+   * 坏 YAML/缺 description 会被 opencode 静默丢弃，因此分发后必须用本方法校验实际加载结果。
+   */
+  async listSkills(directory?: string): Promise<OpencodeSkill[]> {
+    await this.ensureStarted()
+    const result = await this.client.request<{ data?: unknown[] }>('GET', '/api/skill', {
+      query: directory ? { 'location[directory]': directory } : undefined
+    })
+    if (!result.ok) throw this.httpError('读取 skill 列表', result.status, result.text)
+    return (result.data?.data ?? [])
+      .map(raw => {
+        if (!raw || typeof raw !== 'object') return null
+        const skill = raw as Record<string, unknown>
+        if (typeof skill.id !== 'string' || !skill.id) return null
+        return {
+          id: skill.id,
+          ...(typeof skill.name === 'string' ? { name: skill.name } : {}),
+          ...(typeof skill.description === 'string' ? { description: skill.description } : {}),
+          ...(typeof skill.location === 'string' ? { location: skill.location } : {}),
+          ...(typeof skill.enabled === 'boolean' ? { enabled: skill.enabled } : {})
+        }
+      })
+      .filter((skill): skill is OpencodeSkill => Boolean(skill))
+  }
+
+  /** 项目级 commands（`GET /api/command` 只返回 name/description，不含正文/agent） */
+  async listCommands(directory?: string): Promise<OpencodeCommand[]> {
+    await this.ensureStarted()
+    const result = await this.client.request<{ data?: unknown[] }>('GET', '/api/command', {
+      query: directory ? { 'location[directory]': directory } : undefined
+    })
+    if (!result.ok) throw this.httpError('读取 command 列表', result.status, result.text)
+    return (result.data?.data ?? [])
+      .map(raw => {
+        if (!raw || typeof raw !== 'object') return null
+        const command = raw as Record<string, unknown>
+        if (typeof command.name !== 'string' || !command.name) return null
+        return {
+          name: command.name,
+          ...(typeof command.description === 'string' ? { description: command.description } : {})
+        }
+      })
+      .filter((command): command is OpencodeCommand => Boolean(command))
+  }
+
+  /** 触发 command（P0：服务端展开 $ARGUMENTS，text 即参数） */
+  async runCommand(sessionId: string, name: string, text?: string): Promise<unknown> {
+    await this.ensureStarted()
+    const result = await this.client.request('POST', `/api/session/${encodeURIComponent(sessionId)}/command`, {
+      body: { name, text: text ?? '' }
+    })
+    if (!result.ok) throw this.httpError('执行 command', result.status, result.text)
+    this.track(sessionId)
+    return result.data
   }
 
   /** 确保目录下存在指定 agent；新应用首次对话时 opencode 可能尚未加载目录配置 */

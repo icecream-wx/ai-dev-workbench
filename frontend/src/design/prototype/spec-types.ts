@@ -61,6 +61,15 @@ export interface SpecPage {
   status: SpecItemStatus
   priority?: SpecPriority
   acceptanceCriteria?: string[]
+  /** P7 页面契约摘要（渲染器可暂不消费） */
+  recipe?: string
+  catalogRef?: string
+  blueprint?: string
+  filters?: string[]
+  selection?: boolean
+  rowActions?: SpecPageAction[]
+  toolbarActions?: SpecPageAction[]
+  components?: Record<string, string>
 }
 
 export type ControlType =
@@ -142,7 +151,26 @@ export interface PageLayout {
   /** 表单分组展示形态：sections=分组卡片（默认），tabs=顶部页签 */
   groupMode?: 'groups' | 'tabs'
   /** 子表格覆盖项：默认按实体 one-to-many 关系自动渲染，可改标题/列或隐藏 */
-  subTables?: Array<{ target: string; title?: string; columns?: string[]; hidden?: boolean }>
+  subTables?: Array<{ target: string; title?: string; columns?: string[]; hidden?: boolean; mode?: 'tab' | 'flow' }>
+  /** P7 页面契约（渲染器可暂不消费；旧设计不提供这些字段） */
+  pagination?: { layout?: 'bar' | 'split' | 'three-part'; pageSize?: number }
+  selection?: boolean
+  rowActions?: string[]
+  toolbarActions?: string[]
+  form?: {
+    presentation?: 'dialog' | 'page'
+    columns?: 1 | 2
+    width?: number
+    fields?: string[]
+    groups?: Array<{ title?: string; fields?: string[] }>
+  }
+  tree?: {
+    titleField?: string
+    parentField?: string
+    actionStyle?: string
+    selectionStyle?: string
+  }
+  components?: Record<string, string>
   /** 自由区块：布局层表达元素（说明文本/公告/图片/键值对/按钮组/分步条/时间线/图表） */
   blocks?: WfBlock[]
 }

@@ -1,0 +1,211 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI Dev Workbench 设计产物 design.json",
+  "description": "docs/design/<MOD>/design.json 的唯一格式来源；后端解析与 scripts/validate.mjs 共用同一份。设计系统/页面契约字段均可选，旧 design.json 继续有效。",
+  "type": "object",
+  "required": ["module", "title", "entities", "pages"],
+  "properties": {
+    "module": {
+      "type": "string",
+      "description": "需求模块 key，必须与 docs/requirements 下模块 frontmatter 的 module 一致，如 MOD-001"
+    },
+    "title": { "type": "string", "description": "模块标题，与需求模块标题一致" },
+    "designSystem": {
+      "type": "object",
+      "description": "可选：应用级设计系统摘要（来自 docs/design/design-system.json / 应用设计模板设置）；旧设计可省略",
+      "x-adw-warning": true,
+      "properties": {
+        "pack": { "type": "string", "description": "设计模板包 id，如 afcenter-app-templates-v1" },
+        "applicationType": { "type": "string", "description": "应用类型 id，如 enterprise-application-platform" },
+        "style": { "type": "string", "description": "视觉风格 id，如 platform-blue" }
+      }
+    },
+    "entities": {
+      "type": "array",
+      "description": "实体（表）列表",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "fields"],
+        "properties": {
+          "id": { "type": "string", "description": "实体 id，模内唯一；跨模块引用用 MOD-xxx/entity" },
+          "name": { "type": "string", "description": "实体中文名" },
+          "table": { "type": "string", "description": "物理表名（可选）" },
+          "description": { "type": "string" },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type"],
+              "properties": {
+                "name": { "type": "string" },
+                "label": { "type": "string" },
+                "type": {
+                  "type": "string",
+                  "enum": ["string", "text", "number", "decimal", "date", "datetime", "time", "boolean", "enum", "ref"]
+                },
+                "required": { "type": "boolean" },
+                "unique": { "type": "boolean" },
+                "options": {
+                  "type": "array",
+                  "description": "type=enum 时的枚举值",
+                  "items": { "type": "string" }
+                },
+                "ref": { "type": "string", "description": "type=ref 时引用的实体 id" },
+                "note": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "relations": {
+      "type": "array",
+      "description": "实体关系",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "type"],
+        "properties": {
+          "from": { "type": "string", "description": "源实体 id" },
+          "to": { "type": "string", "description": "目标实体 id（可跨模块 MOD-xxx/entity）" },
+          "type": { "type": "string", "enum": ["1:1", "1:N", "N:1", "N:M"] },
+          "label": { "type": "string", "description": "关系说明，如 所属分类" }
+        }
+      }
+    },
+    "pages": {
+      "type": "array",
+      "description": "页面/原型清单",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "type"],
+        "properties": {
+          "id": { "type": "string", "description": "页面 id，模内唯一" },
+          "name": { "type": "string", "description": "页面名称" },
+          "type": {
+            "type": "string",
+            "enum": ["list", "form", "detail", "dashboard", "kanban", "gantt", "calendar"]
+          },
+          "entity": { "type": "string", "description": "绑定实体 id（可跨模块 MOD-xxx/entity）" },
+          "columns": { "type": "array", "items": { "type": "string" } },
+          "actions": { "type": "array", "items": { "type": "string" } },
+          "requirementRefs": {
+            "type": "array",
+            "description": "可选：需求引用（自由文本，不校验）",
+            "items": { "type": "string" }
+          },
+          "recipe": {
+            "type": "string",
+            "description": "页面配方（来自设计模板包 pageRecipes）",
+            "enum": ["list", "tree-list", "dialog-form", "page-form", "main-sub", "detail", "dashboard", "wizard"],
+            "x-adw-warning": true
+          },
+          "catalogRef": {
+            "type": "string",
+            "description": "模板页面库引用：<applicationType>/<pageId>",
+            "x-adw-warning": true
+          },
+          "blueprint": {
+            "type": "string",
+            "description": "蓝图 Vue 路径（设计模板包相对路径）",
+            "x-adw-warning": true
+          },
+          "filters": {
+            "type": "array",
+            "description": "查询字段名数组",
+            "items": { "type": "string" },
+            "x-adw-warning": true
+          },
+          "rowActions": {
+            "type": "array",
+            "description": "行操作：推荐动作码 create/edit/delete/detail/batchDelete/import/export/submit/cancel/enable/disable/approve/reject/print/copy；中文标签等自定义值保留原值，只 warning 不阻断",
+            "items": { "type": "string" },
+            "x-adw-recommended": ["create", "edit", "delete", "detail", "batchDelete", "import", "export", "submit", "cancel", "enable", "disable", "approve", "reject", "print", "copy"],
+            "x-adw-warning": true
+          },
+          "toolbarActions": {
+            "type": "array",
+            "description": "工具栏操作：推荐动作码同 rowActions（create/batchDelete/import/export 等）；自定义值保留原值，只 warning 不阻断",
+            "items": { "type": "string" },
+            "x-adw-recommended": ["create", "edit", "delete", "detail", "batchDelete", "import", "export", "submit", "cancel", "enable", "disable", "approve", "reject", "print", "copy"],
+            "x-adw-warning": true
+          },
+          "selection": {
+            "type": "boolean",
+            "description": "列表是否多选",
+            "x-adw-warning": true
+          },
+          "pagination": {
+            "type": "object",
+            "description": "分页形态与每页条数",
+            "x-adw-warning": true,
+            "properties": {
+              "layout": { "type": "string", "enum": ["bar", "split", "three-part"] },
+              "pageSize": { "type": "integer" }
+            }
+          },
+          "form": {
+            "type": "object",
+            "description": "表单页契约",
+            "x-adw-warning": true,
+            "properties": {
+              "presentation": { "type": "string", "enum": ["dialog", "page"] },
+              "columns": { "type": "integer", "enum": [1, 2] },
+              "width": { "type": "integer", "description": "弹窗宽度（presentation=dialog 时）" },
+              "fields": { "type": "array", "items": { "type": "string" } },
+              "groups": {
+                "type": "array",
+                "description": "表单分组；fields 引用本页字段名",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": { "type": "string" },
+                    "fields": { "type": "array", "items": { "type": "string" } }
+                  }
+                }
+              }
+            }
+          },
+          "tree": {
+            "type": "object",
+            "description": "树面板契约（recipe=tree-list 时）",
+            "x-adw-warning": true,
+            "properties": {
+              "titleField": { "type": "string", "description": "树节点标题字段" },
+              "parentField": { "type": "string", "description": "父级字段" },
+              "actionStyle": {
+                "type": "string",
+                "description": "操作形态：header / footer / none（与蓝图保持一致）；未知值只 warning，保留原值",
+                "x-adw-allowed": ["header", "footer", "none"]
+              },
+              "selectionStyle": {
+                "type": "string",
+                "description": "选中标记：platform / dot / background（与蓝图保持一致）；未知值只 warning，保留原值",
+                "x-adw-allowed": ["platform", "dot", "background"]
+              }
+            }
+          },
+          "subTables": {
+            "type": "array",
+            "description": "主从页面的子表",
+            "x-adw-warning": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "entity": { "type": "string", "description": "子表实体 id（可跨模块 MOD-xxx/entity）" },
+                "title": { "type": "string" },
+                "columns": { "type": "array", "items": { "type": "string" } },
+                "mode": { "type": "string", "enum": ["tab", "flow"] }
+              }
+            }
+          },
+          "components": {
+            "type": "object",
+            "description": "字段 → pm 组件覆盖（由设计模板包 componentMap 推导，页面可覆盖）",
+            "additionalProperties": { "type": "string" },
+            "x-adw-warning": true
+          }
+        }
+      }
+    }
+  }
+}

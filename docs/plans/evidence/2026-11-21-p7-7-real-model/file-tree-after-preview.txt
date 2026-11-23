@@ -1,0 +1,262 @@
+.opencode/
+.opencode/commands/
+.opencode/commands/check-consistency.md (2856B)
+.opencode/commands/check-design-fidelity.md (3365B)
+.opencode/commands/generate-design.md (2742B)
+.opencode/commands/preview-app.md (1014B)
+.opencode/commands/update-requirements.md (1315B)
+.opencode/skills/
+.opencode/skills/adw-design-artifacts/
+.opencode/skills/adw-design-artifacts/references/
+.opencode/skills/adw-design-artifacts/references/design-example.json (3680B)
+.opencode/skills/adw-design-artifacts/references/design.schema.json (9465B)
+.opencode/skills/adw-design-artifacts/scripts/
+.opencode/skills/adw-design-artifacts/scripts/validate.mjs (6273B)
+.opencode/skills/adw-design-artifacts/SKILL.md (8533B)
+.opencode/skills/adw-frontend-implementation/
+.opencode/skills/adw-frontend-implementation/scripts/
+.opencode/skills/adw-frontend-implementation/scripts/check-fidelity.mjs (5973B)
+.opencode/skills/adw-frontend-implementation/scripts/lib/
+.opencode/skills/adw-frontend-implementation/scripts/lib/fidelity-core.cjs (36590B)
+.opencode/skills/adw-frontend-implementation/SKILL.md (8151B)
+.opencode/skills/adw-requirements-document/
+.opencode/skills/adw-requirements-document/SKILL.md (4240B)
+.opencode/skills/adw-template-proto-supplier-management/
+.opencode/skills/adw-template-proto-supplier-management/_manifest.json (314B)
+.opencode/skills/adw-template-proto-supplier-management/assets/
+.opencode/skills/adw-template-proto-supplier-management/assets/design-system.json (3102B)
+.opencode/skills/adw-template-proto-supplier-management/SKILL.md (5938B)
+.opencode/skills/adw-template-req-builtin-prd/
+.opencode/skills/adw-template-req-builtin-prd/_manifest.json (238B)
+.opencode/skills/adw-template-req-builtin-prd/assets/
+.opencode/skills/adw-template-req-builtin-prd/assets/template.md (559B)
+.opencode/skills/adw-template-req-builtin-prd/SKILL.md (3625B)
+.opencode/skills/adw-template-req-builtin-prd-lite/
+.opencode/skills/adw-template-req-builtin-prd-lite/_manifest.json (239B)
+.opencode/skills/adw-template-req-builtin-prd-lite/assets/
+.opencode/skills/adw-template-req-builtin-prd-lite/assets/template.md (370B)
+.opencode/skills/adw-template-req-builtin-prd-lite/SKILL.md (2324B)
+.opencode/skills/afcenter-page-generation/
+.opencode/skills/afcenter-page-generation/agents/
+.opencode/skills/afcenter-page-generation/agents/openai.yaml (411B)
+.opencode/skills/afcenter-page-generation/assets/
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/afcenter/
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/afcenter/pages/
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/afcenter/pages/ApplicationCenter.vue (7978B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/afcenter/pages/ApplicationForm.vue (6874B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/afcenter/pages/AuditLogs.vue (6808B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/afcenter/pages/OrganizationUsers.vue (9036B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/afcenter/pages/PlatformOverview.vue (5269B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/afcenter/style.css (13742B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/assets/
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/assets/ledger-workflow.svg (1050B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/pages/
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/pages/OperationsComponentForm.vue (10927B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/pages/OperationsDashboard.vue (27626B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/pages/OperationsForm.vue (8194B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/pages/OperationsIssues.vue (27623B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/pages/OperationsList.vue (13383B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/pages/OperationsPermission.vue (12936B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/pages/OperationsSchedule.vue (27625B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/pages/OperationsTreeTable.vue (25653B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/classic-ops-admin/style.css (29598B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/data-workbench/
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/data-workbench/pages/
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/data-workbench/pages/DataAccessWorkspace.vue (22513B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/data-workbench/pages/DataAssetCatalog.vue (32366B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/data-workbench/pages/DataMonitor.vue (19000B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/data-workbench/pages/DataTaskDetail.vue (32365B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/data-workbench/pages/DataTaskForm.vue (24997B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/data-workbench/pages/DataTaskList.vue (22620B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/data-workbench/pages/DataTreeTable.vue (37454B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/data-workbench/pages/DataWorkspaceMembers.vue (32366B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/data-workbench/style.css (41199B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/lightweight-tool-console/
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/lightweight-tool-console/pages/
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/lightweight-tool-console/pages/IncidentDetail.vue (5853B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/lightweight-tool-console/pages/IncidentList.vue (11247B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/lightweight-tool-console/pages/IncidentRuleForm.vue (6827B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/lightweight-tool-console/pages/IncidentWorkspace.vue (5344B)
+.opencode/skills/afcenter-page-generation/assets/ApplicationPageTemplates/lightweight-tool-console/style.css (26306B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/appearance.css (7531B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/BlueListPage.vue (3142B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/docs/
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/docs/architecture.md (1082B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/docs/catalog.json (4124B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/docs/README.md (28256B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/examples/
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/examples/FormExample.vue (3586B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/examples/ListExample.vue (9113B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/examples/Playground.vue (3981B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/examples/TreeListExample.vue (9983B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/FormPage.vue (1095B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/FormSection.vue (565B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/FormSectionCard.vue (2390B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/FormSectionDivider.vue (1651B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/index.js (719B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/install.js (615B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/list-blue.css (2274B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/ListPage.vue (5409B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/QueryPanel.vue (4206B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/RowActions.vue (2776B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/style.css (6773B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/table-blue.css (2164B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/table-white.css (2224B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/ThreePartPagination.vue (2713B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/toolbar-blue.css (2198B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/TreeListPage.vue (3516B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/TreePanel.vue (6973B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/utils.js (3400B)
+.opencode/skills/afcenter-page-generation/assets/PageTemplates/verify.cjs (15511B)
+.opencode/skills/afcenter-page-generation/references/
+.opencode/skills/afcenter-page-generation/references/application-page-templates.md (5484B)
+.opencode/skills/afcenter-page-generation/references/components.md (5365B)
+.opencode/skills/afcenter-page-generation/references/integration.md (5722B)
+.opencode/skills/afcenter-page-generation/references/page-presets.md (14025B)
+.opencode/skills/afcenter-page-generation/references/page-recipes.md (19943B)
+.opencode/skills/afcenter-page-generation/references/preferences.md (5793B)
+.opencode/skills/afcenter-page-generation/scripts/
+.opencode/skills/afcenter-page-generation/scripts/install-application-page-template.cjs (2820B)
+.opencode/skills/afcenter-page-generation/scripts/install-templates.cjs (2388B)
+.opencode/skills/afcenter-page-generation/SKILL.md (12995B)
+.opencode/skills/pm-components-usage/
+.opencode/skills/pm-components-usage/references/
+.opencode/skills/pm-components-usage/references/business-layout.md (6603B)
+.opencode/skills/pm-components-usage/references/data-display.md (9046B)
+.opencode/skills/pm-components-usage/references/feedback.md (7878B)
+.opencode/skills/pm-components-usage/references/form-inputs.md (8945B)
+.opencode/skills/pm-components-usage/references/selectors.md (17337B)
+.opencode/skills/pm-components-usage/SKILL.md (8036B)
+AGENTS.md (6607B)
+backend/
+backend/.classpath (802B)
+backend/.library (6082B)
+backend/.project (1270B)
+backend/.settings/
+backend/.settings/org.eclipse.core.resources.prefs (77B)
+backend/.settings/org.eclipse.jdt.core.prefs (491B)
+backend/.settings/org.eclipse.m2e.core.prefs (90B)
+backend/META-INF/
+backend/META-INF/additional-spring-configuration-metadata.json (2559B)
+backend/META-INF/spring-configuration-metadata.json (3683B)
+backend/pom.xml (4888B)
+backend/README.md (1779B)
+backend/src/
+backend/src/.eos (194B)
+backend/src/application-afc.properties (1614B)
+backend/src/application-job.properties (1189B)
+backend/src/application-nacos.properties (260B)
+backend/src/application.properties (1393B)
+backend/src/bootstrap.properties (231B)
+backend/src/com/
+backend/src/com/primeton/
+backend/src/com/primeton/gocom/
+backend/src/com/primeton/gocom/lowcode/
+backend/src/com/primeton/gocom/lowcode/Application.java (760B)
+backend/src/logback-spring.xml (297B)
+backend/src/META-INF/
+backend/src/META-INF/_srv/
+backend/src/META-INF/_srv/config/
+backend/src/META-INF/_srv/config/antisamy-security.xml (70207B)
+backend/src/META-INF/_srv/config/eos/
+backend/src/META-INF/_srv/config/eos/handler-contribution.xml (504B)
+backend/src/META-INF/_srv/config/eos/handler-engine.xml (1010B)
+backend/src/META-INF/_srv/config/eos/handler-entity.xml (579B)
+backend/src/META-INF/_srv/config/eos/handler-namedsql.xml (559B)
+backend/src/META-INF/_srv/config/eos/handler-processor.xml (3576B)
+backend/src/META-INF/_srv/config/eos/handler-startup.xml (4574B)
+backend/src/META-INF/_srv/config/eos/handler-web.xml (1257B)
+backend/src/META-INF/_srv/config/spring.xml (2635B)
+backend/src/META-INF/_srv/config/sys-config.xml (24526B)
+backend/src/META-INF/_srv/config/user/
+backend/src/META-INF/_srv/config/user/handler-contribution.xml (376B)
+backend/src/META-INF/_srv/config/user/handler-engine.xml (828B)
+backend/src/META-INF/_srv/config/user/handler-entity.xml (579B)
+backend/src/META-INF/_srv/config/user/handler-namedsql.xml (559B)
+backend/src/META-INF/_srv/config/user/handler-processor.xml (532B)
+backend/src/META-INF/_srv/config/user/handler-startup.xml (320B)
+backend/src/META-INF/_srv/config/user/handler-web.xml (463B)
+backend/src/META-INF/_srv/config/user-config.xml (15545B)
+backend/src/META-INF/_srv/config/user-local-config.xml (922B)
+backend/src/META-INF/_srv/primetonlicense.xml (3383B)
+backend/src/META-INF/MANIFEST.MF (186B)
+backend/src/serialkiller.xml (15141B)
+docs/
+docs/design/
+docs/design/design-system.json (3102B)
+docs/design/MOD-001/
+docs/design/MOD-001/design.json (5313B)
+docs/design/MOD-001/prototypes/
+docs/design/MOD-001/prototypes/_manifest.json (760B)
+docs/design/MOD-001/prototypes/supplier-detail.png (363194B)
+docs/design/MOD-001/prototypes/supplier-form.png (375234B)
+docs/design/MOD-001/prototypes/supplier-list.png (543647B)
+docs/design/MOD-001/tokens.json (223B)
+docs/design/template/
+docs/design/template/styles/
+docs/design/template/styles/data-cyan/
+docs/design/template/styles/data-cyan/style.css (2332B)
+docs/design/template/styles/shared.css (3744B)
+docs/design/template/supplier-management/
+docs/design/template/supplier-management/assets/
+docs/design/template/supplier-management/assets/ledger-workflow.svg (1050B)
+docs/design/template/supplier-management/contracts/
+docs/design/template/supplier-management/contracts/supplier-detail.json (2679B)
+docs/design/template/supplier-management/contracts/supplier-form.json (3552B)
+docs/design/template/supplier-management/pages/
+docs/design/template/supplier-management/pages/supplier-list.vue (13414B)
+docs/design/template/supplier-management/structure.css (30458B)
+docs/requirements/
+docs/requirements/MOD-001-供应商管理.md (190B)
+frontend/
+frontend/.npmrc (22B)
+frontend/babel.config.js (192B)
+frontend/build/
+frontend/build/mfp.config.js (1300B)
+frontend/build/utils.js (457B)
+frontend/build/webpack.config.js (3240B)
+frontend/build/webpack.dev.js (1364B)
+frontend/build/webpack.prod.js (315B)
+frontend/package.json (1543B)
+frontend/public/
+frontend/public/index_app.html (537B)
+frontend/README.md (3616B)
+frontend/setting.json (214B)
+frontend/src/
+frontend/src/App.vue (41B)
+frontend/src/bootstrap.js (463B)
+frontend/src/components/
+frontend/src/components/PageTemplates/
+frontend/src/components/PageTemplates/appearance.css (7531B)
+frontend/src/components/PageTemplates/BlueListPage.vue (3142B)
+frontend/src/components/PageTemplates/FormPage.vue (1095B)
+frontend/src/components/PageTemplates/FormSection.vue (565B)
+frontend/src/components/PageTemplates/FormSectionCard.vue (2390B)
+frontend/src/components/PageTemplates/FormSectionDivider.vue (1651B)
+frontend/src/components/PageTemplates/index.js (719B)
+frontend/src/components/PageTemplates/list-blue.css (2274B)
+frontend/src/components/PageTemplates/ListPage.vue (5409B)
+frontend/src/components/PageTemplates/QueryPanel.vue (4206B)
+frontend/src/components/PageTemplates/RowActions.vue (2776B)
+frontend/src/components/PageTemplates/style.css (6773B)
+frontend/src/components/PageTemplates/table-blue.css (2164B)
+frontend/src/components/PageTemplates/table-white.css (2224B)
+frontend/src/components/PageTemplates/ThreePartPagination.vue (2713B)
+frontend/src/components/PageTemplates/toolbar-blue.css (2198B)
+frontend/src/components/PageTemplates/TreeListPage.vue (3516B)
+frontend/src/components/PageTemplates/TreePanel.vue (6973B)
+frontend/src/components/PageTemplates/utils.js (3400B)
+frontend/src/main.js (25B)
+frontend/src/preferences/
+frontend/src/preferences/GlobalPreference.js (1221B)
+frontend/src/router/
+frontend/src/router/index.js (542B)
+frontend/src/views/
+frontend/src/views/AppIndex.vue (2331B)
+frontend/static/
+frontend/static/.gitkeep (125B)
+opencode.json (189B)
+README.md (540B)

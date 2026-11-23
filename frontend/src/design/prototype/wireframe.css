@@ -390,6 +390,132 @@
   line-height: 17px;
 }
 
+/* ---- P7-4b 表单：单列（form.columns=1 由行内 span 控制）/ 弹窗 / 子表页签 ---- */
+.wf-dialog-demo {
+  position: relative;
+  border: 1px solid #eceef1;
+  border-radius: 10px;
+  background: #fbfcfd;
+  padding: 22px 18px;
+  min-height: 420px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.wf-dialog-bg {
+  position: absolute;
+  inset: 0;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.wf-dialog-bg-search {
+  height: 30px;
+  border: 1px dashed #e4e4e7;
+  border-radius: 6px;
+  background: #fff;
+}
+.wf-dialog-bg-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 34px;
+  border: 1px solid #eceef1;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0 12px;
+}
+.wf-dialog-bg-cell {
+  height: 8px;
+  border-radius: 3px;
+  background: #eceef1;
+}
+.wf-dialog-bg-cell.w1 {
+  width: 22%;
+}
+.wf-dialog-bg-cell.w2 {
+  width: 30%;
+}
+.wf-dialog-bg-cell.w3 {
+  width: 18%;
+}
+.wf-dialog-bg-cell.w4 {
+  width: 14%;
+}
+.wf-dialog-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(24, 24, 27, 0.1);
+}
+.wf-dialog {
+  position: relative;
+  z-index: 2;
+  margin: 8px auto 10px;
+  max-width: 100%;
+  background: #fff;
+  border: 1px solid #dfe3ea;
+  border-radius: 10px;
+  box-shadow: 0 18px 50px rgba(16, 24, 40, 0.22);
+  box-sizing: border-box;
+}
+.wf-dialog-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #eceef1;
+}
+.wf-dialog-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3f3f46;
+}
+.wf-dialog-close {
+  margin-left: auto;
+  font-size: 16px;
+  line-height: 1;
+  color: #a1a1aa;
+}
+.wf-dialog-body {
+  padding: 16px 18px 4px;
+}
+.wf-dialog-body .wf-form-grid {
+  gap: 14px 18px;
+}
+.wf-dialog-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 18px;
+  border-top: 1px solid #eceef1;
+  margin-top: 12px;
+}
+.wf-subtable-block {
+  margin-top: 18px;
+}
+.wf-subtable-block .wf-subtable-section {
+  margin-top: 0;
+}
+.wf-subtabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid #eceef1;
+  margin-bottom: 10px;
+}
+.wf-subtab {
+  font-size: 12.5px;
+  padding: 5px 12px;
+  color: #71717a;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.wf-subtab.on {
+  color: #3f3f46;
+  font-weight: 600;
+  border-bottom-color: #52525b;
+}
+
+
 /* 表格 */
 .wf-table {
   width: 100%;
@@ -994,6 +1120,186 @@
 .wf-table-wrap .wf-table {
   min-width: 540px;
 }
+
+/* ---- P7-4b 树列表面板（recipe=tree-list / layout.tree） ---- */
+.wf-split {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.wf-main {
+  flex: 1;
+  min-width: 0;
+}
+.wf-tree {
+  flex-shrink: 0;
+  width: 210px;
+  border: 1px solid #eceef1;
+  border-radius: 8px;
+  background: #fafafa;
+  padding: 10px 10px 12px;
+  box-sizing: border-box;
+}
+.wf-tree-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.wf-tree-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #3f3f46;
+}
+.wf-tree-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+.wf-tree-action {
+  font-size: 11px;
+  color: #71717a;
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
+  padding: 0 5px;
+  line-height: 18px;
+  background: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.wf-tree-action:hover {
+  color: #3f3f46;
+  border-color: #d4d4d8;
+}
+.wf-tree-actions.footer {
+  margin: 10px 0 0;
+  justify-content: flex-end;
+}
+.wf-tree-search {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  border: 1px solid #e4e4e7;
+  border-radius: 5px;
+  background: #fff;
+  color: #a1a1aa;
+  font-size: 11.5px;
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+.wf-tree-search-icon {
+  font-size: 12px;
+}
+.wf-tree-nodes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 300px;
+  overflow: hidden;
+}
+.wf-tree-node {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #52525b;
+  line-height: 26px;
+  border-radius: 5px;
+  padding-right: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.wf-tree-node:hover {
+  background: #f0f1f4;
+}
+.wf-tree-node-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wf-tree-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d4d4d8;
+  flex-shrink: 0;
+}
+/* dot：圆点指示（选中加深） */
+.wf-tree-node.style-dot .wf-tree-dot {
+  background: #a1a1aa;
+}
+.wf-tree-node.style-dot.is-selected {
+  background: #eef0f3;
+  color: #27272a;
+  font-weight: 600;
+}
+.wf-tree-node.style-dot.is-selected .wf-tree-dot {
+  background: #52525b;
+}
+/* platform：左侧竖条 + 选中底色 */
+.wf-tree-node.style-platform {
+  border-left: 2px solid transparent;
+}
+.wf-tree-node.style-platform.is-selected {
+  background: #eef0f3;
+  border-left-color: #52525b;
+  color: #27272a;
+  font-weight: 600;
+}
+/* background：仅选中底色 */
+.wf-tree-node.style-background.is-selected {
+  background: #e4e6ea;
+  color: #27272a;
+  font-weight: 600;
+}
+.wf-tree-empty {
+  font-size: 11.5px;
+  color: #c4c8ce;
+  padding: 10px 0;
+  text-align: center;
+}
+
+/* ---- P7-4b 批量操作条（选中后出现） ---- */
+.wf-batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 7px 10px;
+  border: 1px solid #e4e4e7;
+  border-radius: 7px;
+  background: #f7f8fa;
+}
+.wf-batch-text {
+  font-size: 12px;
+  color: #3f3f46;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+/* ---- P7-4b 分页三形态：bar（现状）/ split（左统计右分页）/ three-part（已选/页码/每页条数） ---- */
+.wf-pager-split,
+.wf-pager-three-part {
+  justify-content: space-between;
+}
+.wf-pager-pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.wf-pager-stat {
+  font-size: 12px;
+  color: #71717a;
+}
+.wf-pager-split .wf-pager-stat:first-child {
+  margin-right: auto;
+}
+.wf-pager-three-part .wf-pager-pages {
+  margin: 0 auto;
+}
+
 
 /* ---- 窄画框自适应（手机 / 窄桌面窗口）：容器查询由 .ma-proto-frame 触发 ---- */
 @container (max-width: 560px) {

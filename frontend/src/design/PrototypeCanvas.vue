@@ -1,10 +1,10 @@
 <template>
   <div
-    :class="['proto-skin', `skin-${template.category}`, { 'is-capturing': capturing }]"
+    :class="['proto-skin', `skin-${skin.category}`, { 'is-capturing': capturing }]"
     :style="skinStyle"
   >
-    <div :class="['proto-shell', { 'is-topbar': template.shell.type === 'topbar' }]">
-      <aside v-if="template.shell.type === 'sidebar'" :class="['proto-sidebar', { 'is-light': !template.shell.sidebarDark }]">
+    <div :class="['proto-shell', { 'is-topbar': skin.shell.type === 'topbar' }]">
+      <aside v-if="skin.shell.type === 'sidebar'" :class="['proto-sidebar', { 'is-light': !skin.shell.sidebarDark }]">
         <div class="proto-brand">{{ appName }}</div>
         <div
           v-for="set in pageSets"
@@ -17,7 +17,7 @@
       </aside>
 
       <div class="proto-main">
-        <div v-if="template.shell.type === 'topbar'" class="proto-topbar">
+        <div v-if="skin.shell.type === 'topbar'" class="proto-topbar">
           <span class="proto-brand" style="padding: 0; color: #0f172a">{{ appName }}</span>
           <span
             v-for="set in pageSets"
@@ -25,12 +25,12 @@
             :class="['proto-nav-item', { 'is-active': set.id === pageSetId }]"
             style="padding: 4px 8px; opacity: 0.8"
           >{{ set.title }}</span>
-          <span class="proto-topbar-actions">{{ template.name }}</span>
+          <span class="proto-topbar-actions">{{ skin.name }}</span>
         </div>
         <div v-else class="proto-topbar">
           <span class="proto-topbar-title">{{ pageSet?.title ?? page.title }}</span>
           <span class="proto-topbar-sub">{{ pageTypeLabel }}</span>
-          <span class="proto-topbar-actions">原型 · {{ template.name }}</span>
+          <span class="proto-topbar-actions">原型 · {{ skin.name }}</span>
         </div>
 
         <div class="proto-canvas-scroll">
@@ -39,6 +39,7 @@
               v-if="specPage && specEntity"
               :page="specPage"
               :entity="specEntity"
+              :entities="specEntities"
               :layout="specLayout"
               :rows="rows"
               :notes="[]"
@@ -67,19 +68,19 @@ import './design-skin.css'
 import {
   PAGE_TYPE_LABELS,
   type DesignEntity,
-  type DesignPage,
+  type DesignPageRender,
   type DesignPageLayout,
   type DesignPageSet,
   type DesignField,
-  type PrototypeTemplate
+  type PrototypeSkin
 } from './types'
 
 const props = defineProps<{
-  page: DesignPage
+  page: DesignPageRender
   pageSet?: DesignPageSet
   pageSets: DesignPageSet[]
   entities: DesignEntity[]
-  template: PrototypeTemplate
+  skin: PrototypeSkin
   appName: string
   zoom?: number
   capturing?: boolean
@@ -93,17 +94,17 @@ const entity = computed(() => props.entities.find(item => item.id === props.page
 const rows = computed<MockRow[]>(() => (entity.value ? mockRows(toSpecEntity(entity.value), 8) : []))
 
 const skinStyle = computed(() => ({
-  '--proto-primary': props.template.tokens.primary,
-  '--proto-accent': props.template.tokens.accent,
-  '--proto-neutral': props.template.tokens.neutral,
-  '--proto-bg': props.template.tokens.background,
-  '--proto-font': props.template.tokens.font,
-  '--proto-radius': `${props.template.tokens.radius}px`,
-  '--proto-spacing': `${props.template.tokens.spacing}px`
+  '--proto-primary': props.skin.tokens.primary,
+  '--proto-accent': props.skin.tokens.accent,
+  '--proto-neutral': props.skin.tokens.neutral,
+  '--proto-bg': props.skin.tokens.background,
+  '--proto-font': props.skin.tokens.font,
+  '--proto-radius': `${props.skin.tokens.radius}px`,
+  '--proto-spacing': `${props.skin.tokens.spacing}px`
 }))
 
 const paperStyle = computed(() => {
-  const width = props.template.shell.contentWidth ?? 1180
+  const width = props.skin.shell.contentWidth ?? 1180
   if (props.capturing) {
     return { width: `${width}px` }
   }
@@ -149,11 +150,13 @@ function toSpecEntity(item: DesignEntity): SpecEntity {
     name: item.name,
     description: item.description,
     status: 'confirmed',
-    fields: item.fields.map(toSpecField)
+    fields: item.fields.map(toSpecField),
+    ...(item.relations?.length ? { relations: item.relations as unknown as SpecEntity['relations'] } : {})
   }
 }
 
 const specEntity = computed(() => (entity.value ? toSpecEntity(entity.value) : undefined))
+const specEntities = computed(() => props.entities.map(toSpecEntity))
 
 const specPage = computed<SpecPage | undefined>(() => {
   const page = props.page
@@ -162,6 +165,9 @@ const specPage = computed<SpecPage | undefined>(() => {
     type: page.type,
     title: page.title,
     ...(page.entityId ? { entity: page.entityId } : {}),
+    ...(page.recipe ? { recipe: page.recipe } : {}),
+    ...(page.spec.selection !== undefined ? { selection: page.spec.selection } : {}),
+    ...(page.spec.components ? { components: { ...page.spec.components } } : {}),
     ...(page.spec.fields?.length ? { fields: page.spec.fields } : page.layout.table?.columns?.length ? { fields: page.layout.table.columns } : {}),
     ...(page.spec.actions?.length ? { actions: page.spec.actions } : {}),
     status: 'confirmed',
@@ -176,7 +182,35 @@ function toPageLayout(layout: DesignPageLayout): PageLayout {
     ...(layout.detail ? { detail: { ...layout.detail } } : {}),
     ...(layout.stats?.length ? { stats: layout.stats } : {}),
     ...(layout.charts?.length ? { charts: layout.charts } : {}),
-    ...(layout.groupMode ? { groupMode: layout.groupMode } : {})
+    ...(layout.groupMode ? { groupMode: layout.groupMode } : {}),
+    ...(layout.pagination ? { pagination: { ...layout.pagination } } : {}),
+    ...(layout.selection !== undefined ? { selection: layout.selection } : {}),
+    ...(layout.rowActions?.length ? { rowActions: [...layout.rowActions] } : {}),
+    ...(layout.toolbarActions?.length ? { toolbarActions: [...layout.toolbarActions] } : {}),
+    ...(layout.form
+      ? {
+          form: {
+            ...layout.form,
+            ...(layout.form.fields?.length ? { fields: [...layout.form.fields] } : {}),
+            ...(layout.form.groups?.length
+              ? { groups: layout.form.groups.map(group => ({ ...group, ...(group.fields ? { fields: [...group.fields] } : {}) })) }
+              : {})
+          }
+        }
+      : {}),
+    ...(layout.groups?.length
+      ? { groups: layout.groups.map(group => ({ title: group.title ?? '', fields: [...(group.fields ?? [])] })) }
+      : {}),
+    ...(layout.tree ? { tree: { ...layout.tree } } : {}),
+    ...(layout.subTables?.length
+      ? {
+          subTables: layout.subTables.map(item => ({
+            ...item,
+            ...(item.columns ? { columns: [...item.columns] } : {})
+          }))
+        }
+      : {}),
+    ...(layout.components ? { components: { ...layout.components } } : {})
   }
 }
 

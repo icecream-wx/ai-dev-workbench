@@ -1,20 +1,28 @@
 /**
- * 应用 API（P1）
+ * 应用 API
  *
- * - 应用 CRUD：创建时渲染 EOS 模板到 projects/<id>/，删除只删本地目录与登记
- * - 需求（文档模式）/设计（Studio）/开发（原生会话）挂载在 /:id/* 子路由
- * - 三阶段：requirements → design → development → completed
- *
- * 说明：R4b-2 起新应用固定文档模式；旧 structured 需求（workspace/modules/旧 P3 交接包）已移除。
- * 设计阶段“完成”在 DesignStudio 里生成设计交接包并进入开发（D5）。
+ * - 应用 CRUD：创建时渲染 EOS 模板 + 生成共享工作区（skills/commands/docs）
+ * - 模板解析：GET /:id/templates
+ * - 产物：GET /:id/artifacts、GET /:id/events（SSE 变化）
+ * - 模块文件：GET/POST /:id/requirements-modules、PATCH /:id/requirements-modules/:key
+ * - 对话：POST /:id/chat（统一入口，view/module/command）
+ * - 上下文：POST /:id/compact
+ * - 会话：挂载 /:id/development（开发视图沿用；需求/设计用 ?view=）
  */
 import { Router, type NextFunction, type Request, type Response } from 'express'
 import fs from 'node:fs'
+import path from 'node:path'
 import { db, nowIso } from '../db'
 import { appDirOf, removeAppDir, scaffoldApp, type AppSecretsInput } from './scaffold'
 import { appPayload, type AppRow } from './payload'
 import { resolveAppTemplates } from './template-resolution'
-import { changeSetRoutes } from '../changesets/routes'
+import {
+  designSelectionInputFromBody,
+  resolveAppDesignSystem,
+  resolveDesignSelection,
+  updateAppDesignSelection,
+  writeDesignSelection
+} from './design-system'
 import {
   agentForModelStage,
   handleAppChat,
@@ -26,15 +34,16 @@ import {
   type ModelStage
 } from '../chat/service'
 import { opencode } from '../opencode/runtime'
-import { completeActiveChangeSet, deleteDesignHandoffData } from '../handoff/design-service'
 import { devRoutes } from '../dev/routes'
-import { deleteDevPhaseData } from '../dev/phases'
-import { designRoutes } from '../design/routes'
-import { deleteDesignData } from '../design/service'
-import { confirmRequirementDoc } from '../requirements/doc'
-import { requirementBundleRoutes, requirementDocRoutes, requirementModuleRoutes, requirementPrototypeRoutes } from '../requirements/routes'
-import { RequirementDocError, getRequirementTemplateOrThrow } from '../requirements/templates'
-import { getPrototypeTemplateOrThrow } from '../design/templates'
+import { compactDevSession } from '../dev/service'
+import { runDesignFidelity } from '../dev/fidelity'
+import { resolveAssetFile } from '../design-template/paths'
+import { getRequirementTemplateOrThrow } from '../requirements/templates'
+import { writePrototypePackage } from '../design/prototypes'
+import { createModuleFile, updateModuleFile, ModuleFileError } from '../requirements/module-files'
+import { ensureWorkspaceAssets } from '../templates/distribution'
+import { readArtifacts } from '../workspace/artifacts'
+import { subscribeAppEvents } from '../workspace/hub'
 
 export const apps = Router()
 
@@ -53,8 +62,26 @@ function httpError(status: number, message: string, extra?: Record<string, unkno
   return error
 }
 
+/** 应用内设计模板资产的内容类型（扩展名白名单由 resolveAssetFile 保证） */
+function designAssetContentType(file: string): string {
+  switch (path.extname(file).toLowerCase()) {
+    case '.css':
+      return 'text/css; charset=utf-8'
+    case '.svg':
+      return 'image/svg+xml'
+    case '.png':
+      return 'image/png'
+    case '.jpg':
+    case '.jpeg':
+      return 'image/jpeg'
+    default:
+      return 'application/octet-stream'
+  }
+}
+
 const APP_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/
 const SECRET_FIELDS = ['eosSysKey', 'dbHost', 'dbPort', 'dbName', 'dbUser', 'dbPassword', 'mailHost', 'mailUsername', 'mailPassword'] as const
+const VIEW_STATUS = new Set(['requirements', 'design', 'development', 'completed'])
 
 export type { AppRow }
 
@@ -86,30 +113,17 @@ function secretsFromBody(body: Record<string, unknown>): AppSecretsInput {
   return secrets
 }
 
-/** #7：可选的模板 ID；空字符串视为未提供（保存 null，读取时回退默认） */
 function optionalTemplateId(raw: unknown): string | undefined {
   const value = asString(raw)?.trim()
   return value || undefined
 }
 
-/** 创建前校验模板可用；非法/不存在统一 400（不创建目录/登记） */
-function validateTemplates(requirementTemplateId: string | undefined, prototypeTemplateId: string | undefined): void {
-  if (requirementTemplateId) {
-    try {
-      getRequirementTemplateOrThrow(requirementTemplateId)
-    } catch (error) {
-      throw httpError(
-        400,
-        error instanceof Error ? error.message : `需求模板不存在或不可用：${requirementTemplateId}`
-      )
-    }
-  }
-  if (prototypeTemplateId) {
-    try {
-      getPrototypeTemplateOrThrow(prototypeTemplateId)
-    } catch (error) {
-      throw httpError(400, error instanceof Error ? error.message : `原型模板不存在或不可用：${prototypeTemplateId}`)
-    }
+function validateRequirementTemplate(requirementTemplateId: string | undefined): void {
+  if (!requirementTemplateId) return
+  try {
+    getRequirementTemplateOrThrow(requirementTemplateId)
+  } catch (error) {
+    throw httpError(400, error instanceof Error ? error.message : `需求模板不存在或不可用：${requirementTemplateId}`)
   }
 }
 
@@ -123,34 +137,25 @@ function appSettingKey(appId: string, name: string): string {
   return `app.${appId}.${name}`
 }
 
-function recordStageEvent(appId: string, stage: string, event: string, detail?: Record<string, unknown>): void {
-  db.prepare('INSERT INTO app_stage_events (app_id, stage, event, detail, created_at) VALUES (?, ?, ?, ?, ?)').run(
-    appId,
-    stage,
-    event,
-    detail ? JSON.stringify(detail) : null,
-    nowIso()
-  )
+/**
+ * 创建后让 opencode 重新加载 location 配置。
+ *
+ * 注意（P1 实测）：opencode 的 location 是**惰性初始化**的——首次在该目录创建会话之前，
+ * `GET /api/skill?location[directory]` 不包含项目级 skills（即使 reload 之后）。
+ * 因此创建时只做 best-effort reload；真实的 skills/commands 加载校验在
+ * 会话创建后执行（见 `chat/service.ts` 的 `verifyProjectAssets`）。
+ */
+async function warmLocations(): Promise<void> {
+  if (!opencode.status().ready) return
+  try {
+    await opencode.reloadLocations()
+  } catch (error) {
+    console.warn(`[apps] reloadLocations 失败：${error instanceof Error ? error.message : String(error)}`)
+  }
 }
 
-// ---- 变更单（C1） ----
-apps.use('/:id/change-sets', changeSetRoutes)
-
-// ---- 开发会话 ----
+// ---- 开发/需求/设计会话（view 过滤） ----
 apps.use('/:id/development', devRoutes)
-
-// ---- 需求文档（R1，文档模式） ----
-apps.use('/:id/requirements-doc', requirementDocRoutes)
-
-// ---- 需求模块 + 需求聚合快照（M2，#6） ----
-apps.use('/:id/requirements-modules', requirementModuleRoutes)
-apps.use('/:id/requirements-bundle', requirementBundleRoutes)
-
-// ---- 需求阶段只读原型预览（M7，#8；不写库/不产文件） ----
-apps.use('/:id/requirements-prototype', requirementPrototypeRoutes)
-
-// ---- 设计 Studio（D1—D4：实体 + 页面原型；交接包见 /design/handoff） ----
-apps.use('/:id/design', designRoutes)
 
 // ---- 应用 CRUD ----
 
@@ -169,56 +174,97 @@ apps.post(
     const backendPort = body.backendPort === undefined || body.backendPort === '' ? 8081 : normalizePort(body.backendPort)
     const secrets = secretsFromBody(body)
     const requirementTemplateId = optionalTemplateId(body.requirementTemplateId)
-    const prototypeTemplateId = optionalTemplateId(body.prototypeTemplateId)
+    // 设计系统：未传 → 默认 pack/应用类型/风格；非法 → 400（在落盘/建目录前校验）
+    // 旧客户端可能仍带 prototypeTemplateId：忽略（不再有原型模板概念）
+    const designSelection = resolveDesignSelection(designSelectionInputFromBody(body))
 
-    // 模板校验先于 scaffold/写库：非法模板不创建目录、不登记
-    validateTemplates(requirementTemplateId, prototypeTemplateId)
+    validateRequirementTemplate(requirementTemplateId)
 
     if (db.prepare('SELECT 1 FROM apps WHERE id = ?').get(id)) throw httpError(409, `应用 ID 已存在：${id}`)
     if (fs.existsSync(appDirOf(id))) throw httpError(409, `应用目录已存在：projects/${id}`)
 
-    scaffoldApp({ appId: id, appName: name, backendPort, secrets })
+    const scaffolded = scaffoldApp({
+      appId: id,
+      appName: name,
+      backendPort,
+      secrets,
+      requirementTemplateId: requirementTemplateId ?? null,
+      designSystem: designSelection
+    })
     const now = nowIso()
     try {
-      db.prepare(
-        `INSERT INTO apps
-           (id, name, description, dir, backend_port, status, requirement_template_id, prototype_template_id,
-            created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, 'requirements', ?, ?, ?, ?)`
-      ).run(
-        id,
-        name,
-        description,
-        id,
-        backendPort,
-        requirementTemplateId ?? null,
-        prototypeTemplateId ?? null,
-        now,
-        now
-      )
-      recordStageEvent(id, 'requirements', 'created')
+      db.transaction(() => {
+        db.prepare(
+          `INSERT INTO apps
+             (id, name, description, dir, backend_port, status, requirement_template_id,
+              created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, 'requirements', ?, ?, ?)`
+        ).run(id, name, description, id, backendPort, requirementTemplateId ?? null, now, now)
+        writeDesignSelection(id, designSelection)
+      })()
     } catch (error) {
       removeAppDir(id)
       throw error
     }
-    res.status(201).json({ app: appPayload(appOrThrow(id)) })
+    await warmLocations()
+    const warnings = scaffolded.warnings
+    if (body.prototypeTemplateId !== undefined) {
+      warnings.push('已忽略 prototypeTemplateId：设计模板统一由应用类型 × 视觉风格决定')
+    }
+    res.status(201).json({ app: appPayload(appOrThrow(id)), warnings })
   })
 )
 
 apps.get('/:id', (req, res) => {
-  res.json({ app: appPayload(appOrThrow(req.params.id)) })
+  const row = appOrThrow(req.params.id)
+  // 应用打开时做一次幂等对齐（覆盖式）；失败只记 warning，不影响读取
+  const aligned = ensureWorkspaceAssets(row.id)
+  if (aligned.warnings.length) console.warn(`[apps] 工作区对齐提示（${row.id}）：`, aligned.warnings.join('；'))
+  res.json({ app: appPayload(row) })
+})
+
+apps.get('/:id/templates', (req, res) => {
+  const row = appOrThrow(req.params.id)
+  res.json(resolveAppTemplates(row.id))
+})
+
+/** 应用级设计系统：pack/应用类型/风格 + 页面库 */
+apps.get('/:id/design-system', (req, res) => {
+  const row = appOrThrow(req.params.id)
+  res.json(resolveAppDesignSystem(row.id))
 })
 
 /**
- * #7：只读模板解析（供需求阶段原型预览等使用）。
- * - requirement：已有文档 → 文档模板；否则应用默认 → 全局默认
- * - prototype：设计项目 → 应用默认 → 全局默认
- * 不创建需求文档/设计项目。
+ * P7-7c：应用内设计模板资产（只读）。
+ * path 相对 `docs/design/template`，只允许 .css/.svg/.png/.jpg/.jpeg；路径安全由 resolveAssetFile 校验。
  */
-apps.get('/:id/templates', (req, res) => {
+apps.get('/:id/design-system/asset', (req, res) => {
   const row = appOrThrow(req.params.id)
-  const moduleId = typeof req.query.moduleId === 'string' ? req.query.moduleId.trim() : ''
-  res.json(resolveAppTemplates(row.id, moduleId || undefined))
+  const root = path.join(appDirOf(row.id), 'docs', 'design', 'template')
+  const file = resolveAssetFile(root, req.query.path)
+  res.type(designAssetContentType(file))
+  res.setHeader('Cache-Control', 'no-store')
+  res.sendFile(file)
+})
+
+/** 更新应用级设计系统：body {pack?, applicationType?, style?}（也接受 designSystem 对象） */
+apps.patch('/:id/design-system', (req, res, next) => {
+  try {
+    const row = appOrThrow(req.params.id)
+    const body = (req.body ?? {}) as Record<string, unknown>
+    const nested =
+      body.designSystem && typeof body.designSystem === 'object' && !Array.isArray(body.designSystem)
+        ? (body.designSystem as Record<string, unknown>)
+        : undefined
+    const selection = updateAppDesignSelection(row.id, {
+      pack: body.pack ?? body.designPack ?? nested?.pack,
+      applicationType: body.applicationType ?? body.designApplicationType ?? nested?.applicationType,
+      style: body.style ?? body.designStyle ?? nested?.style
+    })
+    res.json({ designSystem: resolveAppDesignSystem(row.id), selection })
+  } catch (error) {
+    next(error)
+  }
 })
 
 apps.delete('/:id', (req, res) => {
@@ -227,20 +273,7 @@ apps.delete('/:id', (req, res) => {
 
   const tx = db.transaction(() => {
     db.prepare('DELETE FROM app_settings WHERE key LIKE ?').run(`${appSettingKey(row.id, '')}%`)
-    db.prepare('DELETE FROM app_stage_events WHERE app_id = ?').run(row.id)
     db.prepare('DELETE FROM app_sessions WHERE app_id = ?').run(row.id)
-    deleteDevPhaseData(row.id)
-    db.prepare('DELETE FROM app_requirement_bundles WHERE app_id = ?').run(row.id)
-    db.prepare('DELETE FROM app_requirement_doc_versions WHERE app_id = ?').run(row.id)
-    db.prepare('DELETE FROM app_requirement_doc_sections WHERE app_id = ?').run(row.id)
-    db.prepare('DELETE FROM app_requirement_docs WHERE app_id = ?').run(row.id)
-    db.prepare('DELETE FROM app_modules WHERE app_id = ?').run(row.id)
-    // M5：变更单模块范围（随变更单删除；放在 deleteDesignHandoffData 之前）
-    db.prepare(
-      'DELETE FROM app_change_set_modules WHERE change_set_id IN (SELECT id FROM app_change_sets WHERE app_id = ?)'
-    ).run(row.id)
-    deleteDesignHandoffData(row.id)
-    deleteDesignData(row.id)
     db.prepare('DELETE FROM apps WHERE id = ?').run(row.id)
   })
   tx()
@@ -248,63 +281,119 @@ apps.delete('/:id', (req, res) => {
   res.json({ ok: true })
 })
 
-// ---- 阶段 ----
+// ---- 产物 ----
 
-apps.post('/:id/stage/confirm', (req, res) => {
+apps.get('/:id/artifacts', (req, res) => {
   const row = appOrThrow(req.params.id)
-  const stage = asString((req.body as Record<string, unknown>)?.stage)?.trim()
-  if (stage !== 'requirements' && stage !== 'design') throw httpError(400, 'stage 只能是 requirements 或 design')
-  const now = nowIso()
+  res.setHeader('Cache-Control', 'no-store')
+  res.json(readArtifacts(row.id))
+})
 
-  if (stage === 'requirements') {
-    if (row.requirements_confirmed_at) return res.json({ app: appPayload(row), alreadyConfirmed: true })
-    if (row.status !== 'requirements') throw httpError(409, `当前阶段不是需求（${row.status}）`)
-    // 文档模式：必填章节 + 至少一个用户故事；待澄清只做警告（M2：默认模块）
-    try {
-      const payload = confirmRequirementDoc(row.id)
-      return res.json({
-        app: appPayload(appOrThrow(row.id)),
-        document: { version: payload.payload.doc.version },
-        appConfirmed: payload.appConfirmed
-      })
-    } catch (error) {
-      if (error instanceof RequirementDocError) {
-        return res.status(error.status).json({ error: error.message, issues: error.issues, warnings: error.warnings })
-      }
-      throw error
-    }
+/**
+ * P7-6a：设计一致性静态检查（只读、只报告）
+ * body: { module?: string }；无设计返回 200 + { empty: true, reason }，不 500。
+ */
+apps.post('/:id/design-fidelity', (req, res, next) => {
+  try {
+    const row = appOrThrow(req.params.id)
+    const body = (req.body ?? {}) as Record<string, unknown>
+    const report = runDesignFidelity(row.id, { module: body.module })
+    res.setHeader('Cache-Control', 'no-store')
+    res.json(report)
+  } catch (error) {
+    next(error)
   }
-
-  // design：在设计 Studio 中确认设计并生成交接包（D5）；顶栏不再重复确认设计
-  throw httpError(
-    409,
-    '请在设计 Studio 中确认设计，并点击「生成交接包并进入开发」；顶栏不再重复确认设计。'
-  )
 })
 
-apps.post('/:id/complete', (req, res) => {
+/** P6-3：原型 PNG + manifest + tokens 写入（唯一新增接口；校验全部通过才落盘） */
+apps.post('/:id/design/:module/prototypes', (req, res, next) => {
+  try {
+    const row = appOrThrow(req.params.id)
+    res.json(writePrototypePackage(row.id, req.params.module, req.body))
+  } catch (error) {
+    next(error)
+  }
+})
+
+/** 产物变化 SSE：docs/ 变化 → artifacts-changed {paths, hashes} */
+apps.get('/:id/events', (req, res) => {
   const row = appOrThrow(req.params.id)
-  if (row.status === 'completed') return res.json({ app: appPayload(row), alreadyCompleted: true })
-  if (row.status !== 'development') throw httpError(409, '只有开发阶段可以确认完成')
-  const now = nowIso()
-  const lastSession = db
-    .prepare('SELECT opencode_session_id FROM app_sessions WHERE app_id = ? ORDER BY created_at DESC LIMIT 1')
-    .get(row.id) as { opencode_session_id: string | null } | undefined
-  db.prepare(`UPDATE apps SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?`).run(now, now, row.id)
-  completeActiveChangeSet(row.id)
-  recordStageEvent(row.id, 'development', 'completed', {
-    lastSessionId: lastSession?.opencode_session_id ?? null
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.setHeader('X-Accel-Buffering', 'no')
+  if (typeof res.flushHeaders === 'function') res.flushHeaders()
+
+  const snapshot = readArtifacts(row.id)
+  res.write(`data: ${JSON.stringify({ type: 'hello', appId: row.id, hashes: snapshot.hashes })}\n\n`)
+  const subscription = subscribeAppEvents(row.id, res)
+  const heartbeat = setInterval(() => {
+    if (!res.writableEnded) res.write(': ping\n\n')
+  }, 15000)
+  heartbeat.unref?.()
+  res.on('close', () => {
+    clearInterval(heartbeat)
+    subscription.close()
   })
-  res.json({ app: appPayload(appOrThrow(row.id)) })
 })
 
-// ---- 需求/设计对话与模型 ----
+// ---- 模块文件（不写 DB；UI 不提供删除） ----
+
+apps.get('/:id/requirements-modules', (req, res) => {
+  const row = appOrThrow(req.params.id)
+  const artifacts = readArtifacts(row.id)
+  res.json({
+    modules: artifacts.modules.map(module => ({
+      key: module.key,
+      title: module.title,
+      order: module.order,
+      template: module.template,
+      file: module.file,
+      sectionCount: module.sections.length,
+      errors: module.errors,
+      warnings: module.warnings
+    })),
+    errors: artifacts.errors
+  })
+})
+
+apps.post('/:id/requirements-modules', (req, res, next) => {
+  try {
+    const row = appOrThrow(req.params.id)
+    const body = (req.body ?? {}) as Record<string, unknown>
+    res.status(201).json(createModuleFile(row.id, { title: body.title, templateId: body.templateId }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+apps.patch('/:id/requirements-modules/:key', (req, res, next) => {
+  try {
+    const row = appOrThrow(req.params.id)
+    const body = (req.body ?? {}) as Record<string, unknown>
+    res.json(updateModuleFile(row.id, req.params.key, { title: body.title, order: body.order, template: body.template }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+// ---- 对话 / 上下文 ----
 
 apps.post(
   '/:id/chat',
   asyncRoute(async (req, res) => {
     const app = appOrThrow(req.params.id)
     await handleAppChat({ id: app.id, name: app.name }, req, res)
+  })
+)
+
+/** 按会话压缩上下文；body {view}（默认开发视图） */
+apps.post(
+  '/:id/compact',
+  asyncRoute(async (req, res) => {
+    const app = appOrThrow(req.params.id)
+    const body = (req.body ?? {}) as { view?: unknown }
+    res.json(await compactDevSession(app.id, { view: body.view }))
   })
 )
 
@@ -344,8 +433,7 @@ apps.put(
     const models = await opencode.listModels(appDirOf(app.id))
     const hit = models.find(
       model =>
-        model.providerID === provided.providerID &&
-        (model.modelID === provided.id || model.id === provided.id)
+        model.providerID === provided.providerID && (model.modelID === provided.id || model.id === provided.id)
     )
     if (!hit) throw httpError(400, `模型不存在或未启用：${provided.providerID}/${provided.id}`)
     const model: ModelRef = { providerID: hit.providerID, id: hit.modelID }
@@ -354,6 +442,15 @@ apps.put(
   })
 )
 
+/** 视图标签（无门禁语义）：PATCH /api/apps/:id/status {status} */
+apps.patch('/:id/status', (req, res) => {
+  const row = appOrThrow(req.params.id)
+  const status = asString((req.body as Record<string, unknown>)?.status)?.trim() ?? ''
+  if (!VIEW_STATUS.has(status)) throw httpError(400, 'status 只能是 requirements/design/development/completed')
+  db.prepare('UPDATE apps SET status = ?, updated_at = ? WHERE id = ?').run(status, nowIso(), row.id)
+  res.json({ app: appPayload(appOrThrow(row.id)) })
+})
+
 /** /api/apps/* 的统一错误出口 */
 export function appsErrorHandler(error: unknown, _req: Request, res: Response, next: NextFunction): void {
   if (res.headersSent) {
@@ -361,7 +458,8 @@ export function appsErrorHandler(error: unknown, _req: Request, res: Response, n
     return
   }
   const typed = error as { status?: unknown; extra?: Record<string, unknown>; issues?: unknown; warnings?: unknown }
-  const status = typeof typed?.status === 'number' ? typed.status : 500
+  const status =
+    typeof typed?.status === 'number' ? typed.status : error instanceof ModuleFileError ? error.status : 500
   const message = error instanceof Error ? error.message : String(error)
   res.status(status).json({
     error: message,

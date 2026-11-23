@@ -1,0 +1,59 @@
+{
+  "pack": {
+    "id": "goods-hub",
+    "name": "商品管理模板",
+    "version": "1.0.0",
+    "defaultApplicationType": "goods-hub",
+    "defaultStyle": "data-cyan",
+    "source": "custom",
+    "templateKind": "custom",
+    "origin": {
+      "kind": "custom",
+      "draftId": "goods-hub",
+      "builtFrom": {
+        "pack": "afcenter-app-templates-v1",
+        "version": "1.0.0"
+      },
+      "baseApplicationType": "operations-management",
+      "style": "data-cyan",
+      "revision": 1,
+      "specHash": "sha256:e63cfb1a502a89755453f5f538e8fee218f769b1e8a48c6f12d15ae242fcc0b1",
+      "publishedAt": "2026-11-23T03:00:00.014Z"
+    },
+    "pageCount": 2,
+    "applicationTypes": [
+      {
+        "id": "goods-hub",
+        "name": "商品管理模板",
+        "category": "custom",
+        "description": "商品主数据台账（引用运营列表）+ 新增/编辑弹窗（契约）",
+        "structure": "application-types/goods-hub/structure.css",
+        "defaultStyle": "data-cyan",
+        "pageCount": 2
+      }
+    ],
+    "styles": [
+      {
+        "id": "data-cyan",
+        "name": "数据蓝青",
+        "className": "visual-style-data-cyan",
+        "description": "蓝青冷色、卡片层次、轻网格和偏数据科技的视觉表达。",
+        "signature": "#145FBA",
+        "css": "styles/data-cyan/style.css",
+        "tokens": {
+          "primary": "#145fba",
+          "accent": "#07858d",
+          "neutral": "#66758a",
+          "background": "#f3f7fb",
+          "radius": 12,
+          "density": "compact"
+        }
+      }
+    ],
+    "skills": [
+      "afcenter-page-generation",
+      "pm-components-usage"
+    ],
+    "referencedApps": []
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "pages": [
+    "supplier-detail",
+    "supplier-form",
+    "supplier-list"
+  ],
+  "sample": {
+    "width": 2880,
+    "height": 1800,
+    "primaryMatches": 2011
+  },
+  "manifest": {
+    "designHash": "391cb9dec4a1a6330177fa15a54ffda572fbe424e899f995fb7d010bab70a353",
+    "styleId": "data-cyan",
+    "exportedAt": "2026-11-21T13:37:35.715Z",
+    "pages": {
+      "supplier-detail": {
+        "file": "supplier-detail.png",
+        "hash": "1fc13cd9676594bc3c0af80bae154ce9718bbb85ac8810adf804f2f2c05c824a",
+        "exportedAt": "2026-11-21T13:37:35.715Z"
+      },
+      "supplier-form": {
+        "file": "supplier-form.png",
+        "hash": "b1bba6736a4040c8c146880a1bde084e16781fe036978f29a3154368253d3580",
+        "exportedAt": "2026-11-21T13:37:35.715Z"
+      },
+      "supplier-list": {
+        "file": "supplier-list.png",
+        "hash": "2e98959db61985088c8b8b9ebf9f7846a7193ba4575d331d4493abb4dd2795a1",
+        "exportedAt": "2026-11-21T13:37:35.715Z"
+      }
+    }
+  }
+}

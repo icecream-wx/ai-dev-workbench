@@ -1,0 +1,123 @@
+{
+  "module": "MOD-001",
+  "title": "组织与人员",
+  "designSystem": {
+    "pack": "afcenter-app-templates-v1",
+    "applicationType": "enterprise-application-platform",
+    "style": "platform-blue"
+  },
+  "entities": [
+    {
+      "id": "organization",
+      "name": "机构",
+      "table": "org_organization",
+      "description": "企业组织结构树，顶级机构为“普元信息技术”",
+      "fields": [
+        { "name": "机构名称", "type": "string", "required": true },
+        { "name": "机构编码", "type": "string", "required": true, "unique": true },
+        { "name": "上级机构", "type": "ref", "ref": "organization", "note": "为空表示顶级机构；停用机构不可新增下级" },
+        { "name": "负责人", "type": "ref", "ref": "employee", "note": "机构负责人，取自员工档案" },
+        { "name": "状态", "type": "enum", "options": ["启用", "停用"], "note": "存在下级或员工时不可删除，只能停用" },
+        { "name": "排序号", "type": "number", "note": "同级机构展示顺序" }
+      ]
+    },
+    {
+      "id": "employee",
+      "name": "员工",
+      "table": "org_employee",
+      "description": "员工档案，必须归属一个机构",
+      "fields": [
+        { "name": "员工姓名", "type": "string", "required": true },
+        { "name": "工号", "type": "string", "required": true, "unique": true },
+        { "name": "所属机构", "type": "ref", "ref": "organization", "required": true, "note": "机构停用后员工仍可查询，但不能新增到该机构" },
+        { "name": "岗位", "type": "string" },
+        { "name": "手机号", "type": "string" },
+        { "name": "邮箱", "type": "string" },
+        { "name": "在职状态", "type": "enum", "options": ["在职", "离职"] }
+      ]
+    },
+    {
+      "id": "account",
+      "name": "账号",
+      "table": "org_account",
+      "description": "员工登录账号，一个员工最多一个账号",
+      "fields": [
+        { "name": "登录账号", "type": "string", "required": true, "unique": true },
+        { "name": "所属员工", "type": "ref", "ref": "employee", "required": true, "note": "一个员工最多一个登录账号" },
+        { "name": "角色", "type": "string", "note": "可多选；角色主数据由权限/安全模块维护，本模块只做分配" },
+        { "name": "状态", "type": "enum", "options": ["启用", "禁用"], "note": "账号启用状态；禁用后立即不能登录，但保留历史" },
+        { "name": "锁定", "type": "enum", "options": ["已锁定", "未锁定"], "note": "只读；只由安全策略触发，界面不能手工解锁" },
+        { "name": "最近登录", "type": "datetime" }
+      ]
+    }
+  ],
+  "relations": [
+    { "from": "organization", "to": "organization", "type": "1:N", "label": "下级机构" },
+    { "from": "employee", "to": "organization", "type": "N:1", "label": "所属机构" },
+    { "from": "account", "to": "employee", "type": "1:1", "label": "所属员工（一个员工最多一个账号）" },
+    { "from": "organization", "to": "employee", "type": "N:1", "label": "负责人" }
+  ],
+  "pages": [
+    {
+      "id": "org-list",
+      "name": "组织与人员",
+      "type": "list",
+      "recipe": "tree-list",
+      "catalogRef": "enterprise-application-platform/organization",
+      "blueprint": "application-types/enterprise-application-platform/pages/OrganizationUsers.vue",
+      "entity": "account",
+      "filters": ["员工姓名", "工号", "在职状态"],
+      "columns": ["登录账号", "所属员工", "所属机构", "岗位", "角色", "状态", "锁定", "最近登录"],
+      "rowActions": ["edit", "enable", "disable"],
+      "toolbarActions": ["create", "import", "batchAssignRole"],
+      "selection": true,
+      "pagination": { "layout": "three-part", "pageSize": 10 },
+      "tree": {
+        "titleField": "机构名称",
+        "parentField": "上级机构",
+        "actionStyle": "none",
+        "selectionStyle": "platform"
+      },
+      "components": {
+        "登录账号": "pm-input",
+        "所属员工": "pm-input",
+        "所属机构": "pm-select",
+        "岗位": "pm-select",
+        "角色": "pm-select",
+        "状态": "pm-select"
+      },
+      "actions": ["新建账号", "编辑", "启用", "禁用", "批量导入", "批量分配角色"],
+      "requirementRefs": ["§2 组织结构", "§3 员工档案", "§4 账号", "§5 页面与操作", "§6 验收"]
+    },
+    {
+      "id": "org-form",
+      "name": "新建/编辑账号",
+      "type": "form",
+      "recipe": "dialog-form",
+      "catalogRef": "enterprise-application-platform/organization",
+      "blueprint": "application-types/enterprise-application-platform/pages/OrganizationUsers.vue",
+      "entity": "account",
+      "form": {
+        "presentation": "dialog",
+        "columns": 2,
+        "width": 560,
+        "fields": ["登录账号", "员工姓名", "所属机构", "岗位", "角色", "状态", "锁定"],
+        "groups": [
+          { "title": "账号信息", "fields": ["登录账号", "员工姓名", "角色"] },
+          { "title": "归属信息", "fields": ["所属机构", "岗位"] },
+          { "title": "账号状态", "fields": ["状态", "锁定"] }
+        ]
+      },
+      "components": {
+        "登录账号": "pm-input",
+        "员工姓名": "pm-input",
+        "所属机构": "pm-select",
+        "岗位": "pm-select",
+        "角色": "pm-select",
+        "状态": "pm-switch"
+      },
+      "actions": ["保存", "取消"],
+      "requirementRefs": ["§4 账号", "§5 页面与操作", "§6 验收"]
+    }
+  ]
+}

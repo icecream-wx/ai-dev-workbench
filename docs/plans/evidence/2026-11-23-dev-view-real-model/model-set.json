@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "stage": "development",
+  "model": {
+    "providerID": "packycode-deepseek",
+    "id": "deepseek-flash"
+  }
+}

@@ -18,6 +18,8 @@
             <path d="M13.2 9.8A5.6 5.6 0 0 1 6.2 2.8a5.7 5.7 0 1 0 7 7Z" />
           </svg>
         </button>
+        <button type="button" class="btn" data-testid="home-template-library" @click="templateOpen = true">模板库</button>
+        <button type="button" class="btn" data-testid="home-design-templates" @click="designTemplateOpen = true">设计模板</button>
         <button type="button" class="btn primary" @click="dialogOpen = true">新建应用</button>
       </div>
     </header>
@@ -25,7 +27,7 @@
     <main class="content">
       <section class="hero">
         <h1>从一个应用开始</h1>
-        <p>创建应用后，按需求、设计、开发三个阶段逐步推进；需求与设计会沉淀为开发交接包。</p>
+        <p>工作台提供共享工作区、模板、会话与三个视图（需求 / 设计 / 开发）；产物以文件为准，agent 在对话里自主检索与修改。</p>
       </section>
 
       <section class="grid">
@@ -51,14 +53,11 @@
               <div class="app-main">
                 <div class="app-title">
                   <strong>{{ app.name }}</strong>
-                  <span :class="['status', app.status]">{{ appListStatusLabel(app) }}</span>
+                  <span :class="['status', app.status]">{{ statusLabel(app.status) }}</span>
                 </div>
                 <div class="app-meta">
                   <code>{{ app.id }}</code>
-                  <span>
-                    需求文档 v{{ app.requirementDoc?.version ?? 1 }} · {{ docStatusLabel(app) }}
-                    <template v-if="app.requirementDoc?.templateName"> · {{ app.requirementDoc.templateName }}</template>
-                  </span>
+                  <span data-testid="home-app-templates">需求模板：{{ app.requirementTemplateName }} · {{ designSummary(app) }}</span>
                   <span>更新于 {{ formatTime(app.updatedAt) }}</span>
                 </div>
               </div>
@@ -109,6 +108,8 @@
     </main>
 
     <NewAppDialog v-model="dialogOpen" @created="onCreated" />
+    <TemplateLibraryDialog v-model="templateOpen" @changed="refresh" />
+    <DesignTemplateCenter v-model="designTemplateOpen" mode="browse" />
   </div>
 </template>
 
@@ -116,8 +117,10 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import NewAppDialog from './NewAppDialog.vue'
+import TemplateLibraryDialog from './TemplateLibraryDialog.vue'
+import DesignTemplateCenter from './DesignTemplateCenter.vue'
 import { appRoute, deleteApp, listApps, type AppInfo } from './api'
-import { appListStatusLabel } from '../changesets/labels.js'
+import { statusLabel } from './view-helpers.js'
 import { useSettingsStore } from '../settings/store'
 
 interface RuntimeStatus {
@@ -144,6 +147,8 @@ const deleting = ref('')
 const error = ref('')
 const runtimeError = ref('')
 const dialogOpen = ref(false)
+const templateOpen = ref(false)
+const designTemplateOpen = ref(false)
 let pollTimer: ReturnType<typeof setTimeout> | null = null
 let pollCount = 0
 
@@ -160,15 +165,21 @@ const runtimeLabel = computed(() => {
   return '未启动'
 })
 
-function docStatusLabel(app: AppInfo): string {
-  const status = app.requirementDoc?.status
-  return status === 'confirmed' ? '已确认' : status === 'review' ? '待审核' : '草稿'
-}
-
 function formatTime(value: string): string {
   if (!value) return '—'
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString('zh-CN', { hour12: false })
+}
+
+/** 应用摘要：设计模板（应用类型 · 风格；自定义模板带版本与来源） */
+function designSummary(app: AppInfo): string {
+  const design = app.designSystem
+  if (design?.applicationType && design.style) {
+    const custom = design.origin?.kind === 'custom' || design.pack?.source === 'custom'
+    const version = custom && design.pack?.version ? ` v${design.pack.version}` : ''
+    return `设计模板：${design.applicationType.name}${version}${custom ? '（自定义）' : ''} · ${design.style.name}`
+  }
+  return '设计模板：默认（应用类型 · 风格）'
 }
 
 async function refresh(): Promise<void> {

@@ -21,6 +21,9 @@ yarn-error.log*
 pnpm-debug.log*
 dist/
 build/
+# MF remote 种子必须入库（否则脚手架缺 build/）
+!templates/afc-remote/build/
+!templates/afc-remote/build/**
 .vite/
 *.tsbuildinfo
 coverage/

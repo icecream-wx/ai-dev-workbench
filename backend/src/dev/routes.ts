@@ -1,20 +1,17 @@
 /**
- * 开发会话 API（P4）
+ * 会话 API（开发视图沿用；需求/设计视图复用同一套接口，用 `view` 区分）
  *
- * GET    /api/apps/:id/development           当前/指定会话 + 时间线 + 待处理询问（?sessionId= 只读）
- * GET    /api/apps/:id/development/sessions  应用全部开发会话（含归档/失效）
- * POST   /api/apps/:id/development/sessions/:sid/activate 切换 active（先停止并归档当前会话）
- * PATCH  /api/apps/:id/development/sessions/:sid          重命名/备注
- * POST   /api/apps/:id/development/sessions/:sid/archive  归档（幂等）
- * POST   /api/apps/:id/development/session   创建/恢复会话（{new:true} 重开）
- * DELETE /api/apps/:id/development/session   归档当前会话
- * POST   /api/apps/:id/development/prompt    发送消息（completion 后自动恢复 development）
- * POST   /api/apps/:id/development/interrupt 停止
- * POST   /api/apps/:id/development/compact   压缩上下文（opencode 原生 compact）
- * GET    /api/apps/:id/development/phases    开发阶段列表（?handoffVersion= 历史只读）
- * POST   /api/apps/:id/development/phases/generate  按需生成阶段（大交接包）
- * POST   /api/apps/:id/development/phases/:phaseId/start|complete|skip|reopen
- * GET    /api/apps/:id/development/events    SSE（按 opencode 会话过滤）
+ * GET    /api/apps/:id/development?view=&sessionId=   当前/指定会话 + 时间线 + 待处理询问
+ * GET    /api/apps/:id/development/sessions?view=     会话列表（按视图过滤）
+ * POST   /api/apps/:id/development/sessions/:sid/activate
+ * PATCH  /api/apps/:id/development/sessions/:sid      重命名/备注
+ * POST   /api/apps/:id/development/sessions/:sid/archive
+ * POST   /api/apps/:id/development/session            创建/恢复会话（{new:true, view}）
+ * DELETE /api/apps/:id/development/session            归档当前会话（view）
+ * POST   /api/apps/:id/development/prompt             发送消息
+ * POST   /api/apps/:id/development/interrupt          停止
+ * POST   /api/apps/:id/development/compact            压缩上下文
+ * GET    /api/apps/:id/development/events             SSE（按 opencode 会话过滤）
  * POST   /api/apps/:id/development/permission/:rid/reply
  * POST   /api/apps/:id/development/form/:fid/reply
  */
@@ -38,14 +35,6 @@ import {
   replyDevForm,
   replyDevPermission
 } from './service'
-import {
-  completeDevPhase,
-  generateDevPhases,
-  getDevPhases,
-  reopenDevPhase,
-  skipDevPhase,
-  startDevPhase
-} from './phases'
 
 export const devRoutes = Router({ mergeParams: true })
 
@@ -67,26 +56,32 @@ function badRequest(message: string): Error & { status?: number } {
   return error
 }
 
+/** view 来自 query 或 body；非法值交给 service 回退默认（development） */
+function viewOf(req: Request, body?: Record<string, unknown>): { view?: unknown } {
+  if (body && body.view !== undefined) return { view: body.view }
+  return req.query.view === undefined ? {} : { view: req.query.view }
+}
+
 devRoutes.get(
   '/',
   asyncRoute(async (req, res) => {
     const raw = req.query.sessionId
     if (raw !== undefined && typeof raw !== 'string') throw badRequest('sessionId 必须为字符串')
-    res.json(await getDevState(appIdOf(req), raw ? { sessionId: raw } : {}))
+    res.json(await getDevState(appIdOf(req), { ...(raw ? { sessionId: raw } : {}), ...viewOf(req) }))
   })
 )
 
 devRoutes.get(
   '/sessions',
   asyncRoute(async (req, res) => {
-    res.json(await listDevSessions(appIdOf(req)))
+    res.json(await listDevSessions(appIdOf(req), viewOf(req)))
   })
 )
 
 devRoutes.post(
   '/sessions/:sid/activate',
   asyncRoute(async (req, res) => {
-    res.json(await activateDevSession(appIdOf(req), String(req.params.sid ?? '')))
+    res.json(await activateDevSession(appIdOf(req), String(req.params.sid ?? ''), viewOf(req)))
   })
 )
 
@@ -111,101 +106,65 @@ devRoutes.post(
 devRoutes.post(
   '/session',
   asyncRoute(async (req, res) => {
-    const body = (req.body ?? {}) as { new?: unknown }
-    res.json(await createDevSession(appIdOf(req), { new: body.new === true }))
+    const body = (req.body ?? {}) as { new?: unknown; view?: unknown; module?: unknown }
+    res.json(
+      await createDevSession(appIdOf(req), {
+        new: body.new === true,
+        view: body.view ?? req.query.view,
+        module: body.module
+      })
+    )
   })
 )
 
 devRoutes.delete(
   '/session',
   asyncRoute(async (req, res) => {
-    res.json(await archiveDevSession(appIdOf(req)))
+    res.json(await archiveDevSession(appIdOf(req), viewOf(req)))
   })
 )
 
 devRoutes.post(
   '/prompt',
   asyncRoute(async (req, res) => {
-    const body = (req.body ?? {}) as { text?: unknown }
+    const body = (req.body ?? {}) as { text?: unknown; view?: unknown; module?: unknown; command?: unknown }
     if (typeof body.text !== 'string') throw badRequest('text 必须为字符串')
-    res.json(await promptDevSession(appIdOf(req), body.text))
+    res.json(
+      await promptDevSession(appIdOf(req), body.text, {
+        view: body.view ?? req.query.view,
+        module: body.module,
+        command: body.command
+      })
+    )
   })
 )
 
 devRoutes.post(
   '/interrupt',
   asyncRoute(async (req, res) => {
-    res.json(await interruptDevSession(appIdOf(req)))
+    res.json(await interruptDevSession(appIdOf(req), viewOf(req, (req.body ?? {}) as Record<string, unknown>)))
   })
 )
 
 devRoutes.post(
   '/compact',
   asyncRoute(async (req, res) => {
-    res.json(await compactDevSession(appIdOf(req)))
-  })
-)
-
-// ---- U7-1：开发阶段（按需生成，不做门禁） ----
-
-devRoutes.get(
-  '/phases',
-  asyncRoute(async (req, res) => {
-    const raw = req.query.handoffVersion
-    if (raw !== undefined && typeof raw !== 'string') throw badRequest('handoffVersion 必须为字符串')
-    if (raw !== undefined && raw !== '' && !/^\d+$/.test(raw)) throw badRequest('handoffVersion 必须为正整数')
-    const handoffVersion = raw === undefined || raw === '' ? undefined : Number(raw)
-    if (handoffVersion !== undefined && handoffVersion <= 0) throw badRequest('handoffVersion 必须为正整数')
-    res.json(getDevPhases(appIdOf(req), { handoffVersion }))
-  })
-)
-
-devRoutes.post(
-  '/phases/generate',
-  asyncRoute(async (req, res) => {
-    res.json(generateDevPhases(appIdOf(req)))
-  })
-)
-
-devRoutes.post(
-  '/phases/:phaseId/start',
-  asyncRoute(async (req, res) => {
-    res.json(await startDevPhase(appIdOf(req), String(req.params.phaseId ?? '')))
-  })
-)
-
-devRoutes.post(
-  '/phases/:phaseId/complete',
-  asyncRoute(async (req, res) => {
-    res.json(await completeDevPhase(appIdOf(req), String(req.params.phaseId ?? '')))
-  })
-)
-
-devRoutes.post(
-  '/phases/:phaseId/skip',
-  asyncRoute(async (req, res) => {
-    res.json(skipDevPhase(appIdOf(req), String(req.params.phaseId ?? '')))
-  })
-)
-
-devRoutes.post(
-  '/phases/:phaseId/reopen',
-  asyncRoute(async (req, res) => {
-    res.json(reopenDevPhase(appIdOf(req), String(req.params.phaseId ?? '')))
+    res.json(await compactDevSession(appIdOf(req), viewOf(req, (req.body ?? {}) as Record<string, unknown>)))
   })
 )
 
 devRoutes.post(
   '/permission/:rid/reply',
   asyncRoute(async (req, res) => {
-    const body = (req.body ?? {}) as { decision?: unknown; message?: unknown }
+    const body = (req.body ?? {}) as { decision?: unknown; message?: unknown; view?: unknown }
     if (typeof body.decision !== 'string' || !body.decision) throw badRequest('decision 不能为空')
     res.json(
       await replyDevPermission(
         appIdOf(req),
         String(req.params.rid ?? ''),
         body.decision,
-        typeof body.message === 'string' ? body.message : undefined
+        typeof body.message === 'string' ? body.message : undefined,
+        viewOf(req, body as Record<string, unknown>)
       )
     )
   })
@@ -214,8 +173,10 @@ devRoutes.post(
 devRoutes.post(
   '/form/:fid/reply',
   asyncRoute(async (req, res) => {
-    const body = (req.body ?? {}) as { answer?: unknown }
-    res.json(await replyDevForm(appIdOf(req), String(req.params.fid ?? ''), body.answer))
+    const body = (req.body ?? {}) as { answer?: unknown; view?: unknown }
+    res.json(
+      await replyDevForm(appIdOf(req), String(req.params.fid ?? ''), body.answer, viewOf(req, body as Record<string, unknown>))
+    )
   })
 )
 
@@ -224,9 +185,9 @@ devRoutes.get(
   asyncRoute(async (req, res) => {
     const appId = appIdOf(req)
     await opencode.ensureStarted()
-    const sessionID = activeOpencodeSessionId(appId)
+    const sessionID = activeOpencodeSessionId(appId, viewOf(req))
     if (!sessionID) {
-      res.status(409).json({ error: '当前没有开发会话，请先开始开发' })
+      res.status(409).json({ error: '当前没有活跃会话，请先开始' })
       return
     }
     registerAppSecrets(appId, appDirOf(appId))

@@ -1,0 +1,116 @@
+{
+  "appId": "p77c2-real",
+  "schemaVersion": 1,
+  "ok": true,
+  "empty": false,
+  "generatedAt": "2026-11-21T13:38:21.158Z",
+  "module": "MOD-001",
+  "modules": [
+    "MOD-001"
+  ],
+  "designSystem": {
+    "exists": true,
+    "valid": true,
+    "pack": "supplier-management",
+    "applicationType": "supplier-management",
+    "style": "data-cyan",
+    "styleName": "数据蓝青",
+    "pageCount": 3,
+    "blueprintRoot": "docs/design/template"
+  },
+  "checks": [
+    {
+      "id": "design-system",
+      "label": "应用设计系统",
+      "status": "pass",
+      "evidence": "supplier-management v1.0.0 · supplier-management · data-cyan · 3 页蓝图"
+    },
+    {
+      "id": "page-contract",
+      "label": "页面契约",
+      "status": "pass",
+      "evidence": "3 页均含 recipe 与 blueprint/catalogRef/契约文件"
+    },
+    {
+      "id": "blueprint-files",
+      "label": "蓝图文件",
+      "status": "pass",
+      "evidence": "1 个蓝图文件均存在（例如 docs/design/template/supplier-management/pages/supplier-list.vue）；另 2 个契约页（无蓝图）"
+    },
+    {
+      "id": "implementation",
+      "label": "实现视图/路由",
+      "status": "warn",
+      "evidence": "视图匹配 0/3；路由 1 条；未匹配：supplier-list、supplier-form、supplier-detail",
+      "hint": "按蓝图复制到 frontend/src/views/，并在 router/index.js 挂载；文件名/id 未能自动判断属于正常情况。"
+    },
+    {
+      "id": "page-templates",
+      "label": "PageTemplates",
+      "status": "warn",
+      "evidence": "未发现 PageTemplates 导入/使用",
+      "hint": "列表/树/表单优先使用 frontend/src/components/PageTemplates/。"
+    },
+    {
+      "id": "pm-components",
+      "label": "pm-* 组件",
+      "status": "warn",
+      "evidence": "未发现 pm-* 标签",
+      "hint": "业务页面应使用宿主提供的 pm-* 组件；不要自造同名组件或重复打包。"
+    },
+    {
+      "id": "form-dialog",
+      "label": "表单弹窗/FormSection",
+      "status": "warn",
+      "evidence": "1/1 个表单页待确认：supplier-form（未找到实现文件）",
+      "hint": "新增/编辑默认 pm-form-dialog；独立页面表单用 StandardFormPage/FormSection。"
+    },
+    {
+      "id": "auto-height",
+      "label": "列表 v-auto-height",
+      "status": "warn",
+      "evidence": "1/1 个列表页待确认：supplier-list（未找到实现文件）",
+      "hint": "el-table/pm-table 统一使用 v-auto-height，不要固定 height/max-height。"
+    },
+    {
+      "id": "global-preference",
+      "label": "GlobalPreference",
+      "status": "warn",
+      "evidence": "未发现 GlobalPreference 导入/使用",
+      "hint": "统一导入 src/preferences/GlobalPreference.js；预设只在页面 computed 合并。"
+    },
+    {
+      "id": "style-imports",
+      "label": "结构/风格导入",
+      "status": "warn",
+      "evidence": "未发现 structure.css/style.css/shared.css 导入或 visual-style-* 使用",
+      "hint": "把 docs/design/template 的结构/风格接入 frontend（或由宿主提供），保持蓝图视觉基准。"
+    },
+    {
+      "id": "template-contract",
+      "label": "模板契约页",
+      "status": "pass",
+      "evidence": "2 个契约页与模板契约一致（文件存在、recipe 一致）"
+    },
+    {
+      "id": "ui-check",
+      "label": "ui-check 对照表",
+      "status": "warn",
+      "evidence": "MOD-001: 未生成",
+      "hint": "实现前先填 docs/design/<MOD>/ui-check.md；未填不阻断，但完成汇报需标记“流程未完成”。"
+    },
+    {
+      "id": "prototypes",
+      "label": "PNG 原型",
+      "status": "pass",
+      "evidence": "MOD-001: 3 张未过期"
+    }
+  ],
+  "summary": {
+    "pass": 5,
+    "warn": 8,
+    "fail": 0,
+    "total": 13,
+    "status": "warn"
+  }
+}

@@ -1,0 +1,36 @@
+[
+  {
+    "type": "document",
+    "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-spike\\ws-a1\\opencode.json",
+    "info": {
+      "$schema": "https://opencode.ai/config.json",
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "edit",
+          "resource": "spec.json",
+          "effect": "allow"
+        },
+        {
+          "action": "edit",
+          "resource": "drafts/**",
+          "effect": "allow"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "ask"
+        },
+        {
+          "action": "shell",
+          "resource": "node .opencode/scripts/generate.mjs *",
+          "effect": "allow"
+        }
+      ]
+    }
+  }
+]

@@ -11,6 +11,7 @@
  */
 import path from 'node:path'
 import { redact, redactDeep } from '../opencode/redact'
+import { lastIdleMessage, sessionCompletion } from '../opencode/session-state'
 
 export const LIMITS = {
   toolOutput: 20000,
@@ -177,6 +178,23 @@ export function scrubText(value: unknown): string {
   )
   out = out.replace(/\b(https?:\/\/)([^/@\s]+)@/gi, '$1***@')
   return out
+}
+
+/**
+ * 用户消息的展示文本。
+ *
+ * P2 起 `buildViewPrompt` 会在用户输入前拼一段“视图框架”（当前视图/产物路径/skill 提示），
+ * 时间线不能把框架当用户原话展示：
+ * - 仅当文本以 `当前视图：` 开头时，取**第一个** `\n用户消息：\n` 之后的内容；
+ * - 找不到 marker / 不是框架开头 → 原样返回（不改用户原文，含换行与特殊字符）。
+ */
+export function displayUserText(text: string): string {
+  const raw = typeof text === 'string' ? text : ''
+  if (!raw.startsWith('当前视图：')) return raw
+  const marker = '\n用户消息：\n'
+  const index = raw.indexOf(marker)
+  if (index < 0) return raw
+  return raw.slice(index + marker.length)
 }
 
 export function truncateText(value: unknown, limit = LIMITS.toolOutput, mode: 'head' | 'tail' = 'tail'): DevToolOutput {
@@ -476,7 +494,11 @@ export function normalizeMessages(messages: unknown[], options: { appDir?: strin
         ? Number((message.time as Record<string, unknown>).created)
         : null
     }
-    if (message.type === 'user' || message.type === 'system') {
+    if (message.type === 'user') {
+      out.push({ ...base, text: scrubText(displayUserText(asText(message.text))) })
+      continue
+    }
+    if (message.type === 'system') {
       out.push({ ...base, text: scrubText(message.text) })
       continue
     }
@@ -664,7 +686,7 @@ export function contextUsedTokens(messages: unknown[]): number {
 }
 
 /** 只算 used；limit/percent/level 由 dev/service 补齐（需要查模型元数据） */
-export function contextUsage(messages: unknown[]): DevContextUsage {
+function contextUsage(messages: unknown[]): DevContextUsage {
   return { used: contextUsedTokens(messages), limit: null, percent: null, level: 'unknown' }
 }
 
@@ -689,9 +711,33 @@ export function buildProgress(input: {
       }
     }
   }
-  const endedAt = info?.outcome ? (typeof time.idle === 'number' ? time.idle : typeof time.updated === 'number' ? time.updated : now) : null
+  const endedIdleAt = (() => {
+    const idle = lastIdleMessage(messages)
+    const idleTime = idle && idle.time && typeof idle.time === 'object' ? (idle.time as Record<string, unknown>) : null
+    return idleTime && typeof idleTime.created === 'number' ? idleTime.created : null
+  })()
+  // P7-6c：`session.idle` 事件可能丢失，但 opencode 仍会写 idle 消息/outcome；
+  // 状态优先看消息收尾记录，避免开发视图长期停在“运行中”。
+  const completion = sessionCompletion(info, messages)
+  const status =
+    completion === 'complete'
+      ? 'succeeded'
+      : completion === 'failed'
+        ? 'failed'
+        : completion === 'interrupted'
+          ? 'interrupted'
+          : asText(info?.outcome) || (time.busy ? 'running' : 'idle')
+  const endedAt =
+    status === 'running'
+      ? info?.outcome
+        ? typeof time.updated === 'number'
+          ? time.updated
+          : now
+        : null
+      : typeof time.idle === 'number'
+        ? time.idle
+        : (endedIdleAt ?? (typeof time.updated === 'number' ? time.updated : now))
   const elapsedMs = startedAt ? Math.max(0, (endedAt ?? now) - startedAt) : null
-  const status = asText(info?.outcome) || (time.busy ? 'running' : 'idle')
   const { steps, stepsTruncated, droppedSteps } = buildSteps(messages, { appDir: input.appDir, now })
   const stats = { input: 0, output: 0, reasoning: 0, cacheRead: 0, cacheWrite: 0 }
   const tokens = (info?.tokens && typeof info.tokens === 'object' ? info.tokens : {}) as Record<string, unknown>

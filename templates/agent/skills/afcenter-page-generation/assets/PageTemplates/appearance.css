@@ -1,0 +1,176 @@
+/* 从“左分类右表_双风格新模版.html”提取；仅在显式选择风格的模板内生效。 */
+.pt-appearance[data-appearance='blue'],
+.pt-appearance[data-appearance='editorial'] {
+  --pt-surface: #fff;
+  --pt-canvas: #f4f6fa;
+  --pt-sidebar-heading: #202938;
+  --pt-sidebar-bg: #fbfcfe;
+  --pt-sidebar-text: #536176;
+  --pt-sidebar-hover: #f0f4fc;
+  --pt-sidebar-selected: #edf2ff;
+  --pt-sidebar-active: #2856dc;
+  --pt-sidebar-accent: transparent;
+  --pt-search-bg: #fff;
+  --pt-search-border: #e2e7ef;
+  --pt-search-placeholder: #8b95a7;
+  --pt-accent: #315eea;
+  --pt-accent-text: #fff;
+  --pt-text: #475467;
+  --pt-muted: #788397;
+  --pt-line: #e9edf3;
+  --pt-row-line: #f0f2f6;
+  --pt-head-bg: #fafbfc;
+  --pt-row-hover: #fafcff;
+  --pt-radius: 10px;
+  --pt-workspace-radius: 14px;
+  --pt-control-radius: 8px;
+  --pt-workspace-gap: 0px;
+  --pt-sidebar-padding: 22px 16px;
+  --pt-content-padding: 24px 26px;
+  --pt-tree-height: 42px;
+  --pt-table-head-height: 43px;
+  --pt-table-row-height: 54px;
+  --pt-footer-height: 58px;
+  --pt-shadow: 0 8px 30px rgba(27, 39, 65, .07);
+  color: var(--pt-text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --el-color-primary: var(--pt-accent);
+}
+.pt-appearance[data-appearance='editorial'] {
+  --pt-canvas: #f2efe9;
+  --pt-sidebar-heading: #fff;
+  --pt-sidebar-bg: #202a36;
+  --pt-sidebar-text: #c1cad4;
+  --pt-sidebar-hover: #2b3745;
+  --pt-sidebar-selected: #303e4e;
+  --pt-sidebar-active: #e7f6a4;
+  --pt-sidebar-accent: #d6f36a;
+  --pt-search-bg: #2b3745;
+  --pt-search-border: #3b4959;
+  --pt-search-placeholder: #aab4c1;
+  --pt-accent: #202a36;
+  --pt-accent-text: #e6f5a1;
+  --pt-text: #515852;
+  --pt-muted: #73796e;
+  --pt-line: #d9d8d1;
+  --pt-row-line: #eeeee8;
+  --pt-head-bg: #f0f1eb;
+  --pt-row-hover: #fbfcf6;
+  --pt-radius: 4px;
+  --pt-workspace-radius: 4px;
+  --pt-control-radius: 3px;
+  --pt-workspace-gap: 18px;
+  --pt-sidebar-padding: 24px 20px;
+  --pt-content-padding: 0px;
+  --pt-tree-height: 48px;
+  --pt-table-head-height: 46px;
+  --pt-table-row-height: 61px;
+  --pt-footer-height: 65px;
+  --pt-shadow: none;
+}
+/* 左右分栏：不覆盖平台的拖动宽度和自动高度逻辑。 */
+.pt-tree-list.pt-appearance {
+  gap: var(--pt-workspace-gap);
+  border-radius: var(--pt-workspace-radius);
+  background: var(--pt-canvas);
+  box-shadow: var(--pt-shadow);
+}
+.pt-tree-list.pt-appearance > .left {
+  background: var(--pt-sidebar-bg);
+  border-right: 1px solid var(--pt-line);
+  border-radius: var(--pt-workspace-radius) 0 0 var(--pt-workspace-radius);
+}
+.pt-tree-list.pt-appearance > .right {
+  padding: var(--pt-content-padding);
+  background: var(--pt-surface);
+}
+.pt-tree-list.pt-appearance .pt-tree-list-sidebar { padding: var(--pt-sidebar-padding); }
+.pt-tree-list.pt-appearance > .handle { min-width: 1px !important; padding: 0; background: var(--pt-line); }
+.pt-tree-list.pt-appearance[data-appearance='editorial'] > .left { border: 0; border-radius: var(--pt-radius); }
+.pt-tree-list.pt-appearance[data-appearance='editorial'] > .right { background: transparent; }
+/* 树区块：搜索外侧仍保留 8px 的内边距。 */
+.pt-appearance .pt-tree-panel { color: var(--pt-sidebar-text); }
+.pt-appearance .pt-tree-panel .el-tree {
+  background: transparent;
+  color: var(--pt-sidebar-text);
+  border-top-color: var(--pt-line);
+  --el-tree-node-hover-bg-color: var(--pt-sidebar-hover);
+  --el-color-primary: var(--pt-sidebar-active);
+}
+.pt-appearance .pt-tree-panel .el-tree-node__content {
+  height: var(--pt-tree-height);
+  margin-top: 5px;
+  padding-right: 11px;
+  border-radius: var(--pt-control-radius);
+  border-left: 3px solid transparent;
+  font-size: 13px;
+}
+.pt-appearance[data-appearance='blue'] .pt-tree-panel .el-tree { border-top: 0; }
+/* 蓝白风沿用平台伪元素高亮条，不再用左边框重复占位。 */
+.pt-appearance[data-appearance='blue'] .pt-tree-panel .el-tree-node__content { border-left: 0; }
+.pt-appearance .pt-tree-panel .el-tree-node.is-current > .el-tree-node__content {
+  color: var(--pt-sidebar-active);
+  background: var(--pt-sidebar-selected);
+  border-left-color: var(--pt-sidebar-accent);
+  font-weight: 650;
+}
+.pt-appearance .pt-tree-panel .el-input__wrapper {
+  min-height: 36px;
+  background: var(--pt-search-bg);
+  border-radius: var(--pt-control-radius);
+  box-shadow: 0 0 0 1px var(--pt-search-border) inset;
+}
+.pt-appearance .pt-tree-panel .el-input__wrapper.is-focus { box-shadow: 0 0 0 1px var(--pt-sidebar-active) inset; }
+.pt-appearance .pt-tree-panel .el-input__inner { color: var(--pt-sidebar-text); font-size: 12px; }
+.pt-appearance .pt-tree-panel .el-input__inner::placeholder { color: var(--pt-search-placeholder); }
+.pt-appearance .pt-tree-panel .pt-tree-panel-trigger { color: var(--pt-sidebar-text); }
+.pt-appearance .pt-tree-panel .pt-tree-panel-trigger:hover { color: var(--pt-sidebar-active); }
+.pt-appearance .pt-tree-panel-footer { border-top-color: var(--pt-search-border); }
+.pt-appearance[data-appearance='blue'] .pt-tree-panel-footer { border-top: 0; }
+.pt-appearance .pt-tree-panel-footer .el-button {
+  background: var(--pt-sidebar-selected);
+  border-color: var(--pt-search-border);
+  color: var(--pt-sidebar-active);
+  border-radius: var(--pt-control-radius);
+}
+/* 表格、工具栏与分页。紧凑密度优先于两套风格的默认行高。 */
+.pt-appearance .pt-list {
+  color: var(--pt-text);
+  background: var(--pt-surface);
+  border: 1px solid var(--pt-line);
+  border-radius: var(--pt-radius);
+  overflow: hidden;
+  --table-row-height: var(--pt-table-row-height);
+}
+.pt-appearance .pt-list[data-density='compact'] { --pt-table-head-height: 32px; --pt-table-row-height: 32px; }
+.pt-appearance .pt-list > .top-block { padding: 14px 15px; border-bottom: 1px solid var(--pt-line); }
+.pt-appearance .pt-list .el-table {
+  --el-table-header-bg-color: var(--pt-head-bg);
+  --el-table-header-text-color: var(--pt-muted);
+  --el-table-text-color: var(--pt-text);
+  --el-table-border-color: var(--pt-row-line);
+  --el-table-row-hover-bg-color: var(--pt-row-hover);
+  font-size: 12px;
+}
+.pt-appearance .pt-list .el-table th.el-table__cell { height: var(--pt-table-head-height); padding: 0; background: var(--pt-head-bg); font-weight: 600; }
+.pt-appearance .pt-list .el-table td.el-table__cell { height: var(--pt-table-row-height); padding: 0; }
+.pt-appearance .pt-list .el-table .cell { padding-left: 16px; padding-right: 16px; }
+.pt-appearance .pt-list .pt-list-footer { min-height: var(--pt-footer-height); padding: 10px 14px; box-sizing: border-box; }
+.pt-appearance .pt-list .el-button,
+.pt-appearance .pt-list .el-input__wrapper { border-radius: var(--pt-control-radius); }
+.pt-appearance .pt-list .pm-toolbar.al-toolbar .pm-toolbar__inner .el-button--primary:not(.is-disabled) {
+  background: var(--pt-accent);
+  border-color: var(--pt-accent);
+  color: var(--pt-accent-text);
+}
+.pt-appearance .pt-list .el-pager li.is-active { background: var(--pt-accent); color: var(--pt-accent-text); border-radius: var(--pt-control-radius); }
+@media (max-width: 1050px) {
+  .pt-tree-list.pt-appearance > .right { padding: 18px; }
+  .pt-tree-list.pt-appearance[data-appearance='editorial'] > .right { padding: 0; }
+}
+@media (max-width: 640px) {
+  .pt-tree-list.pt-appearance { gap: 12px; }
+  .pt-tree-list.pt-appearance > .left { border-right: 0; border-radius: var(--pt-radius); }
+  .pt-tree-list.pt-appearance .pt-tree-list-sidebar { padding: 12px; }
+}
+/* Modified by AI on 2026-11-10 16:46:56 */

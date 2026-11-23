@@ -1,0 +1,144 @@
+.pt-page {
+  --pt-gap: 16px;
+  --pt-padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pt-gap);
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--pt-padding);
+  color: var(--el-text-color-primary, #303133);
+  background: var(--el-bg-color, #fff);
+  border-radius: var(--el-border-radius-base, 4px);
+  container-type: inline-size;
+}
+/* 紧凑模式下模板容器内表格行高 32px；--table-row-height 为平台固定行高变量（默认 46px），表头与数据行共用 */
+.pt-page[data-density='compact'] { --pt-gap: 10px; --pt-padding: 12px; --table-row-height: 32px; }
+/* 弹窗内的模板不自带 --pt-padding 边距，间距由弹窗 body 提供 */
+.el-dialog .pt-page { padding: 0; }
+.pt-page .pt-header h2 { margin: 0; font-size: 18px; }
+.pt-page .pt-toolbar, .pt-page .pt-actions, .pt-page .pt-tools,
+.pt-page .pt-pagination, .pt-page .pt-form-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.pt-page .pt-actions { flex: 1; }
+.pt-page [data-align='start'] { justify-content: flex-start; }
+.pt-page [data-align='end'] { justify-content: flex-end; }
+.pt-page .pt-content { min-width: 0; overflow-x: auto; }
+.pt-page .pt-toggle {
+  color: var(--el-color-primary, #409eff);
+  background: transparent;
+  border: 0;
+  padding: 4px 0 8px;
+  cursor: pointer;
+}
+.pt-page .pt-toggle:focus-visible { outline: 2px solid var(--el-color-primary, #409eff); }
+.pt-page .pt-form-footer {
+  padding: 12px 0;
+  background: var(--el-bg-color, #fff);
+  border-top: 1px solid var(--el-border-color-light, #e4e7ed);
+}
+.pt-form-page[data-sticky='true'] > .pt-form-footer { position: sticky; bottom: 0; z-index: 1; }
+.pt-form-section { min-width: 0; margin-bottom: var(--pt-gap, 16px); }
+.pt-form-section h3 { margin: 0 0 16px; font-size: 16px; }
+/* 表单字段标签加粗：仅在查看态偏好 viewDisplay=text（纯文本查看）时由表单挂 pt-form-view 类生效，
+   新增/编辑标签保持默认字重。 */
+.pt-form-view .el-form-item__label { font-weight: 600; }
+.pt-description { color: var(--el-text-color-secondary, #909399); }
+.pt-field-grid { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: var(--pt-gap, 16px); }
+.pt-field-grid[data-columns='2'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pt-field-grid > * { min-width: 0; }
+/* 平台 pm-textarea 根元素为无宽度 span，在表单栅格内需撑满单元格：
+   el-form-item__content 是 flex 容器，span 作为 flex 项块化后 width:100% 生效 */
+.pt-field-grid .el-form-item__content > span { width: 100%; min-width: 0; }
+.pt-field-grid > .pt-field-full { grid-column: 1 / -1; }
+@container (max-width: 640px) {
+  .pt-field-grid[data-columns='2'] { grid-template-columns: minmax(0, 1fr); }
+  .pt-page .pt-tools { width: 100%; }
+}
+/* 列表模版区域内边距：上下跟随 --pt-gap（列表内默认 10px），左右固定 10px */
+.pt-page.pt-list { padding: 0; gap: 0; --pt-gap: 10px; }
+.pt-list > .pt-header, .pt-list > .pt-region { padding: var(--pt-gap) 10px; }
+.pt-list .pt-list-actions { display: flex; }
+.pt-list .pt-list-footer[data-align='start'] .el-pagination { justify-content: flex-start; }
+.pt-list .pt-list-footer[data-align='end'] .el-pagination { justify-content: flex-end; }
+/* 分页条第二布局：split 拆分——"共 X 条"靠最左，页码与条数选择器靠右（依赖分页 layout 含 total） */
+.pt-list .pt-list-footer[data-layout='split'] .el-pagination { width: 100%; }
+.pt-list .pt-list-footer[data-layout='split'] .el-pagination .el-pagination__total { margin-right: auto; }
+/* 顶部操作栏批量态：已选数量高亮文本 + 激活的批量删除图标按钮 */
+.pt-list .pt-list-selection-count {
+  display: inline-flex;
+  align-items: center;
+  color: var(--el-color-primary, #409eff);
+  font-weight: 600;
+}
+/* 居右模式批量态：左侧标题区域替换为已选数量 + 取消选择 */
+.pt-list .pt-list-batch-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pt-list .pt-list-clear-selection {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--el-color-primary, #409eff);
+  font-size: inherit;
+  cursor: pointer;
+}
+.pt-list .pt-list-clear-selection:focus-visible { outline: 2px solid var(--el-color-primary, #409eff); }
+.pt-list .pm-toolbar.al-toolbar .pm-toolbar__inner .pt-list-icon-action.is-active .el-button:not(.is-disabled) {
+  color: var(--el-color-primary, #409eff);
+  background: var(--el-color-primary-light-9, rgba(31, 94, 255, 0.06));
+}
+.pt-list .pt-list-inline-header { display: flex; align-items: center; column-gap: 0; row-gap: 12px; flex-wrap: wrap; }
+.pt-list .pt-list-inline-title { flex: 1 1 auto; min-width: 0; }
+.pt-list .pt-list-inline-title h2 { overflow-wrap: anywhere; }
+.pt-list .pt-list-inline-search { flex: 0 1 320px; min-width: 180px; }
+.pt-list .pt-list-inline-search .al-search { width: 100% !important; margin: 0; padding-right: 10px;}
+.pt-list .pt-list-inline-tools { display: flex; align-items: center; gap: 8px; }
+.pt-list .pt-list-inline-actions .pm-toolbar__inner { align-items: center; }
+.pt-list .pt-list-icon-action { display: inline-flex; }
+.pt-list .pt-list-icon-action .el-button { width: 32px; padding: 0; }
+.pt-list .pm-toolbar.al-toolbar .pm-toolbar__inner .pt-list-icon-action .el-button {
+  border: none !important;
+  box-shadow: none;
+  background: transparent;
+}
+.pt-list .pm-toolbar.al-toolbar .pm-toolbar__inner .pt-list-icon-action .el-button:not(.is-disabled):hover {
+  background: var(--el-fill-color-light, #f5f7fa) !important;
+  color: var(--el-color-primary, #409eff);
+}
+.pt-list .pm-toolbar.al-toolbar .pm-toolbar__inner .pt-list-icon-action .el-button:not(.is-disabled) {
+  color: var(--el-text-color-regular, #606266);
+  background: var(--el-bg-color, #fff);
+}
+.pt-list .pm-toolbar.al-toolbar .pm-toolbar__inner .pt-list-create:not(.is-disabled) {
+  color: var(--el-color-white, #fff);
+  background: var(--el-color-primary, #409eff);
+}
+.pt-list .pm-toolbar.al-toolbar .pm-toolbar__inner .pt-list-create:not(.is-disabled):hover {
+  background: var(--el-color-primary-light-3, #79bbff);
+}
+@container (max-width: 640px) {
+  .pt-list .pt-list-inline-title { flex-basis: 100%; }
+  .pt-list .pt-list-inline-search { flex: 1 1 180px; }
+}
+/* 查看态偏好 viewDisplay=text 时的字段内容文本：仅展示内容，不渲染输入组件。 */
+.pt-form-view-text {
+  display: inline-block;
+  width: 100%;
+  min-height: 32px;
+  padding: 5px 0;
+  line-height: 22px;
+  color: var(--el-text-color-regular, #606266);
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+.pt-page[data-density='compact'] .pt-form-view-text { min-height: 24px; padding: 2px 0; line-height: 20px; }
+/* Modified by AI on 2026-11-09 14:53:21 */

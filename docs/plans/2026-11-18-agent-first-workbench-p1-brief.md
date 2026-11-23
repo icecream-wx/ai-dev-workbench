@@ -140,11 +140,11 @@ backend/                      （现有 EOS 模板渲染不变）
 - 保留：`smoke:dev-sessions`、`smoke:dev-health`、`smoke:dev`。
 - 新增：`smoke:workspace`（§10）。
 
-### 9.4 文档
+### 9.4 文档（主会话已在 2026-11-18 完成）
 
-- 新建 `docs/plans/README.md`：声明**只有 `2026-11-18-*` 为当前有效**，其余为历史。
-- 在 `2026-11-09-workbench-v2-design.md`、`2026-11-13-module-requirements-design.md`、`2026-11-11-iterative-change-design.md` 顶部加"已被 2026-11-18 Agent-First 取代"提示。
-- 旧设计稿**不删除**（无 git，删除不可恢复；保留决策历史）。如需连历史文档一起删，由用户单独确认。
+- 旧设计稿与交接单（2026-11-04 ~ 2026-11-17，共 64 个）**已删除**；只保留 `2026-11-18-*` 两份与 `docs/plans/README.md` 索引（需要时从 GitHub 历史恢复）。
+- `AGENTS.md`、`README.md`、`docs/STATUS.md` 已按新方向重写。
+- P1 实施会话只需确认无残留引用（grep 旧路径/旧文档名），不需要再调整文档结构。
 
 ## 10. 测试与验收
 
@@ -169,3 +169,72 @@ backend/                      （现有 EOS 模板渲染不变）
 4. 测试大面积删除：删除前确认无保留模块引用；新基线数字写进交接单回填与 `docs/STATUS.md`。
 5. 数据处置：真实库 `apps=0`（用户已删 app1）；P1 不在真实库执行升级，等 P5 由用户重启时生效。
 6. **不设计兜底**：不处理文件丢失、回滚、并发、多实例（本版明确不做）；出问题直接修。
+
+---
+
+## P1 实施结果（2026-11-18）
+
+### 完成范围
+
+- **数据层**：`db.ts` + `db-migrate.ts` 只保留 5 表；三态升级（no-op / 空库重建（**全局模板库保留**） / 有应用数据 fail-closed）；`app_sessions.view` 用 `ensureColumn` 补列不回填。
+- **工作区**：`apps/scaffold.ts` 生成 `AGENTS.md`、`README.md`、`opencode.json`（`permission.edit`：`*` allow、`.opencode/skills/**` 与 `.opencode/commands/**` deny）、`docs/requirements/`、`docs/design/`、`.opencode/{skills,commands}`、`backend/`；**未创建任何 git 文件、未执行任何 git 命令**。
+- **资产**：新建 `templates/agent/skills/{adw-requirements-document,adw-design-artifacts}` 与 `templates/agent/commands/*.md`（4 个）；`design.schema.json` 是唯一校验源，`scripts/validate.mjs` 读同一份。
+- **分发/同步**：新增 `templates/distribution.ts`（骨架渲染、原型副本、`_manifest.json` + sha256、全局保存即同步、`POST /api/templates/:kind/:id/sync` 幂等、模块引用删除保护 409）；创建/打开应用与会话启动时幂等对齐。
+- **模块文件**：`POST/PATCH /api/apps/:id/requirements-modules`（不写 DB、不提供删除）。
+- **统一 chat**：`POST /api/apps/:id/chat`（SSE，`view/module/command/model`）；每视图一个活跃会话；`command` 走 `POST /api/session/:id/command`；会话 API 沿用 `/development` 前缀 + `view` 过滤；`POST /api/apps/:id/compact`。
+- **产物/监听**：`workspace/artifacts.ts`（frontmatter/章节、design.json schema 校验、错误结构化、hash 聚合）、`workspace/watcher.ts`（300ms 防抖 + 失败降级 2s 轮询）、`GET /api/apps/:id/artifacts`、`GET /api/apps/:id/events`（SSE `artifacts-changed`）。
+- **运行时**：`listSkills` / `listCommands` / `runCommand`。
+- **清理**：旧后端模块/旧路由/旧表/旧测试、旧前端组件/协议、旧冒烟脚本全部删除；需求/设计视图为占位页（含 artifacts 只读展示），开发视图保留时间线与会话并去掉 phase/handoff/变更单。
+
+### 验证命令与结果
+
+| 命令 | 结果 |
+| --- | --- |
+| `npm run build --prefix backend` | 通过 |
+| `npm test --prefix backend`（临时 `RG_DATA_DIR`/`RG_PROJECTS_DIR`） | 71 通过 / 0 失败（15 个测试文件） |
+| `npm run smoke:workspace --prefix backend` | 通过（临时目录 + 端口 3416，`OPENCODE_AUTO_START=false`） |
+| `npm run smoke:assets --prefix backend` | 通过（真实 opencode 2.2.5，serve 4719 / 后端 3419，不调用模型）：会话创建后 2 个 skill + 4 个 command 均实际加载 |
+| `npm test --prefix frontend` | 23 通过 / 0 失败（4 个测试文件） |
+| `npm run typecheck --prefix frontend` | 通过 |
+| `npm run build --prefix frontend` | 通过 |
+| `npm run check:vue --prefix frontend` | 通过 |
+
+### 新增/改写测试
+
+- 后端新增：`db-migrate.test.ts`（迁移三态 + 补 `view` 列）、`templates/distribution.test.ts`（manifest/hash/同步/幂等/删除保护）、`workspace/artifacts.test.ts`（模块解析、schema 错误、hash）、`workspace/watcher.test.ts`（防抖/关闭）；改写 `apps/scaffold.test.ts`、`apps/templates.test.ts`、`chat/service.test.ts`（视图会话 + command）、`dev/service.test.ts`（按视图会话/无门禁）。
+- 前端：保留 `er-layout`、`dev-health`，改写 `session-labels`，新增 `workbench/view-helpers`。
+
+### 评审 must-fix 已修（2026-11-18 复核后）
+
+| 项 | 修复 | 验证 |
+| --- | --- | --- |
+| MF1 重建丢模板库 | `db-migrate.ts` 导出 `PRESERVED_TABLES`（`requirement_templates`、`prototype_templates`）；rebuilt 只 drop 非保留表；`createSchema` 保留表幂等建表/索引 + `builtin/visibility/preview_path` 补列兜底；fail-closed 未改 | 新增回归测试（旧结构 + apps=0 + 两表各 1 行 → rebuilt 后各 1 行、`apps=0`、`app_modules` 删除）；内存库实测 `reqTplRows=1`、`protoTplRows=1` |
+| MF2 skill/command 与“agent 自同步”冲突 | 需求 SKILL §5 改为加载 `adw-design-artifacts` 并按 schema 修改 `docs/design/<MOD>/design.json`；`update-requirements` 同步设计文件；`generate-design` 反向同步需求；frontmatter `name`/`description` 未改 | 文本检查 + `smoke:assets` 通过 |
+| SF1 模板副本像具体模块 | 模板副本改用 `MOD-XXX` / `"<模块标题>"` / `order: 1`，frontmatter 后加“模板示例”注释；测试断言同步 | `distribution.test.ts`、`scaffold.test.ts`、`smoke:workspace` 通过 |
+
+### 偏差（逐条）0. **P1 实测补充（修正 P0 表述）**：opencode location 惰性初始化——首次在应用目录创建会话前，`GET /api/skill?location[directory]` 没有项目级 skill（`POST /api/location/reload` 后也一样）；会话创建后才加载。因此创建应用只做 `reloadLocations()`，实际校验移到首个会话后（失败只告警），并新增 `GET /api/opencode/skills|commands` 与 `smoke:assets`。
+1. `requirements/types.ts`、`design/types.ts` 保留但裁剪为模板/渲染类型（templates 依赖），未整文件删除。
+2. 模板路由合并为 `backend/src/templates/routes.ts`（CRUD + sync/usage），原 `design/template-routes.ts`、`requirements/routes.ts` 删除。
+3. 原型模板 CRUD UI 未做；只提供需求模板库界面（含“同步到应用”），原型模板走 API。
+4. `PrototypeTab`/`EntityDesignTab`/`PrototypeTemplateDialog` 删除（依赖旧 design service API）；保留纯渲染器 `ErGraph`/`PrototypeCanvas`/`prototype/**`/`snapshot.ts`/`er-layout.js`，P3 接线。
+5. 旧 `smoke:{dev,dev-sessions,dev-health}` 删除（内容依赖交接包/阶段流程），未保留；新增 `smoke:workspace`，开发视图冒烟 P4 重写。
+6. 需求/设计占位页只读展示 artifacts 并订阅变化事件（超出“纯文案占位”），用于验证出口 6/8。
+7. 会话 API 沿用 `/api/apps/:id/development` + `view` 参数，未新增 `/api/apps/:id/sessions`。
+8. 模块 `order` 为 1-based（与设计稿示例一致）。
+9. schema 校验器为极简实现（`type/required/properties/items/enum`），与 schema 使用的关键字一致。
+10. `app_sessions.stage` 保留并与 `view` 同步写入（读取以 `view` 为准）。
+11. 85% 上下文的“压缩后继续 / 开新会话继续”两键流程未做（P1 只保留健康度 + compact）。
+12. `apps.status` 保留为当前视图标签，新增 `PATCH /api/apps/:id/status`。
+
+### 未验证项
+
+- 真实模型对话（P1 未调用模型；真实 3300 保持旧构建、未启停/未重启）。
+- Playwright / 浏览器交互（本轮不做）。
+- EOS 应用构建/运行态（外部 Maven/Nacos/MySQL/Redis/制品未验证）。
+- Windows `fs.watch` 长时稳定性（仅单测/冒烟覆盖基本事件与降级轮询）。
+- 多应用批量模板同步的性能（只验证正确性与幂等）。
+
+### 环境确认
+
+- 未触碰真实 `data/`、`projects/`、`.env`；未启停/重启 3300；未执行任何 git 操作。
+- `npm run build --prefix frontend` 按验收要求重写了 `frontend/dist` 构建产物（未重启服务）。

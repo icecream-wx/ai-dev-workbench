@@ -1,371 +1,191 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 1840" width="1180" height="1840" role="img" aria-labelledby="flowTitle flowDesc">
-  <title id="flowTitle">AI Dev Workbench 业务流程图</title>
-  <desc id="flowDesc">三阶段（需求、设计、开发）主流程，右侧为变更回流（Change Set #2 起）；蓝色为用户动作，紫色为 AI 动作，灰色为系统动作，菱形为门禁，绿色为阶段产物。</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="880" viewBox="0 0 1280 880" role="img" aria-label="Agent-First 工作台架构与数据流（P7）">
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
     </marker>
-    <marker id="arrow-start" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M10,0 L0,5 L10,10 z" fill="#94a3b8"/>
-    </marker>
+    <style>
+      .bg { fill:#f8fafc; }
+      .card { fill:#ffffff; stroke:#dbe3ec; stroke-width:1.5; }
+      .card-soft { fill:#f1f4fb; stroke:#dbe3ec; stroke-width:1.5; }
+      .p7 { fill:#f5f3ff; stroke:#ddd6fe; stroke-width:1.5; }
+      .ink { fill:#0f172a; }
+      .muted { fill:#475569; }
+      .faint { fill:#64748b; }
+      .accent { fill:#5b5bd6; }
+      .teal { fill:#0f766e; }
+      .amber { fill:#b45309; }
+      .title { font-family:'Microsoft YaHei','Segoe UI',sans-serif; font-size:15px; font-weight:700; }
+      .label { font-family:'Microsoft YaHei','Segoe UI',sans-serif; font-size:12.5px; }
+      .small { font-family:'Microsoft YaHei','Segoe UI',sans-serif; font-size:11.5px; }
+      .mono { font-family:'Cascadia Code',Consolas,monospace; font-size:11px; }
+      .line { stroke:#64748b; stroke-width:1.7; fill:none; }
+      .dash { stroke:#94a3b8; stroke-width:1.4; stroke-dasharray:6 5; fill:none; }
+      .chip { fill:#eef2ff; stroke:#c7d2fe; }
+    </style>
   </defs>
 
-  <style>
-    .bg { fill: #ffffff; }
-    .band { fill: #fcfdff; stroke: #e2e8f0; stroke-width: 1; }
-    .panel { fill: #ffffff; stroke: #e2e8f0; stroke-width: 1; }
-    .band-title { font-size: 15px; font-weight: 700; fill: #0f172a; }
-    .band-sub { font-size: 11.5px; fill: #64748b; }
-    .pill { fill: #ecfdf5; stroke: #a7f3d0; stroke-width: 1; }
-    .pill-text { font-size: 11.5px; font-weight: 600; fill: #065f46; }
-    .node { stroke-width: 1.2; }
-    .node-user { fill: #eff6ff; stroke: #2563eb; }
-    .node-ai { fill: #f5f3ff; stroke: #7c3aed; }
-    .node-sys { fill: #f1f5f9; stroke: #475569; }
-    .node-out { fill: #ecfdf5; stroke: #047857; }
-    .node-dash { fill: #fffdf5; stroke: #b45309; stroke-dasharray: 5 4; }
-    .nt { font-size: 12.5px; font-weight: 700; fill: #0f172a; }
-    .nb { font-size: 11.5px; fill: #334155; }
-    .nb-small { font-size: 10.5px; fill: #475569; }
-    .tag { font-size: 10px; font-weight: 700; }
-    .tag-user { fill: #1d4ed8; }
-    .tag-ai { fill: #6d28d9; }
-    .tag-sys { fill: #475569; }
-    .gate { fill: #fffbeb; stroke: #b45309; stroke-width: 1.6; }
-    .gate-text { font-size: 11.5px; font-weight: 700; fill: #7c2d12; }
-    .edge { fill: none; stroke: #94a3b8; stroke-width: 1.4; }
-    .edge-dash { fill: none; stroke: #94a3b8; stroke-width: 1.3; stroke-dasharray: 6 5; }
-    .block { fill: #f8fafc; stroke: #e2e8f0; stroke-width: 1; }
-    .block-ai { fill: #faf5ff; stroke: #e9d5ff; stroke-width: 1; }
-    .block-title { font-size: 12px; font-weight: 700; fill: #0f172a; }
-    .li { font-size: 11.5px; fill: #334155; }
-    .li-ai { font-size: 11px; fill: #6b21a8; }
-    .hint { font-size: 10.5px; fill: #64748b; }
-    .legend-text { font-size: 12px; fill: #0f172a; }
-  </style>
+  <rect class="bg" x="0" y="0" width="1280" height="880"/>
 
-  <rect class="bg" x="0" y="0" width="1180" height="1840"/>
+  <!-- 用户 -->
+  <rect class="card" x="32" y="120" width="212" height="128" rx="12"/>
+  <text class="title ink" x="48" y="148">用户</text>
+  <text class="small muted" x="48" y="176">· 提出目标 / 对话</text>
+  <text class="small muted" x="48" y="198">· 在三个视图里看结果</text>
+  <text class="small muted" x="48" y="220">· 审阅并继续追问</text>
 
-  <!-- 标题 -->
-  <text x="36" y="52" font-size="27" font-weight="700" fill="#0f172a">AI Dev Workbench · 业务流程图</text>
-  <text x="36" y="80" class="band-sub" font-size="13">三阶段 AI 开发工作台：需求 → 设计 → 开发　|　用户动作 / 系统动作 / AI 动作分色，菱形为门禁，绿色为阶段产物</text>
+  <!-- 三个视图 -->
+  <rect class="card" x="292" y="72" width="330" height="452" rx="14"/>
+  <text class="title ink" x="310" y="102">工作台前端：三个视图</text>
+  <text class="small faint" x="310" y="124">需求 / 设计 / 开发是“当前关注点”，不是门禁</text>
 
-  <!-- 图例 -->
-  <g>
-    <rect x="36" y="104" width="20" height="14" rx="4" fill="#eff6ff" stroke="#2563eb"/>
-    <text x="64" y="115" class="legend-text">用户动作</text>
-    <rect x="132" y="104" width="20" height="14" rx="4" fill="#f5f3ff" stroke="#7c3aed"/>
-    <text x="160" y="115" class="legend-text">AI 动作</text>
-    <rect x="228" y="104" width="20" height="14" rx="4" fill="#f1f5f9" stroke="#475569"/>
-    <text x="256" y="115" class="legend-text">系统动作</text>
-    <polygon points="324,104 334,111 324,118 314,111" fill="#fffbeb" stroke="#b45309"/>
-    <text x="342" y="115" class="legend-text">门禁</text>
-    <rect x="404" y="104" width="20" height="14" rx="4" fill="#ecfdf5" stroke="#047857"/>
-    <text x="432" y="115" class="legend-text">阶段产物</text>
-    <text x="1156" y="115" class="hint" text-anchor="end">矢量源：docs/report/assets/flow-overview.svg</text>
-  </g>
+  <rect class="card-soft" x="310" y="140" width="294" height="104" rx="10"/>
+  <text class="label ink" x="324" y="164">需求视图</text>
+  <text class="small muted" x="324" y="186">模块大纲 · 章节 TOC · Markdown</text>
+  <text class="small muted" x="324" y="206">新建/改名/排序/切模板 · 对话</text>
+  <text class="small faint" x="324" y="228">产物：docs/requirements/MOD-xxx-*.md</text>
 
-  <!-- ================= 阶段一：需求 ================= -->
-  <rect class="band" x="24" y="150" width="716" height="480" rx="14"/>
-  <text x="40" y="176" class="band-title">阶段一 · 需求（Requirements）</text>
-  <text x="40" y="195" class="band-sub">对话 + 模板化 PRD + 模块规划 + Epics / Stories + 参考原型</text>
-  <rect class="pill" x="386" y="157" width="330" height="26" rx="13"/>
-  <text x="400" y="175" class="pill-text">产物：需求 bundle（模块版本 + 聚合 hash）</text>
+  <rect class="card-soft" x="310" y="256" width="294" height="104" rx="10"/>
+  <text class="label ink" x="324" y="280">设计视图</text>
+  <text class="small muted" x="324" y="302">ER · 原型画布 · 自动导出 PNG / 过期提示</text>
+  <text class="small muted" x="324" y="322">模板徽标/页面库 · 页面契约 · brief/tokens</text>
+  <text class="small faint" x="324" y="344">产物：design.json + brief/tokens/prototypes</text>
 
-  <!-- row1 -->
-  <rect class="node node-user" x="40" y="202" width="330" height="68" rx="10"/>
-  <text x="56" y="226" class="nt">① 新建应用</text>
-  <text x="356" y="224" class="tag tag-user" text-anchor="end">用户</text>
-  <text x="56" y="246" class="nb">填 app-id / 名称 / 说明</text>
-  <text x="56" y="263" class="nb">选需求模板 + 原型模板</text>
+  <rect class="card-soft" x="310" y="372" width="294" height="132" rx="10"/>
+  <text class="label ink" x="324" y="396">开发视图</text>
+  <text class="small muted" x="324" y="418">会话列表 · 时间线 · 工具/终端/diff</text>
+  <text class="small muted" x="324" y="438">模块下拉 · 设计参考 · ui-check</text>
+  <text class="small muted" x="324" y="458">一致性报告 · 权限卡 · 表单卡 · 停止</text>
+  <text class="small faint" x="324" y="480">产物：工作区代码（frontend/ MF remote）</text>
 
-  <rect class="node node-sys" x="386" y="202" width="330" height="68" rx="10"/>
-  <text x="402" y="226" class="nt">创建应用空间</text>
-  <text x="702" y="224" class="tag tag-sys" text-anchor="end">系统</text>
-  <text x="402" y="246" class="nb">建 projects 目录 + 渲染 EOS 模板</text>
-  <text x="402" y="263" class="nb">初始化默认模块 MOD-001（空 PRD）</text>
+  <!-- 工作台后端 -->
+  <rect class="card" x="292" y="548" width="330" height="180" rx="14"/>
+  <text class="title ink" x="310" y="578">工作台后端（Express + SQLite）</text>
+  <text class="small muted" x="310" y="602">· 应用登记 / 模板默认值 / 会话登记</text>
+  <text class="small muted" x="310" y="624">· artifacts：需求 / design / design-system / ui-check</text>
+  <text class="small muted" x="310" y="646">· docs/ 文件监听（300ms 防抖 + 2s 轮询兜底）</text>
+  <text class="small muted" x="310" y="668">· 模板/设计 skill 分发 + 设计 PNG 写入</text>
+  <text class="small muted" x="310" y="690">· SSE：artifacts-changed / 会话事件 / 收尾看门狗</text>
+  <text class="small faint" x="310" y="714">5 张表：apps · app_settings · app_sessions · 2 个模板库</text>
 
-  <line class="edge" x1="370" y1="236" x2="386" y2="236" marker-end="url(#arrow)"/>
+  <!-- opencode 运行时 -->
+  <rect class="card" x="742" y="56" width="506" height="132" rx="14"/>
+  <text class="title ink" x="760" y="86">opencode 运行时（serve · 每个应用一个 location）</text>
+  <text class="small muted" x="760" y="112">会话 · 工具执行 · skills / commands（热加载） · 权限询问 · compact</text>
+  <text class="small muted" x="760" y="134">原生 build agent：不限制工具和步骤；工作台只做外部管理</text>
+  <text class="small faint" x="760" y="158">3 方法 skill + 2 团队 skill + 模板 skill；5 个 command</text>
 
-  <!-- row2 -->
-  <rect class="node node-ai" x="40" y="286" width="330" height="68" rx="10"/>
-  <text x="56" y="310" class="nt">AI 需求对话</text>
-  <text x="356" y="308" class="tag tag-ai" text-anchor="end">AI</text>
-  <text x="56" y="330" class="nb">req agent + SSE，按模块注入上下文</text>
-  <text x="56" y="347" class="nb">只输出文本与建议，不改文件</text>
+  <!-- 工作区 -->
+  <rect class="card" x="742" y="220" width="506" height="328" rx="14"/>
+  <text class="title ink" x="760" y="250">应用工作区 projects/&lt;app&gt;/（产物 = 文件，单一事实源）</text>
+  <text class="mono ink" x="760" y="278">AGENTS.md · README.md · opencode.json</text>
+  <text class="small faint" x="760" y="298">应用级约定；opencode.json 对受管资源设 edit deny</text>
 
-  <rect class="node node-user" x="386" y="286" width="330" height="68" rx="10"/>
-  <text x="402" y="310" class="nt">模板化 PRD 章节</text>
-  <text x="702" y="308" class="tag tag-user" text-anchor="end">用户</text>
-  <text x="402" y="330" class="nb">章节自动保存（不产版本）</text>
-  <text x="402" y="347" class="nb">手动保存 / 模板切换 / AI 应用产版本</text>
+  <text class="mono ink" x="760" y="326">.opencode/skills/&lt;adw-*&gt; · commands/</text>
+  <text class="small faint" x="760" y="346">方法/开发/团队/模板 skill；update-requirements 等 5 个 command</text>
 
-  <line class="edge" x1="370" y1="320" x2="386" y2="320" marker-end="url(#arrow)"/>
+  <text class="mono ink" x="760" y="374">docs/requirements/MOD-xxx-*.md</text>
+  <text class="small faint" x="760" y="394">frontmatter：module / title / order / template；正文按 ## 章节</text>
 
-  <!-- row3 -->
-  <rect class="node node-ai" x="40" y="370" width="676" height="72" rx="10"/>
-  <text x="56" y="394" class="nt">AI 模块规划：拆分建议卡</text>
-  <text x="700" y="392" class="tag tag-ai" text-anchor="end">AI</text>
-  <text x="56" y="414" class="nb">首次实质需求自动触发；随时可用「AI 规划模块」重新拆分（保留 / 改名 / 重新生成 / 新建 / 归档）</text>
-  <text x="56" y="431" class="nb">可编辑模块名 / 范围 / 建议 Epics / 依赖与覆盖；确认后「应用拆分并生成」或「保持单模块」</text>
+  <text class="mono ink" x="760" y="422">docs/design/design-system.json · template/</text>
+  <text class="small faint" x="760" y="442">类型/风格/蓝图根/页面库；蓝图 + structure/styles 副本</text>
 
-  <!-- row4 -->
-  <rect class="node node-ai" x="40" y="458" width="330" height="68" rx="10"/>
-  <text x="56" y="482" class="nt">逐模块生成完整 PRD</text>
-  <text x="356" y="480" class="tag tag-ai" text-anchor="end">AI</text>
-  <text x="56" y="502" class="nb">SSE 进度、失败重试、取消</text>
-  <text x="56" y="519" class="nb">旧模块归档保留，可恢复</text>
+  <text class="mono ink" x="760" y="470">docs/design/&lt;MOD&gt;/design.json + 页面契约</text>
+  <text class="small faint" x="760" y="490">recipe/columns/actions/form/tree…；brief/tokens/prototypes 供开发参考</text>
 
-  <rect class="node node-sys" x="386" y="458" width="330" height="68" rx="10"/>
-  <text x="402" y="482" class="nt">Scene / Epic / Story</text>
-  <text x="702" y="480" class="tag tag-sys" text-anchor="end">系统</text>
-  <text x="402" y="502" class="nb">稳定全局 ID（EPIC-001、STORY-001）</text>
-  <text x="402" y="519" class="nb">模块内拆分，跨模块依赖只提示</text>
+  <text class="mono ink" x="760" y="518">docs/design/&lt;MOD&gt;/ui-check.md（软门禁）</text>
+  <text class="small faint" x="760" y="538">实现前先填对照表；缺失生成、不覆盖、状态只读</text>
 
-  <line class="edge" x1="370" y1="492" x2="386" y2="492" marker-end="url(#arrow)"/>
+  <!-- 全局模板库 -->
+  <rect class="card" x="742" y="586" width="240" height="142" rx="14"/>
+  <text class="title ink" x="760" y="614">全局模板库（DB）</text>
+  <text class="small muted" x="760" y="640">需求模板 4 · 原型模板 2（内置）</text>
+  <text class="small muted" x="760" y="662">每个模板 → 一个 adw-template-* skill</text>
+  <text class="small muted" x="760" y="684">保存 → 重新生成并同步引用应用</text>
+  <text class="small faint" x="760" y="708">删除保护：仍被模块引用 → 409</text>
 
-  <!-- row5 -->
-  <rect class="node node-ai node-dash" x="40" y="542" width="676" height="54" rx="10"/>
-  <text x="56" y="564" class="nt" font-size="12">AI 参考原型（可选）：PRD → 实体 / 字段 / 页面 → 真实字段线框，仅用于需求评审</text>
-  <text x="56" y="583" class="nb">不写设计数据、不产 PNG、不进入设计阶段与交接包；显式生成、可重新生成、过期提示</text>
+  <!-- SSE 刷新 -->
+  <rect class="card-soft" x="1002" y="586" width="246" height="142" rx="14"/>
+  <text class="title ink" x="1020" y="614">docs/ 变化 → 视图刷新</text>
+  <text class="small muted" x="1020" y="640">watcher → hash 变化</text>
+  <text class="small muted" x="1020" y="662">SSE artifacts-changed</text>
+  <text class="small muted" x="1020" y="684">大纲 / 文档 / ER / 原型 / ui-check 增量重读</text>
+  <text class="small faint" x="1020" y="708">外部手改文件同样生效（≤1.5s）</text>
 
-  <!-- 阶段一内部连线 -->
-  <line class="edge" x1="551" y1="354" x2="551" y2="370" marker-end="url(#arrow)"/>
-  <line class="edge" x1="205" y1="442" x2="205" y2="458" marker-end="url(#arrow)"/>
-  <line class="edge" x1="382" y1="630" x2="382" y2="646" marker-end="url(#arrow)"/>
+  <!-- P7 链路 -->
+  <text class="title ink" x="32" y="764">P7：模板 → 契约 → 开发 → 一致性检查</text>
+  <rect class="p7" x="20" y="774" width="1240" height="94" rx="12"/>
 
-  <!-- ================= 门禁 1 ================= -->
-  <polygon class="gate" points="382,646 532,684 382,722 232,684"/>
-  <text x="382" y="678" class="gate-text" text-anchor="middle">门禁 ①：全部必选模块需求已确认</text>
-  <text x="382" y="696" class="gate-text" text-anchor="middle">含必填章节 + 至少 1 个 Story</text>
+  <rect class="card" x="32" y="786" width="232" height="70" rx="10"/>
+  <text class="label ink" x="46" y="808">设计模板 pack（内置）</text>
+  <text class="small muted" x="46" y="828">4 应用类型 × 4 风格 × 25 页面</text>
+  <text class="small faint" x="46" y="846">蓝图 + structure + shared/style</text>
 
-  <!-- ================= 阶段二：设计 ================= -->
-  <rect class="band" x="24" y="738" width="716" height="480" rx="14"/>
-  <text x="40" y="764" class="band-title">阶段二 · 设计（Design）</text>
-  <text x="40" y="783" class="band-sub">设计大纲树 + 按 Epic 生成实体/页面集 + 页面原型截图 + 覆盖度</text>
-  <rect class="pill" x="386" y="745" width="330" height="26" rx="13"/>
-  <text x="400" y="763" class="pill-text">产物：实体 / 页面集 / 页面 + PNG，逐模块设计版本</text>
+  <rect class="card" x="278" y="786" width="232" height="70" rx="10"/>
+  <text class="label ink" x="292" y="808">模板中心 / preview.html</text>
+  <text class="small muted" x="292" y="828">类型卡片 · 风格切换 · 页面集</text>
+  <text class="small faint" x="292" y="846">iframe 预览 · 新建应用 picker</text>
 
-  <!-- row1 -->
-  <rect class="node node-sys" x="40" y="790" width="330" height="68" rx="10"/>
-  <text x="56" y="814" class="nt">设计大纲树</text>
-  <text x="356" y="812" class="tag tag-sys" text-anchor="end">系统</text>
-  <text x="56" y="834" class="nb">模块根 / 数据集（共享实体）</text>
-  <text x="56" y="851" class="nb">Epic / 页面集 / 未归属</text>
+  <rect class="card" x="524" y="786" width="232" height="70" rx="10"/>
+  <text class="label ink" x="538" y="808">design-system + 页面契约</text>
+  <text class="small muted" x="538" y="828">类型/风格/蓝图根/页面库</text>
+  <text class="small faint" x="538" y="846">design.json：recipe/columns/actions</text>
 
-  <rect class="node node-user" x="386" y="790" width="330" height="68" rx="10"/>
-  <text x="402" y="814" class="nt">设计对话 + 手工编辑</text>
-  <text x="702" y="812" class="tag tag-user" text-anchor="end">用户</text>
-  <text x="402" y="834" class="nb">实体 / 原型 / 覆盖度 三个 Tab</text>
-  <text x="402" y="851" class="nb">切模块前先落盘，避免丢输入</text>
+  <rect class="card" x="770" y="786" width="232" height="70" rx="10"/>
+  <text class="label ink" x="784" y="808">开发提示 + ui-check</text>
+  <text class="small muted" x="784" y="828">prompt · digest · AGENTS · skill</text>
+  <text class="small faint" x="784" y="846">先填 ui-check.md（软门禁）</text>
 
-  <line class="edge" x1="370" y1="824" x2="386" y2="824" marker-end="url(#arrow)"/>
+  <rect class="card" x="1016" y="786" width="232" height="70" rx="10"/>
+  <text class="label ink" x="1030" y="808">MF remote + fidelity</text>
+  <text class="small muted" x="1030" y="828">PageTemplates · pm-* · GlobalPreference</text>
+  <text class="small faint" x="1030" y="846">12 项只读：CLI / API / 开发视图</text>
 
-  <!-- row2 -->
-  <rect class="node node-ai" x="40" y="874" width="676" height="72" rx="10"/>
-  <text x="56" y="898" class="nt">按 Epic 生成（AI，每个 Epic 一次）</text>
-  <text x="700" y="896" class="tag tag-ai" text-anchor="end">AI</text>
-  <text x="56" y="918" class="nb">实体合并进模块共享实体池（不删其它 Epic）；替换该 Epic 主页面集，页面按 Story 组织</text>
-  <text x="56" y="935" class="nb">每 Epic 一个设计版本、结果为草稿；批量 / 单 Epic 进度、失败重试、停止；已确认项需勾选重开</text>
+  <path class="line" d="M 264 821 L 278 821" marker-end="url(#arrow)"/>
+  <path class="line" d="M 510 821 L 524 821" marker-end="url(#arrow)"/>
+  <path class="line" d="M 756 821 L 770 821" marker-end="url(#arrow)"/>
+  <path class="line" d="M 1002 821 L 1016 821" marker-end="url(#arrow)"/>
 
-  <line class="edge" x1="551" y1="858" x2="551" y2="874" marker-end="url(#arrow)"/>
+  <!-- 连线 -->
+  <!-- 用户 ↔ 三视图 -->
+  <path class="line" d="M 244 168 L 292 168" marker-end="url(#arrow)"/>
+  <path class="line" d="M 292 200 L 244 200" marker-end="url(#arrow)"/>
+  <text class="small faint" x="236" y="150" text-anchor="end">目标 / 消息</text>
+  <text class="small faint" x="236" y="224" text-anchor="end">结果</text>
 
-  <!-- row3 -->
-  <rect class="node node-user" x="40" y="962" width="330" height="68" rx="10"/>
-  <text x="56" y="986" class="nt">页面原型 + 截图 PNG</text>
-  <text x="356" y="984" class="tag tag-user" text-anchor="end">用户</text>
-  <text x="56" y="1006" class="nb">线框原型、页面规格与动作</text>
-  <text x="56" y="1023" class="nb">每页 PNG 是生成交接包的硬条件</text>
+  <!-- 三视图 ↔ 工作台后端 -->
+  <path class="line" d="M 420 524 L 420 548" marker-end="url(#arrow)"/>
+  <path class="line" d="M 500 548 L 500 524" marker-end="url(#arrow)"/>
+  <text class="small faint" x="430" y="542">REST</text>
+  <text class="small faint" x="510" y="542">JSON</text>
 
-  <rect class="node node-sys" x="386" y="962" width="330" height="68" rx="10"/>
-  <text x="402" y="986" class="nt">覆盖度 / 设计输入</text>
-  <text x="702" y="984" class="tag tag-sys" text-anchor="end">系统</text>
-  <text x="402" y="1006" class="nb">Story 是否落到页面（未覆盖只提示）</text>
-  <text x="402" y="1023" class="nb">设计输入 = 版本 + hash；需求变更 → 过期</text>
+  <!-- 工作台后端 ↔ opencode -->
+  <path class="line" d="M 622 580 L 630 580 L 630 100 L 742 100" marker-end="url(#arrow)"/>
+  <path class="line" d="M 742 128 L 734 128 L 734 600 L 622 600" marker-end="url(#arrow)"/>
+  <text class="small faint" x="682" y="330" text-anchor="middle">HTTP + SSE</text>
+  <text class="small faint" x="682" y="500" text-anchor="middle">会话 / 权限</text>
 
-  <line class="edge" x1="370" y1="996" x2="386" y2="996" marker-end="url(#arrow)"/>
+  <!-- opencode ↔ 工作区 -->
+  <path class="line" d="M 900 188 L 900 220" marker-end="url(#arrow)"/>
+  <path class="line" d="M 1000 220 L 1000 188" marker-end="url(#arrow)"/>
+  <text class="small faint" x="808" y="182" text-anchor="end">读 skills / 改文件</text>
+  <text class="small faint" x="1030" y="182">工具结果</text>
 
-  <!-- row4 -->
-  <rect class="node node-user" x="40" y="1046" width="676" height="68" rx="10"/>
-  <text x="56" y="1070" class="nt">逐模块「确认设计」</text>
-  <text x="700" y="1068" class="tag tag-user" text-anchor="end">用户</text>
-  <text x="56" y="1090" class="nb">设计总览显示各模块确认 / 缺图 / 过期状态</text>
-  <text x="56" y="1107" class="nb">全部必选模块确认后，才能生成应用级交接包</text>
+  <!-- 工作台 ↔ 工作区 -->
+  <path class="line" d="M 622 568 L 742 568 L 742 548" marker-end="url(#arrow)"/>
+  <text class="small faint" x="640" y="562">解析 docs / 监听</text>
 
-  <line class="edge" x1="551" y1="946" x2="551" y2="962" marker-end="url(#arrow)"/>
-  <line class="edge" x1="205" y1="1030" x2="205" y2="1046" marker-end="url(#arrow)"/>
+  <!-- 模板库 → 工作区 -->
+  <path class="dash" d="M 862 586 L 862 548" marker-end="url(#arrow)"/>
+  <text class="small faint" x="870" y="572">分发 skill</text>
 
-  <!-- row5 -->
-  <rect class="node node-sys node-dash" x="40" y="1130" width="676" height="54" rx="10"/>
-  <text x="56" y="1152" class="nt" font-size="12">设计边界：页面集只属于一个模块；跨模块实体关系允许，只提示不阻塞</text>
-  <text x="56" y="1171" class="nb">实体 / 页面集 / 页面 ID 全应用唯一；设计版本按模块独立，可回滚</text>
+  <!-- SSE 卡片 → 三视图（沿画布右侧外缘绕行，避免穿过工作区文字） -->
+  <path class="dash" d="M 1248 640 L 1262 640 L 1262 205 L 622 205" marker-end="url(#arrow)"/>
+  <text class="small faint" x="680" y="200" text-anchor="middle">事件 → 增量刷新</text>
 
-  <line class="edge" x1="382" y1="1184" x2="382" y2="1234" marker-end="url(#arrow)"/>
-
-  <!-- ================= 门禁 2 ================= -->
-  <polygon class="gate" points="382,1234 532,1272 382,1310 232,1272"/>
-  <text x="382" y="1266" class="gate-text" text-anchor="middle">门禁 ②：全部必选模块设计已确认</text>
-  <text x="382" y="1284" class="gate-text" text-anchor="middle">无过期 · 每页原型 PNG 齐全</text>
-
-  <!-- ================= 阶段三：开发 ================= -->
-  <rect class="band" x="24" y="1326" width="716" height="480" rx="14"/>
-  <text x="40" y="1352" class="band-title">阶段三 · 开发（Development）</text>
-  <text x="40" y="1371" class="band-sub">确定性交接包 → Change Set #1 → 原生 opencode 会话分阶段实现</text>
-  <rect class="pill" x="386" y="1333" width="330" height="26" rx="13"/>
-  <text x="400" y="1351" class="pill-text">产物：可运行应用 + 会话记录（绑定交接包版本）</text>
-
-  <!-- row1 -->
-  <rect class="node node-sys" x="40" y="1378" width="330" height="68" rx="10"/>
-  <text x="56" y="1402" class="nt">确定性生成应用级交接包</text>
-  <text x="356" y="1400" class="tag tag-sys" text-anchor="end">系统</text>
-  <text x="56" y="1422" class="nb">00—05 + schema.sql + prototype-template.json</text>
-  <text x="56" y="1439" class="nb">+ manifest.json + prototypes 原型目录</text>
-
-  <rect class="node node-user" x="386" y="1378" width="330" height="68" rx="10"/>
-  <text x="402" y="1402" class="nt">校验 → Change Set #1 → 开发</text>
-  <text x="702" y="1400" class="tag tag-user" text-anchor="end">用户</text>
-  <text x="402" y="1422" class="nb">首包记为“初始开发”基线</text>
-  <text x="402" y="1439" class="nb">开发会话绑定交接包 版本 + hash</text>
-
-  <line class="edge" x1="370" y1="1412" x2="386" y2="1412" marker-end="url(#arrow)"/>
-
-  <!-- row2 -->
-  <rect class="node node-user" x="40" y="1462" width="330" height="68" rx="10"/>
-  <text x="56" y="1486" class="nt">按阶段开发（可选，U7）</text>
-  <text x="356" y="1484" class="tag tag-user" text-anchor="end">用户</text>
-  <text x="56" y="1506" class="nb">模块阶段 = 里程碑（不建会话）</text>
-  <text x="56" y="1523" class="nb">Epic 阶段 = 会话 + 阶段 brief</text>
-
-  <rect class="node node-sys" x="386" y="1462" width="330" height="68" rx="10"/>
-  <text x="402" y="1486" class="nt">每阶段一个原生会话</text>
-  <text x="702" y="1484" class="tag tag-sys" text-anchor="end">系统</text>
-  <text x="402" y="1506" class="nb">brief：目标 / 范围 / 上一阶段摘要</text>
-  <text x="402" y="1523" class="nb">完成不归档；跳过 / 重新打开</text>
-
-  <line class="edge" x1="370" y1="1496" x2="386" y2="1496" marker-end="url(#arrow)"/>
-  <line class="edge" x1="551" y1="1446" x2="551" y2="1462" marker-end="url(#arrow)"/>
-
-  <!-- row3 -->
-  <rect class="node node-ai" x="40" y="1546" width="676" height="72" rx="10"/>
-  <text x="56" y="1570" class="nt">opencode 原生 build agent + 原生会话</text>
-  <text x="700" y="1568" class="tag tag-ai" text-anchor="end">AI</text>
-  <text x="56" y="1590" class="nb">时间线 / 工具卡 / diff / shell / 权限与表单卡片 / 停止 / 追加消息；上下文健康度 60% 黄、85% 红 + 原生压缩</text>
-  <text x="56" y="1607" class="nb">会话列表按变更单分组：切换 / 重命名 / 归档只读 / 恢复；不做自定义 agent、批次、证据、Git 门禁</text>
-
-  <line class="edge" x1="551" y1="1530" x2="551" y2="1546" marker-end="url(#arrow)"/>
-
-  <!-- row4 -->
-  <rect class="node node-user" x="40" y="1634" width="330" height="68" rx="10"/>
-  <text x="56" y="1658" class="nt">用户确认完成开发</text>
-  <text x="356" y="1656" class="tag tag-user" text-anchor="end">用户</text>
-  <text x="56" y="1678" class="nb">只记录完成状态</text>
-  <text x="56" y="1695" class="nb">不检查 Git / 证据 / 测试门禁</text>
-
-  <rect class="node node-sys" x="386" y="1634" width="330" height="68" rx="10"/>
-  <text x="402" y="1658" class="nt">完成后继续发消息</text>
-  <text x="702" y="1656" class="tag tag-sys" text-anchor="end">系统</text>
-  <text x="402" y="1678" class="nb">应用自动回到“开发中”</text>
-  <text x="402" y="1695" class="nb">归档会话只读，可随时恢复</text>
-
-  <line class="edge" x1="370" y1="1668" x2="386" y2="1668" marker-end="url(#arrow)"/>
-  <line class="edge" x1="205" y1="1618" x2="205" y2="1634" marker-end="url(#arrow)"/>
-
-  <!-- row5 -->
-  <rect class="node node-dash" x="40" y="1718" width="676" height="54" rx="10"/>
-  <text x="56" y="1740" class="nt" font-size="12">诚实边界：EOS 构建/运行态需内部 Maven 仓库、EOS 制品、团队 license、Nacos/MySQL/Redis（未验证）</text>
-  <text x="56" y="1759" class="nb">本期无登录/角色（未验证 401/403）；768px 以下移动端未验证；不做旧应用数据兼容；工作台只读写 SQLite</text>
-
-  <!-- ================= 右侧：读图要点 ① ================= -->
-  <rect class="panel" x="764" y="150" width="392" height="480" rx="14"/>
-  <text x="780" y="180" font-size="14" font-weight="700" fill="#0f172a">读图要点 ①　谁在做？</text>
-  <text x="780" y="200" class="hint">AI 负责内容生成；工程约束、版本、门禁由代码保证</text>
-
-  <rect class="block-ai" x="780" y="214" width="360" height="176" rx="10"/>
-  <text x="794" y="236" class="block-title">AI 动作（调用模型）</text>
-  <text x="794" y="258" class="li">· 需求对话、模块拆分建议</text>
-  <text x="794" y="278" class="li">· 逐模块 PRD 生成、设计按 Epic 生成</text>
-  <text x="794" y="298" class="li">· 开发会话（原生 build agent）</text>
-  <text x="794" y="318" class="li">· 阶段完成摘要（失败回退到最后回复）</text>
-  <text x="794" y="338" class="li">· AI 参考原型（仅需求评审）</text>
-  <text x="794" y="362" class="li-ai">输出波动：自动重试一次 + 可展开诊断片段</text>
-
-  <rect class="block" x="780" y="402" width="360" height="190" rx="10"/>
-  <text x="794" y="424" class="block-title">确定性动作（不调模型）</text>
-  <text x="794" y="446" class="li">· 模板渲染、章节 / 版本 / 回滚、hash</text>
-  <text x="794" y="466" class="li">· 模块归属、全局唯一 ID、门禁判定</text>
-  <text x="794" y="486" class="li">· 交接包渲染与校验（含 05-CHANGES diff）</text>
-  <text x="794" y="506" class="li">· 原型 PNG 落盘、开发阶段派生</text>
-  <text x="794" y="526" class="li">· 访问控制：阶段 / 确认 / 变更范围只读</text>
-  <text x="794" y="546" class="li">· 一键启停、脱敏、路径穿越防护</text>
-  <text x="780" y="610" class="hint">本期未接入登录/角色：只读来自状态机，不是权限隔离。</text>
-
-  <!-- ================= 右侧：读图要点 ② ================= -->
-  <rect class="panel" x="764" y="738" width="392" height="480" rx="14"/>
-  <text x="780" y="768" font-size="14" font-weight="700" fill="#0f172a">读图要点 ②　门禁与只读</text>
-  <text x="780" y="788" class="hint">门禁 = 服务端校验 + 状态机，不由模型判断“做完了”</text>
-
-  <rect class="block" x="780" y="802" width="360" height="96" rx="10"/>
-  <text x="794" y="822" class="block-title">需求 → 设计</text>
-  <text x="794" y="844" class="li">· 每个模块单独确认（必填章节 + 至少 1 Story）</text>
-  <text x="794" y="864" class="li">· 全部必选模块确认后，点「完成需求阶段」</text>
-  <text x="794" y="884" class="li">· 生成需求 bundle 快照，应用进入设计</text>
-
-  <rect class="block" x="780" y="910" width="360" height="118" rx="10"/>
-  <text x="794" y="930" class="block-title">设计 → 开发</text>
-  <text x="794" y="952" class="li">· 每个模块单独确认设计</text>
-  <text x="794" y="972" class="li">· 全部必选模块已确认、设计输入未过期</text>
-  <text x="794" y="992" class="li">· 引用完整 + 每页原型 PNG 齐全</text>
-  <text x="794" y="1012" class="li">· 生成交接包 + Change Set #1 才进入开发</text>
-
-  <rect class="block" x="780" y="1040" width="360" height="150" rx="10"/>
-  <text x="794" y="1060" class="block-title">变更 / 归档 / 历史</text>
-  <text x="794" y="1082" class="li">· 变更只重开选中模块，其它模块只读</text>
-  <text x="794" y="1102" class="li">· 变更中禁止归档模块；取消按模块恢复基线</text>
-  <text x="794" y="1122" class="li">· 变更中新增模块：取消时自动归档、内容保留</text>
-  <text x="794" y="1142" class="li">· 已确认文档 / 设计、归档模块、历史会话只读</text>
-  <text x="794" y="1162" class="li">· 可「重新编辑需求 / 设计」或恢复会话继续</text>
-
-  <!-- ================= 右侧：变更回流 ================= -->
-  <rect class="panel" x="764" y="1326" width="392" height="480" rx="14"/>
-  <text x="780" y="1356" font-size="14" font-weight="700" fill="#0f172a">变更回流 · Change Set #2 起</text>
-  <text x="780" y="1376" class="hint">开发中或完成后随时发起；目标是不重写已完成部分</text>
-
-  <rect class="node node-user" x="780" y="1392" width="360" height="64" rx="10"/>
-  <text x="796" y="1416" class="nt">① 发起变更</text>
-  <text x="1124" y="1414" class="tag tag-user" text-anchor="end">用户</text>
-  <text x="796" y="1436" class="nb">选受影响模块（默认全选）；可先「仅设计」再升级</text>
-
-  <rect class="node node-sys" x="780" y="1470" width="360" height="64" rx="10"/>
-  <text x="796" y="1494" class="nt">② 只重开选中模块</text>
-  <text x="1124" y="1492" class="tag tag-sys" text-anchor="end">系统</text>
-  <text x="796" y="1514" class="nb">需求 + 设计回草稿；未选模块不动、写操作 409</text>
-
-  <rect class="node node-user" x="780" y="1548" width="360" height="64" rx="10"/>
-  <text x="796" y="1572" class="nt">③ 改需求并重新确认</text>
-  <text x="1124" y="1570" class="tag tag-user" text-anchor="end">用户</text>
-  <text x="796" y="1592" class="nb">同步设计输入解除过期 → 确认设计</text>
-
-  <rect class="node node-sys" x="780" y="1626" width="360" height="64" rx="10"/>
-  <text x="796" y="1650" class="nt">④ 重新生成交接包</text>
-  <text x="1124" y="1648" class="tag tag-sys" text-anchor="end">系统</text>
-  <text x="796" y="1670" class="nb">05-CHANGES 增量 diff；未选模块标“未变更”</text>
-
-  <rect class="node node-user" x="780" y="1704" width="360" height="64" rx="10"/>
-  <text x="796" y="1728" class="nt">⑤ 新开发会话增量实现</text>
-  <text x="1124" y="1726" class="tag tag-user" text-anchor="end">用户</text>
-  <text x="796" y="1748" class="nb">只改受影响部分；旧会话保留为历史</text>
-
-  <line class="edge" x1="960" y1="1456" x2="960" y2="1470" marker-end="url(#arrow)"/>
-  <line class="edge" x1="960" y1="1534" x2="960" y2="1548" marker-end="url(#arrow)"/>
-  <line class="edge" x1="960" y1="1612" x2="960" y2="1626" marker-end="url(#arrow)"/>
-  <line class="edge" x1="960" y1="1690" x2="960" y2="1704" marker-end="url(#arrow)"/>
-
-  <!-- 开发与变更回流的双向衔接 -->
-  <line class="edge" x1="740" y1="1424" x2="780" y2="1424" marker-end="url(#arrow)"/>
-  <line class="edge" x1="780" y1="1736" x2="740" y2="1736" marker-end="url(#arrow)"/>
-  <line class="edge-dash" x1="780" y1="1502" x2="740" y2="1502" marker-end="url(#arrow)"/>
-  <text x="760" y="1494" class="hint" text-anchor="middle" font-size="9.5">取消</text>
-
-  <text x="780" y="1792" class="hint">取消变更：按模块恢复基线（变更中新增模块自动归档、内容保留）</text>
+  <!-- P7 链路 → 后端/工作区 -->
+  <path class="dash" d="M 394 786 L 394 728" marker-end="url(#arrow)"/>
+  <text class="small faint" x="402" y="770">pack / preview 托管</text>
+  <path class="dash" d="M 640 786 L 640 728" marker-end="url(#arrow)"/>
+  <text class="small faint" x="648" y="770">design-system / 契约解析</text>
 </svg>

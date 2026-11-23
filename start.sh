@@ -42,7 +42,7 @@ fi
 if [[ -f "$PID_FILE" ]]; then
   OLD_PID="$(tr -d '[:space:]' < "$PID_FILE" || true)"
   if [[ -n "$OLD_PID" ]] && kill -0 "$OLD_PID" 2>/dev/null; then
-    fail "工作台已在运行（PID $OLD_PID），如需重启请先执行 ./stop.sh"
+    fail "工作台已在运行（PID $OLD_PID），如需重建并重启请执行 ./restart.sh（或先 ./stop.sh 再 ./start.sh）"
   fi
   rm -f "$PID_FILE"
 fi
@@ -87,8 +87,10 @@ ensure_deps() {
 ensure_deps backend
 ensure_deps frontend
 
-log "构建后端与前端..."
-npm run build
+log "构建后端（tsc）..."
+npm run build --prefix backend || fail "后端构建失败（tsc），已中止"
+log "构建前端（vite）..."
+npm run build --prefix frontend || fail "前端构建失败（vite），已中止"
 
 mkdir -p "$LOG_DIR"
 

@@ -1,0 +1,691 @@
+{
+  "status": "succeeded",
+  "elapsedMs": 62165,
+  "stats": {
+    "tokens": {
+      "input": 59210,
+      "output": 5089,
+      "reasoning": 3121,
+      "cacheRead": 830592,
+      "cacheWrite": 0
+    },
+    "cost": 0,
+    "toolCounts": {
+      "read": 19,
+      "shell": 3,
+      "glob": 3,
+      "grep": 2,
+      "write": 2
+    },
+    "toolTotal": 29,
+    "failedTools": 1,
+    "messageCount": 21,
+    "partial": false,
+    "steps": 2,
+    "stepsTruncated": false,
+    "droppedSteps": 0
+  },
+  "toolItems": [
+    {
+      "name": "read",
+      "status": "completed",
+      "target": "AGENTS.md",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\AGENTS.md"
+      },
+      "durationMs": 197
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": "catalog/index.json",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\catalog\\index.json"
+      },
+      "durationMs": 165
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": "catalog/pages.json",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\catalog\\pages.json"
+      },
+      "durationMs": 211
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": "catalog/styles.json",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\catalog\\styles.json"
+      },
+      "durationMs": 156
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": "catalog/recipes.json",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\catalog\\recipes.json"
+      },
+      "durationMs": 171
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": "catalog/components.json",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\catalog\\components.json"
+      },
+      "durationMs": 181
+    },
+    {
+      "name": "shell",
+      "status": "error",
+      "target": "Get-ChildItem -Force drafts | Select-Object Name; Get-ChildItem drafts/supplier-management -Force -ErrorAction SilentlyContinue | Select-Object Name,Length",
+      "error": {
+        "type": "permission.rejected",
+        "message": "Permission denied: shell",
+        "status": null
+      },
+      "input": {
+        "command": "Get-ChildItem -Force drafts | Select-Object Name; Get-ChildItem drafts/supplier-management -Force -ErrorAction SilentlyContinue | Select-Object Name,Length",
+        "workdir": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop"
+      },
+      "durationMs": 314
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": "catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/pages/OperationsList.vue",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\catalog\\builtin\\afcenter-app-templates-v1\\application-types\\operations-management\\pages\\OperationsList.vue"
+      },
+      "durationMs": 231
+    },
+    {
+      "name": "glob",
+      "status": "completed",
+      "target": "drafts/**/*",
+      "error": null,
+      "input": {
+        "pattern": "drafts/**/*"
+      },
+      "durationMs": 114
+    },
+    {
+      "name": "glob",
+      "status": "completed",
+      "target": ".opencode/**/*.cjs",
+      "error": null,
+      "input": {
+        "pattern": ".opencode/**/*.cjs"
+      },
+      "durationMs": 135
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": "drafts/supplier-management/spec.json",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\drafts\\supplier-management\\spec.json"
+      },
+      "durationMs": 192
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": "drafts/supplier-management/draft.json",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\drafts\\supplier-management\\draft.json"
+      },
+      "durationMs": 164
+    },
+    {
+      "name": "glob",
+      "status": "completed",
+      "target": ".opencode/**/*",
+      "error": null,
+      "input": {
+        "pattern": ".opencode/**/*",
+        "hidden": true
+      },
+      "durationMs": 160
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": ".opencode/skills/adw-design-template-authoring/references/spec.schema.json",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\.opencode\\skills\\adw-design-template-authoring\\references\\spec.schema.json"
+      },
+      "durationMs": 224
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": ".opencode/skills/adw-design-template-authoring/SKILL.md",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\.opencode\\skills\\adw-design-template-authoring\\SKILL.md"
+      },
+      "durationMs": 221
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": ".opencode/skills/adw-design-template-authoring/references/contract-recipes.md",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\.opencode\\skills\\adw-design-template-authoring\\references\\contract-recipes.md"
+      },
+      "durationMs": 217
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": ".opencode/scripts/lib/spec.cjs",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\.opencode\\scripts\\lib\\spec.cjs"
+      },
+      "durationMs": 176
+    },
+    {
+      "name": "grep",
+      "status": "completed",
+      "target": ".opencode/scripts/lib/generator.cjs: warning\\(|errors\\.push\\(|warning\\s*[,(]",
+      "error": null,
+      "input": {
+        "pattern": "warning\\(|errors\\.push\\(|warning\\s*[,(]",
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\.opencode\\scripts\\lib\\generator.cjs",
+        "limit": 80
+      },
+      "durationMs": 376
+    },
+    {
+      "name": "grep",
+      "status": "completed",
+      "target": ".opencode/scripts/lib/css.cjs: css-conflict|warning",
+      "error": null,
+      "input": {
+        "pattern": "css-conflict|warning",
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\.opencode\\scripts\\lib\\css.cjs",
+        "limit": 40
+      },
+      "durationMs": 307
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": ".opencode/scripts/lib/generator.cjs",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\.opencode\\scripts\\lib\\generator.cjs",
+        "offset": 150,
+        "limit": 160
+      },
+      "durationMs": 327
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": "catalog/builtin/afcenter-app-templates-v1/application-types/operations-management/structure.css",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\catalog\\builtin\\afcenter-app-templates-v1\\application-types\\operations-management\\structure.css",
+        "limit": 80
+      },
+      "durationMs": 307
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": ".opencode/scripts/generate.cjs",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\.opencode\\scripts\\generate.cjs"
+      },
+      "durationMs": 169
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": ".opencode/scripts/lib/generator.cjs",
+      "error": null,
+      "input": {
+        "limit": 90,
+        "offset": 309,
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\.opencode\\scripts\\lib\\generator.cjs"
+      },
+      "durationMs": 278
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": ".opencode/scripts/lib/generator.cjs",
+      "error": null,
+      "input": {
+        "limit": 80,
+        "offset": 60,
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\.opencode\\scripts\\lib\\generator.cjs"
+      },
+      "durationMs": 283
+    },
+    {
+      "name": "read",
+      "status": "completed",
+      "target": ".opencode/scripts/lib/generator.cjs",
+      "error": null,
+      "input": {
+        "limit": 12,
+        "offset": 138,
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\.opencode\\scripts\\lib\\generator.cjs"
+      },
+      "durationMs": 254
+    },
+    {
+      "name": "write",
+      "status": "completed",
+      "target": "drafts/supplier-management/spec.json",
+      "error": null,
+      "input": {
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\drafts\\supplier-management\\spec.json",
+        "content": "{\n  \"schemaVersion\": 1,\n  \"id\": \"supplier-management\",\n  \"name\": \"供应商管理模板\",\n  \"description\": \"供应商主数据台账：列表检索与批量操作、弹窗新建/编辑、详情查看。\",\n  \"baseApplicationType\": \"operations-management\",\n  \"style\": \"data-cyan\",\n  \"pages\": [\n    {\n      \"id\": \"supplier-list\",\n      \"name\": \"供应商列表\",\n      \"kind\": \"reference\",\n      \"description\": \"复用运营管理后台列表页：左侧检索与概况、右侧台账表格、行内筛选与紧凑分页。\",\n      \"source\": {\n        \"pack\": \"afcenter-app-templates-v1\",\n        \"applicationType\": \"operations-management\",\n        \"pageId\": \"list\"\n      }\n    },\n    {\n      \"id\": \"supplier-form\",\n      \"name\": \"供应商新建/编辑\",\n      \"kind\": \"contract\",\n      \"type\": \"form\",\n      \"recipe\": \"dialog-form\",\n      \"description\": \"弹窗内分组维护供应商基础信息、合作与结算、联系信息及补充说明。\",\n      \"contract\": {\n        \"form\": {\n          \"presentation\": \"dialog\",\n          \"columns\": 2,\n          \"width\": 900,\n          \"groups\": [\n            {\n              \"title\": \"基础信息\",\n              \"fields\": [\"code\", \"name\", \"category\", \"level\"]\n            },\n            {\n              \"title\": \"合作与结算\",\n              \"fields\": [\"status\", \"settleTerm\", \"creditLimit\", \"cooperationDate\"]\n            },\n            {\n              \"title\": \"联系信息\",\n              \"fields\": [\"contact\", \"phone\", \"email\", \"region\"]\n            },\n            {\n              \"title\": \"补充说明\",\n              \"fields\": [\"owner\", \"address\", \"remark\"]\n            }\n          ]\n        },\n        \"components\": {\n          \"category\": \"pm-select\",\n          \"level\": \"pm-select\",\n          \"status\": \"pm-select\",\n          \"settleTerm\": \"pm-select\",\n          \"creditLimit\": \"pm-number\",\n          \"cooperationDate\": \"pm-datepicker\",\n          \"owner\": \"pm-select-user\",\n          \"address\": \"pm-textarea\",\n          \"remark\": \"pm-textarea\"\n        }\n      },\n      \"sampleEntity\": {\n        \"id\": \"supplier\",\n        \"name\": \"供应商\",\n        \"fields\": [\n          { \"name\": \"code\", \"label\": \"供应商编号\", \"type\": \"string\", \"required\": true, \"unique\": true },\n          { \"name\": \"name\", \"label\": \"供应商名称\", \"type\": \"string\", \"required\": true },\n          { \"name\": \"category\", \"label\": \"供应品类\", \"type\": \"enum\", \"options\": [\"原材料\", \"包装材料\", \"物流服务\", \"设备配件\", \"办公用品\"] },\n          { \"name\": \"level\", \"label\": \"供应商等级\", \"type\": \"enum\", \"options\": [\"战略供应商\", \"核心供应商\", \"普通供应商\", \"备选供应商\"] },\n          { \"name\": \"status\", \"label\": \"合作状态\", \"type\": \"enum\", \"options\": [\"合作中\", \"待审核\", \"已暂停\", \"已淘汰\"] },\n          { \"name\": \"settleTerm\", \"label\": \"结算方式\", \"type\": \"enum\", \"options\": [\"月结30天\", \"月结60天\", \"货到付款\", \"预付款\"] },\n          { \"name\": \"creditLimit\", \"label\": \"授信额度（元）\", \"type\": \"decimal\" },\n          { \"name\": \"cooperationDate\", \"label\": \"合作起始日期\", \"type\": \"date\" },\n          { \"name\": \"contact\", \"label\": \"联系人\", \"type\": \"string\" },\n          { \"name\": \"phone\", \"label\": \"联系电话\", \"type\": \"string\" },\n          { \"name\": \"email\", \"label\": \"邮箱\", \"type\": \"string\" },\n          { \"name\": \"region\", \"label\": \"所在地区\", \"type\": \"string\" },\n          { \"name\": \"owner\", \"label\": \"采购负责人\", \"type\": \"ref\", \"ref\": \"user\" },\n          { \"name\": \"address\", \"label\": \"详细地址\", \"type\": \"text\" },\n          { \"name\": \"remark\", \"label\": \"备注\", \"type\": \"text\" }\n        ]\n      }\n    },\n    {\n      \"id\": \"supplier-detail\",\n      \"name\": \"供应商详情\",\n      \"kind\": \"contract\",\n      \"type\": \"detail\",\n      \"recipe\": \"detail\",\n      \"description\": \"展示供应商主数据、合作状态、结算方式、授信额度与联系信息。\",\n      \"contract\": {\n        \"columns\": [\n          \"code\",\n          \"name\",\n          \"category\",\n          \"level\",\n          \"status\",\n          \"settleTerm\",\n          \"creditLimit\",\n          \"cooperationDate\",\n          \"contact\",\n          \"phone\",\n          \"email\",\n          \"region\",\n          \"owner\",\n          \"address\",\n          \"remark\"\n        ]\n      },\n      \"sampleEntity\": {\n        \"id\": \"supplier\",\n        \"name\": \"供应商\",\n        \"fields\": [\n          { \"name\": \"code\", \"label\": \"供应商编号\", \"type\": \"string\", \"required\": true, \"unique\": true },\n          { \"name\": \"name\", \"label\": \"供应商名称\", \"type\": \"string\", \"required\": true },\n          { \"name\": \"category\", \"label\": \"供应品类\", \"type\": \"enum\", \"options\": [\"原材料\", \"包装材料\", \"物流服务\", \"设备配件\", \"办公用品\"] },\n          { \"name\": \"level\", \"label\": \"供应商等级\", \"type\": \"enum\", \"options\": [\"战略供应商\", \"核心供应商\", \"普通供应商\", \"备选供应商\"] },\n          { \"name\": \"status\", \"label\": \"合作状态\", \"type\": \"enum\", \"options\": [\"合作中\", \"待审核\", \"已暂停\", \"已淘汰\"] },\n          { \"name\": \"settleTerm\", \"label\": \"结算方式\", \"type\": \"enum\", \"options\": [\"月结30天\", \"月结60天\", \"货到付款\", \"预付款\"] },\n          { \"name\": \"creditLimit\", \"label\": \"授信额度（元）\", \"type\": \"decimal\" },\n          { \"name\": \"cooperationDate\", \"label\": \"合作起始日期\", \"type\": \"date\" },\n          { \"name\": \"contact\", \"label\": \"联系人\", \"type\": \"string\" },\n          { \"name\": \"phone\", \"label\": \"联系电话\", \"type\": \"string\" },\n          { \"name\": \"email\", \"label\": \"邮箱\", \"type\": \"string\" },\n          { \"name\": \"region\", \"label\": \"所在地区\", \"type\": \"string\" },\n          { \"name\": \"owner\", \"label\": \"采购负责人\", \"type\": \"ref\", \"ref\": \"user\" },\n          { \"name\": \"address\", \"label\": \"详细地址\", \"type\": \"text\" },\n          { \"name\": \"remark\", \"label\": \"备注\", \"type\": \"text\" }\n        ]\n      }\n    }\n  ]\n}\n"
+      },
+      "durationMs": 4512
+    },
+    {
+      "name": "shell",
+      "status": "completed",
+      "target": "node .opencode/scripts/generate.cjs --draft supplier-management",
+      "error": null,
+      "input": {
+        "command": "node .opencode/scripts/generate.cjs --draft supplier-management",
+        "workdir": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop"
+      },
+      "durationMs": 673
+    },
+    {
+      "name": "shell",
+      "status": "completed",
+      "target": "node .opencode/scripts/validate.cjs --draft supplier-management",
+      "error": null,
+      "input": {
+        "command": "node .opencode/scripts/validate.cjs --draft supplier-management",
+        "workdir": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop"
+      },
+      "durationMs": 566
+    },
+    {
+      "name": "write",
+      "status": "completed",
+      "target": "drafts/supplier-management/notes.md",
+      "error": null,
+      "input": {
+        "content": "# 供应商管理模板 · 编写说明\n\n## 方案\n- 页面 1「供应商列表」`reference`：引用 `operations-management/list`（运营管理后台列表页）。\n- 页面 2「供应商新建/编辑」`contract` + `dialog-form`：4 组共 15 个字段，2 列，宽 900。\n- 页面 3「供应商详情」`contract` + `detail`：以 `columns` 展示主数据、结算与联系信息。\n- 风格：`data-cyan`（数据蓝青）；`baseApplicationType`：`operations-management`（与引用页同源，只合并一份结构样式）。\n\n## 假设\n- 供应商主实体字段采用 15 项合成样例（编号/名称/品类/等级/状态/结算方式/授信额度/合作起始日期/联系人/电话/邮箱/地区/采购负责人/地址/备注）。\n- 采购负责人按 `ref: user` 处理，表单用 `pm-select-user`；授信额度用 `pm-number`，日期用 `pm-datepicker`。\n- 详情页暂不含子表（如联系人、合同记录）；如需可在 `contract.subTables` + `sampleSubEntities` 中补充。\n\n## 已知限制\n- `reference` 页直接复制源页面蓝图，页面标题与字段文案仍为源页「通知公告管理」的公告内容；\n  需要供应商语义时，后续可把它改成 `contract` + `list`，或在应用侧基于该模板再调整。\n",
+        "path": "C:\\Users\\icecream\\AppData\\Local\\Temp\\workbench-p7-7-real-s8BRUr\\data\\design-system\\_workshop\\drafts\\supplier-management\\notes.md"
+      },
+      "durationMs": 1981
+    }
+  ],
+  "toolCounts": {
+    "read": 19,
+    "shell": 3,
+    "glob": 3,
+    "grep": 2,
+    "write": 2
+  },
+  "finalText": "已按你的要求写好 `drafts/supplier-management/spec.json`，并完成了生成与校验。\n\n## 页面清单\n\n| 序号 | 页面 | kind | 配方 | 来源 / 契约 |\n| --- | --- | --- | --- | --- |\n| 1 | 供应商列表 | reference | list | `operations-management/list`（运营管理后台「通知公告管理」列表页） |\n| 2 | 供应商新建/编辑 | contract | dialog-form | 弹窗 2 列、宽 900，4 个分组：基础信息 / 合作与结算 / 联系信息 / 补充说明 |\n| 3 | 供应商详情 | contract | detail | 15 个字段的只读展示（主数据、结算、联系信息） |\n\n- 风格：`data-cyan`（数据蓝青）\n- `baseApplicationType`：`operations-management`（与引用页同源，结构样式只合并一份）\n- 样例实体字段共 15 项（编号、名称、品类、等级、状态、结算方式、授信额度、合作起始日期、联系人、电话、邮箱、地区、采购负责人、地址、备注），契约中的字段全部来自 `sampleEntity.fields`\n- 控件映射：`pm-select` ×4、`pm-number`、`pm-datepicker`、`pm-select-user`、`pm-textarea` ×2，均为 catalog 中 `contractSupported: true` 的组件\n\n## 生成 / 校验结果\n\n**生成**（`node .opencode/scripts/generate.cjs --draft supplier-management`）\n- `ok: true`，pageCount 3，specHash `sha256:a6496a…6917c`\n- errors：**0**\n- warnings：**0**\n- CSS：单一来源 `operations-management`，212 条规则，冲突 0\n- 后端预检：HTTP 200，`ok: true`，errors/warnings 均为空\n\n**校验**（`node .opencode/scripts/validate.cjs --draft supplier-management`）\n- `ok: true`，errors：**0**，warnings：**0**\n\n## 未实现项 / 假设\n\n1. 供应商列表是 `reference`，生成时会原样复制源页面蓝图，因此预览里的标题和文案仍是源页「通知公告管理」的公告内容，不会自动替换为供应商字段。这是 reference 方式的固有限制：先用它复用成熟布局，后续如需供应商语义，可改为 `contract` + `list`。\n2. 详情页未加子表（如联系人、合同记录），只展示主实体字段；需要的话可以再补 `contract.subTables` 与 `sampleSubEntities`。\n3. 供应商编号 (`code`) 未接自动编号控件；`pm-auto-number` 属于容器组件，契约里不能指定。\n\n## 发布前待确认\n\n- 列表页作为「布局参考」直接复用是否可接受，还是希望换成供应商字段的 contract 列表；\n- 详情页是否需要联系人 / 合同等子表；\n- 15 个样例字段是否覆盖你们的供应商主数据口径。\n\n草稿包已生成，可在右侧预览；确认无误后由你点击「发布」，我不会自行发布。",
+  "assistantTexts": [
+    "我先读取 AGENTS.md 和 catalog，确认可用的页面、组件与风格。",
+    "已按你的要求写好 `drafts/supplier-management/spec.json`，并完成了生成与校验。\n\n## 页面清单\n\n| 序号 | 页面 | kind | 配方 | 来源 / 契约 |\n| --- | --- | --- | --- | --- |\n| 1 | 供应商列表 | reference | list | `operations-management/list`（运营管理后台「通知公告管理」列表页） |\n| 2 | 供应商新建/编辑 | contract | dialog-form | 弹窗 2 列、宽 900，4 个分组：基础信息 / 合作与结算 / 联系信息 / 补充说明 |\n| 3 | 供应商详情 | contract | detail | 15 个字段的只读展示（主数据、结算、联系信息） |\n\n- 风格：`data-cyan`（数据蓝青）\n- `baseApplicationType`：`operations-management`（与引用页同源，结构样式只合并一份）\n- 样例实体字段共 15 项（编号、名称、品类、等级、状态、结算方式、授信额度、合作起始日期、联系人、电话、邮箱、地区、采购负责人、地址、备注），契约中的字段全部来自 `sampleEntity.fields`\n- 控件映射：`pm-select` ×4、`pm-number`、`pm-datepicker`、`pm-select-user`、`pm-textarea` ×2，均为 catalog 中 `contractSupported: true` 的组件\n\n## 生成 / 校验结果\n\n**生成**（`node .opencode/scripts/generate.cjs --draft supplier-management`）\n- `ok: true`，pageCount 3，specHash `sha256:a6496a…6917c`\n- errors：**0**\n- warnings：**0**\n- CSS：单一来源 `operations-management`，212 条规则，冲突 0\n- 后端预检：HTTP 200，`ok: true`，errors/warnings 均为空\n\n**校验**（`node .opencode/scripts/validate.cjs --draft supplier-management`）\n- `ok: true`，errors：**0**，warnings：**0**\n\n## 未实现项 / 假设\n\n1. 供应商列表是 `reference`，生成时会原样复制源页面蓝图，因此预览里的标题和文案仍是源页「通知公告管理」的公告内容，不会自动替换为供应商字段。这是 reference 方式的固有限制：先用它复用成熟布局，后续如需供应商语义，可改为 `contract` + `list`。\n2. 详情页未加子表（如联系人、合同记录），只展示主实体字段；需要的话可以再补 `contract.subTables` 与 `sampleSubEntities`。\n3. 供应商编号 (`code`) 未接自动编号控件；`pm-auto-number` 属于容器组件，契约里不能指定。\n\n## 发布前待确认\n\n- 列表页作为「布局参考」直接复用是否可接受，还是希望换成供应商字段的 contract 列表；\n- 详情页是否需要联系人 / 合同等子表；\n- 15 个样例字段是否覆盖你们的供应商主数据口径。\n\n草稿包已生成，可在右侧预览；确认无误后由你点击「发布」，我不会自行发布。"
+  ],
+  "spec": {
+    "schemaVersion": 1,
+    "id": "supplier-management",
+    "name": "供应商管理模板",
+    "description": "供应商主数据台账：列表检索与批量操作、弹窗新建/编辑、详情查看。",
+    "baseApplicationType": "operations-management",
+    "style": "data-cyan",
+    "pages": [
+      {
+        "id": "supplier-list",
+        "name": "供应商列表",
+        "kind": "reference",
+        "description": "复用运营管理后台列表页：左侧检索与概况、右侧台账表格、行内筛选与紧凑分页。",
+        "source": {
+          "pack": "afcenter-app-templates-v1",
+          "applicationType": "operations-management",
+          "pageId": "list"
+        }
+      },
+      {
+        "id": "supplier-form",
+        "name": "供应商新建/编辑",
+        "kind": "contract",
+        "type": "form",
+        "recipe": "dialog-form",
+        "description": "弹窗内分组维护供应商基础信息、合作与结算、联系信息及补充说明。",
+        "contract": {
+          "form": {
+            "presentation": "dialog",
+            "columns": 2,
+            "width": 900,
+            "groups": [
+              {
+                "title": "基础信息",
+                "fields": [
+                  "code",
+                  "name",
+                  "category",
+                  "level"
+                ]
+              },
+              {
+                "title": "合作与结算",
+                "fields": [
+                  "status",
+                  "settleTerm",
+                  "creditLimit",
+                  "cooperationDate"
+                ]
+              },
+              {
+                "title": "联系信息",
+                "fields": [
+                  "contact",
+                  "phone",
+                  "email",
+                  "region"
+                ]
+              },
+              {
+                "title": "补充说明",
+                "fields": [
+                  "owner",
+                  "address",
+                  "remark"
+                ]
+              }
+            ]
+          },
+          "components": {
+            "category": "pm-select",
+            "level": "pm-select",
+            "status": "pm-select",
+            "settleTerm": "pm-select",
+            "creditLimit": "pm-number",
+            "cooperationDate": "pm-datepicker",
+            "owner": "pm-select-user",
+            "address": "pm-textarea",
+            "remark": "pm-textarea"
+          }
+        },
+        "sampleEntity": {
+          "id": "supplier",
+          "name": "供应商",
+          "fields": [
+            {
+              "name": "code",
+              "label": "供应商编号",
+              "type": "string",
+              "required": true,
+              "unique": true
+            },
+            {
+              "name": "name",
+              "label": "供应商名称",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "category",
+              "label": "供应品类",
+              "type": "enum",
+              "options": [
+                "原材料",
+                "包装材料",
+                "物流服务",
+                "设备配件",
+                "办公用品"
+              ]
+            },
+            {
+              "name": "level",
+              "label": "供应商等级",
+              "type": "enum",
+              "options": [
+                "战略供应商",
+                "核心供应商",
+                "普通供应商",
+                "备选供应商"
+              ]
+            },
+            {
+              "name": "status",
+              "label": "合作状态",
+              "type": "enum",
+              "options": [
+                "合作中",
+                "待审核",
+                "已暂停",
+                "已淘汰"
+              ]
+            },
+            {
+              "name": "settleTerm",
+              "label": "结算方式",
+              "type": "enum",
+              "options": [
+                "月结30天",
+                "月结60天",
+                "货到付款",
+                "预付款"
+              ]
+            },
+            {
+              "name": "creditLimit",
+              "label": "授信额度（元）",
+              "type": "decimal"
+            },
+            {
+              "name": "cooperationDate",
+              "label": "合作起始日期",
+              "type": "date"
+            },
+            {
+              "name": "contact",
+              "label": "联系人",
+              "type": "string"
+            },
+            {
+              "name": "phone",
+              "label": "联系电话",
+              "type": "string"
+            },
+            {
+              "name": "email",
+              "label": "邮箱",
+              "type": "string"
+            },
+            {
+              "name": "region",
+              "label": "所在地区",
+              "type": "string"
+            },
+            {
+              "name": "owner",
+              "label": "采购负责人",
+              "type": "ref",
+              "ref": "user"
+            },
+            {
+              "name": "address",
+              "label": "详细地址",
+              "type": "text"
+            },
+            {
+              "name": "remark",
+              "label": "备注",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      {
+        "id": "supplier-detail",
+        "name": "供应商详情",
+        "kind": "contract",
+        "type": "detail",
+        "recipe": "detail",
+        "description": "展示供应商主数据、合作状态、结算方式、授信额度与联系信息。",
+        "contract": {
+          "columns": [
+            "code",
+            "name",
+            "category",
+            "level",
+            "status",
+            "settleTerm",
+            "creditLimit",
+            "cooperationDate",
+            "contact",
+            "phone",
+            "email",
+            "region",
+            "owner",
+            "address",
+            "remark"
+          ]
+        },
+        "sampleEntity": {
+          "id": "supplier",
+          "name": "供应商",
+          "fields": [
+            {
+              "name": "code",
+              "label": "供应商编号",
+              "type": "string",
+              "required": true,
+              "unique": true
+            },
+            {
+              "name": "name",
+              "label": "供应商名称",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "category",
+              "label": "供应品类",
+              "type": "enum",
+              "options": [
+                "原材料",
+                "包装材料",
+                "物流服务",
+                "设备配件",
+                "办公用品"
+              ]
+            },
+            {
+              "name": "level",
+              "label": "供应商等级",
+              "type": "enum",
+              "options": [
+                "战略供应商",
+                "核心供应商",
+                "普通供应商",
+                "备选供应商"
+              ]
+            },
+            {
+              "name": "status",
+              "label": "合作状态",
+              "type": "enum",
+              "options": [
+                "合作中",
+                "待审核",
+                "已暂停",
+                "已淘汰"
+              ]
+            },
+            {
+              "name": "settleTerm",
+              "label": "结算方式",
+              "type": "enum",
+              "options": [
+                "月结30天",
+                "月结60天",
+                "货到付款",
+                "预付款"
+              ]
+            },
+            {
+              "name": "creditLimit",
+              "label": "授信额度（元）",
+              "type": "decimal"
+            },
+            {
+              "name": "cooperationDate",
+              "label": "合作起始日期",
+              "type": "date"
+            },
+            {
+              "name": "contact",
+              "label": "联系人",
+              "type": "string"
+            },
+            {
+              "name": "phone",
+              "label": "联系电话",
+              "type": "string"
+            },
+            {
+              "name": "email",
+              "label": "邮箱",
+              "type": "string"
+            },
+            {
+              "name": "region",
+              "label": "所在地区",
+              "type": "string"
+            },
+            {
+              "name": "owner",
+              "label": "采购负责人",
+              "type": "ref",
+              "ref": "user"
+            },
+            {
+              "name": "address",
+              "label": "详细地址",
+              "type": "text"
+            },
+            {
+              "name": "remark",
+              "label": "备注",
+              "type": "text"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  }
+}

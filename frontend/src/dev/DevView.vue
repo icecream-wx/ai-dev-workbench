@@ -1,10 +1,11 @@
 <template>
-  <div class="dev-view">
+  <div class="dev-view" data-testid="dev-view">
     <header class="dev-head">
       <div class="dev-title">
         <button
           type="button"
           class="pane-toggle"
+          data-testid="dev-sidebar-toggle"
           :class="{ active: sidebarOpen }"
           :title="sidebarOpen ? '收起会话列表' : '展开会话列表'"
           :aria-label="sidebarOpen ? '收起会话列表' : '展开会话列表'"
@@ -16,16 +17,20 @@
         <span class="badge">开发</span>
         <strong>{{ headerTitle }}</strong>
         <span class="meta">{{ session?.agent ?? 'build' }} · {{ modelLabel }}</span>
-        <span v-if="handoff" class="meta handoff-meta">交接包 v{{ handoff.version }}{{ changeSetLabel ? ` · ${changeSetLabel}` : '' }}</span>
+        <label v-if="moduleOptions.length" class="module-pick" title="开发目标模块；prompt 会带上模块并生成 ui-check 骨架">
+          <span>模块</span>
+          <select v-model="moduleKey" data-testid="dev-module-select" :disabled="actionBusy !== ''">
+            <option value="">未指定</option>
+            <option v-for="option in moduleOptions" :key="option.key" :value="option.key">
+              {{ option.key }} · {{ option.title }}{{ option.hasDesign ? '' : '（无设计）' }}
+            </option>
+          </select>
+        </label>
+        <span v-else class="meta" data-testid="dev-module-empty">暂无设计模块</span>
         <span v-if="readOnly" class="readonly-chip">只读 · {{ sessionStatusLabel(session?.status ?? '') }}</span>
       </div>
       <div class="dev-actions">
-        <span
-          v-if="session"
-          :class="['ctx-chip', contextInfo.level]"
-          :title="contextInfo.title"
-          data-testid="context-chip"
-        >
+        <span v-if="session" :class="['ctx-chip', contextInfo.level]" :title="contextInfo.title" data-testid="context-chip">
           {{ contextInfo.label }}
         </span>
         <button
@@ -39,31 +44,12 @@
           {{ actionBusy === 'compact' ? '压缩中…' : '压缩上下文' }}
         </button>
         <span :class="['conn', connectionState]">{{ connectionLabel }}</span>
-        <span :class="['run-status', statusClass]">{{ statusLabel }}</span>
-        <button
-          v-if="canGeneratePhases"
-          type="button"
-          class="btn"
-          :disabled="actionBusy !== '' || phaseGenerating"
-          data-testid="phase-generate-btn"
-          @click="generatePhases"
-        >
-          {{ phaseGenerating ? '生成中…' : '按阶段开发' }}
-        </button>
+        <span :class="['run-status', statusClass]" data-testid="dev-status">{{ statusLabel }}</span>
         <button type="button" class="btn" :disabled="actionBusy !== ''" @click="newSession">新会话</button>
-        <button type="button" class="btn" @click="openHandoff()">交接包</button>
-        <button
-          v-if="session && !isCompleted && !readOnly"
-          type="button"
-          class="btn"
-          :disabled="actionBusy !== ''"
-          @click="completeDevelopment"
-        >
-          确认完成
-        </button>
         <button
           type="button"
           class="pane-toggle"
+          data-testid="dev-aside-toggle"
           :class="{ active: asideOpen }"
           :title="asideOpen ? '收起会话信息' : '展开会话信息'"
           :aria-label="asideOpen ? '收起会话信息' : '展开会话信息'"
@@ -76,8 +62,8 @@
     </header>
 
     <div :class="['dev-body', { 'sidebar-collapsed': !sidebarOpen, 'aside-collapsed': !asideOpen }]">
-      <div v-if="maskVisible" class="dev-mask" aria-hidden="true" @click="closePanes" />
-      <div class="dev-sessions">
+      <div v-if="maskVisible" class="dev-mask" data-testid="dev-mask" aria-hidden="true" @click="closePanes" />
+      <div class="dev-sessions" data-testid="dev-sessions">
         <SessionList
           :sessions="sessions"
           :selected-id="selectedSessionId"
@@ -89,26 +75,12 @@
           @new-session="newSession"
         />
       </div>
-      <main class="timeline">
-        <PhaseBar
-          v-if="phasesGenerated"
-          :phases="phases"
-          :current-phase-id="currentPhaseId"
-          :current-handoff-version="handoff?.version ?? null"
-          :read-only="readOnly"
-          :busy="phaseBusy"
-          @open="openPhaseDialog"
-          @start="startPhase"
-          @complete="completePhase"
-          @skip="skipPhase"
-          @reopen="reopenPhase"
-        />
+      <main class="timeline" data-testid="dev-timeline">
         <div v-if="loading" class="center-card">正在加载开发会话…</div>
         <div v-else-if="error" class="center-card error-card">
           <p>{{ error }}</p>
           <div class="center-actions">
             <button type="button" class="btn" @click="refresh(false)">重试</button>
-            <button type="button" class="btn" @click="openHandoff()">查看交接包</button>
           </div>
         </div>
         <div v-else-if="!session && sessions.length" class="start-card">
@@ -122,84 +94,32 @@
             <button type="button" class="btn" @click="toggleSidebar">查看会话列表</button>
           </div>
         </div>
-        <div v-else-if="!session" class="start-card">
+        <div v-else-if="!session" class="start-card" data-testid="dev-start-card">
           <div class="start-head">
             <h2>开始开发</h2>
             <span class="hint">opencode 原生 build agent · 不限制工具/流程</span>
           </div>
-          <p v-if="isCompleted" class="warn">应用已确认完成；开始开发并发送消息会重新打开开发状态。</p>
-          <p v-if="!handoffReady" class="warn">交接包尚未生成，请先在“交接包”中生成。</p>
-
-          <template v-if="phasesGenerated">
-            <p>
-              已生成 {{ executablePhases.length }} 个可执行阶段<template v-if="(phasesData?.modulePhaseCount ?? 0) > 0">（另 {{ phasesData?.modulePhaseCount }} 个模块里程碑，仅分组）</template>（来自 <code>04-PLAN.md</code> 的分阶段建议）。每个阶段使用单独会话，
-              首条提示只放入输入框，不会自动发送；阶段不设门禁，也不会自动完成应用。
-            </p>
-            <ul class="phase-start-list" data-testid="phase-start-list">
-              <li
-                v-for="phase in executablePhases"
-                :key="phase.id"
-                :class="['phase-start-item', { current: phase.id === currentPhaseId }]"
-              >
-                <div class="psi-main">
-                  <span class="psi-title">{{ phaseOrderLabel(phase.order, phases.length) }} · {{ phase.title }}</span>
-                  <span :class="['phase-chip', phaseStatusClass(phase.status)]">{{ phaseStatusLabel(phase.status) }}</span>
-                  <span v-if="phase.session" class="psi-session">会话</span>
-                </div>
-                <p class="psi-goal">
-                  {{ phaseScopeLabel(phase.scope) }}<template v-if="phase.goal"> · {{ phase.goal }}</template>
-                </p>
-                <div class="psi-actions">
-                  <button
-                    type="button"
-                    class="btn small primary"
-                    :disabled="phaseBusy || !phaseActionStateFor(phase).canStart"
-                    :data-testid="`phase-start-${phase.order}`"
-                    @click="startPhase(phase)"
-                  >
-                    {{ phaseStartButtonLabel(phase) }}
-                  </button>
-                  <button type="button" class="btn small" @click="openPhaseDialog(phase.id)">查看范围</button>
-                </div>
-              </li>
-            </ul>
-            <button type="button" class="plain-toggle" @click="plainStartOpen = !plainStartOpen">
-              {{ plainStartOpen ? '收起普通会话' : '普通会话（不关联阶段）' }}
+          <p>
+            产物是工作区里的文件：<code>AGENTS.md</code>、<code>docs/requirements/</code>、<code>docs/design/</code> 与现有代码。
+            首条提示已让 agent 先读这些材料再动手；你可以编辑后再发送。
+          </p>
+          <textarea
+            v-model="startPrompt"
+            rows="5"
+            data-testid="dev-start-prompt"
+            :disabled="actionBusy !== ''"
+          />
+          <div class="start-actions">
+            <button
+              type="button"
+              class="btn primary"
+              data-testid="dev-start-btn"
+              :disabled="actionBusy !== ''"
+              @click="start"
+            >
+              {{ actionBusy === 'start' ? '启动中…' : '开始开发' }}
             </button>
-            <template v-if="plainStartOpen">
-              <p>新会话不会关联阶段；仍只有一个 active 会话。默认提示只指向 <code>docs/handoff/00-README.md</code>。</p>
-              <textarea v-model="startPrompt" rows="5" :disabled="actionBusy !== ''" />
-              <div class="start-actions">
-                <button type="button" class="btn" :disabled="actionBusy !== '' || !handoffReady" @click="start">
-                  {{ actionBusy === 'start' ? '启动中…' : '开始普通会话' }}
-                </button>
-                <button type="button" class="btn" @click="openHandoff()">查看交接包</button>
-              </div>
-            </template>
-          </template>
-
-          <template v-else>
-            <p>
-              Agent 只会看到应用目录和交接包。默认提示只指向 <code>docs/handoff/00-README.md</code>；你可以编辑后再发送。
-            </p>
-            <textarea v-model="startPrompt" rows="5" :disabled="actionBusy !== ''" />
-            <div class="start-actions">
-              <button
-                v-if="canGeneratePhases"
-                type="button"
-                class="btn"
-                :disabled="actionBusy !== '' || phaseGenerating"
-                data-testid="phase-generate-card-btn"
-                @click="generatePhases"
-              >
-                {{ phaseGenerating ? '生成中…' : '按阶段开发' }}
-              </button>
-              <button type="button" class="btn primary" :disabled="actionBusy !== '' || !handoffReady" @click="start">
-                {{ actionBusy === 'start' ? '启动中…' : '开始开发' }}
-              </button>
-              <button type="button" class="btn" @click="openHandoff()">查看交接包</button>
-            </div>
-          </template>
+          </div>
         </div>
         <template v-else>
           <div class="timeline-main">
@@ -207,12 +127,6 @@
               <div ref="content" class="timeline-content">
                 <div v-if="readOnly" class="readonly-banner">
                   该会话{{ sessionStatusLabel(session.status) }}，只读查看；恢复为当前会话后可继续发送。
-                </div>
-                <div v-if="isCompleted" class="completed-banner">
-                  已确认完成{{ data?.app.completedAt ? `（${formatTime(data.app.completedAt)}）` : '' }}。继续发送消息会把应用状态改回“开发中”。
-                </div>
-                <div v-if="phaseWarningsText" class="context-banner warn" data-testid="phase-warnings">
-                  <span>阶段摘要提示：{{ phaseWarningsText }}</span>
                 </div>
                 <div v-if="state?.status === 'failed'" class="error-banner">
                   Agent 本轮执行失败。请查看工具错误，修正后重新发送。
@@ -239,10 +153,10 @@
                     <pre>{{ entry.message?.text }}</pre>
                   </div>
                   <div v-else-if="entry.kind === 'assistant'" class="assistant-message">
-                    <div v-if="entry.message?.reasoning" class="reasoning">
-                      <span class="reasoning-label">思考</span>
+                    <details v-if="showReasoning(entry.message)" class="rg-reasoning" open data-testid="dev-reasoning">
+                      <summary>思考</summary>
                       <pre>{{ entry.message.reasoning }}</pre>
-                    </div>
+                    </details>
                     <pre v-if="entry.message?.text">{{ entry.message.text }}</pre>
                   </div>
                   <div
@@ -256,6 +170,11 @@
                   </div>
                   <StepCard v-else-if="entry.kind === 'step'" :step="entry.step!" />
                 </template>
+
+                <div v-if="pending" :class="['rg-pending', pending.phase]" :data-testid="pendingId">
+                  <span v-if="pending.phase === 'awaiting'" class="rg-pending-spinner" />
+                  <span>{{ pendingText }}</span>
+                </div>
 
                 <div v-if="pendingPermissions.length || pendingForms.length" class="pending-stack">
                   <PermissionCard
@@ -276,7 +195,7 @@
                   />
                 </div>
 
-                <div v-if="state?.status === 'running'" class="working-row">
+                <div v-if="state?.status === 'running' && !pending" class="working-row">
                   <span class="spinner" />
                   Agent 正在执行 · {{ state.phase.label }}
                 </div>
@@ -295,32 +214,90 @@
           v-model="composer"
           :disabled="actionBusy === 'start'"
           :busy="state?.status === 'running'"
+          placeholder="给开发 agent 发消息… 会先读 AGENTS.md 与 docs/ 再执行 · Enter 发送"
           @send="send"
           @stop="stop"
         />
-        <div v-else-if="session && readOnly" class="readonly-bar">
+        <div v-else-if="session && readOnly" class="readonly-bar" data-testid="dev-readonly-bar">
           <span>该会话{{ sessionStatusLabel(session.status) }}，只读查看；恢复为当前会话后可继续发送。</span>
           <button type="button" class="btn primary" :disabled="actionBusy !== ''" @click="restoreCurrent">恢复为当前会话</button>
         </div>
       </main>
 
       <aside class="dev-side">
+        <section data-testid="dev-design-ref">
+          <h3>设计参考</h3>
+          <p v-if="designHint" class="muted warn" data-testid="dev-design-hint">{{ designHint }}</p>
+          <dl>
+            <div><dt>应用类型</dt><dd :title="designRef.applicationTypeName">{{ designRef.applicationTypeName || '—' }}</dd></div>
+            <div><dt>视觉风格</dt><dd :title="designRef.styleName">{{ designRef.styleName || '—' }}</dd></div>
+            <div><dt>页面库</dt><dd>{{ designRef.pageCount }} 页</dd></div>
+            <div><dt>模块</dt><dd :title="selectedModule?.title ?? ''">{{ selectedModule ? `${selectedModule.key} · ${selectedModule.title}` : '未指定' }}</dd></div>
+            <div>
+              <dt>ui-check</dt>
+              <dd
+                :class="['ui-check', uiCheckTone(uiCheckStatus)]"
+                :title="selectedModule?.uiCheckFile || 'docs/design/<MOD>/ui-check.md'"
+                data-testid="dev-ui-check-status"
+              >
+                {{ uiCheckLabel(uiCheckStatus) }}
+              </dd>
+            </div>
+            <div><dt>蓝图根</dt><dd class="mono" :title="designRef.blueprintRoot">{{ designRef.blueprintRoot }}</dd></div>
+          </dl>
+          <p v-if="uiCheckFlowPending" class="muted warn" data-testid="dev-ui-check-pending">
+            {{ uiCheckHint(uiCheckStatus) }}
+          </p>
+          <p class="muted">软门禁：先填 ui-check 对照表再写代码；未填不阻断，只标记流程未完成。</p>
+          <div class="side-actions">
+            <button
+              type="button"
+              class="btn small"
+              data-testid="dev-fidelity-check"
+              :disabled="fidelityBusy"
+              @click="runFidelityCheck"
+            >
+              {{ fidelityBusy ? '检查中…' : '检查一致性' }}
+            </button>
+            <button type="button" class="btn small" data-testid="dev-open-templates" @click="openDesignTemplates">打开模板中心</button>
+          </div>
+          <p class="muted">只读静态检查：PageTemplates/pm-*/表单/列表/样式/ui-check/PNG stale；不阻断、不改代码。</p>
+          <p v-if="fidelityError" class="muted warn" data-testid="dev-fidelity-error">{{ fidelityError }}</p>
+          <section v-if="fidelityReport" class="fidelity-report" data-testid="dev-fidelity-report">
+            <div class="fidelity-head">
+              <span :class="['fidelity-status', fidelityTone]" data-testid="dev-fidelity-status">{{ fidelityLabel }}</span>
+              <span class="muted" data-testid="dev-fidelity-summary">{{ fidelitySummary }}</span>
+            </div>
+            <p class="muted" data-testid="dev-fidelity-meta">
+              {{ fidelityScope }} · {{ formatTime(fidelityReport.generatedAt) }}
+            </p>
+            <p v-if="fidelityReport.empty" class="muted warn" data-testid="dev-fidelity-empty">{{ fidelityEmpty }}</p>
+            <ul v-else class="fidelity-checks">
+              <li
+                v-for="check in fidelityReport.checks"
+                :key="check.id"
+                :class="['fidelity-item', check.status]"
+                :data-testid="`dev-fidelity-check-${check.id}`"
+              >
+                <div class="fidelity-item-head">
+                  <span :class="['fidelity-badge', fidelityStatusTone(check.status)]">{{ fidelityCheckLabel(check.status) }}</span>
+                  <strong>{{ check.label }}</strong>
+                </div>
+                <p>{{ check.evidence }}</p>
+                <p v-if="check.hint" class="fidelity-hint">建议：{{ check.hint }}</p>
+              </li>
+            </ul>
+            <p class="muted">只读报告：不会自动修改代码；失败/警告请按建议处理。</p>
+          </section>
+        </section>
+
         <section>
           <h3>会话</h3>
           <dl>
             <div><dt>标题</dt><dd :title="headerTitle">{{ headerTitle }}</dd></div>
             <div><dt>状态</dt><dd>{{ readOnly ? `只读 · ${sessionStatusLabel(session?.status ?? '')}` : statusLabel }}</dd></div>
+            <div><dt>视图</dt><dd>开发</dd></div>
             <div><dt>模型</dt><dd class="mono" :title="modelLabel">{{ modelLabel }}</dd></div>
-            <div><dt>交接包</dt><dd>{{ session?.handoffVersion ? `v${session.handoffVersion}` : '—' }}</dd></div>
-            <div>
-              <dt>阶段</dt>
-              <dd
-                data-testid="aside-phase"
-                :title="phaseReadOnlyReason ? `${asidePhaseLabel} · ${phaseReadOnlyReason}` : asidePhaseLabel"
-              >
-                {{ asidePhaseLabel }}
-              </dd>
-            </div>
             <div><dt>开始</dt><dd>{{ session ? formatTime(session.createdAt) : '—' }}</dd></div>
             <div><dt>耗时</dt><dd>{{ formatElapsed(state?.elapsedMs) }}</dd></div>
             <div><dt>消息</dt><dd>{{ state?.stats.messageCount ?? 0 }}</dd></div>
@@ -335,57 +312,28 @@
         </section>
 
         <section>
-          <h3>交接文档</h3>
-          <p v-if="!handoff" class="muted">尚未生成交接包。</p>
-          <template v-else>
-            <p v-if="changeSetLabel" class="muted">{{ changeSetLabel }}</p>
-            <p class="muted">v{{ handoff.version }} · {{ shortHash(handoff.hash) }}</p>
-            <div v-if="handoffScale?.suggested" class="handoff-scale" data-testid="dev-handoff-scale">
-              <span class="scale-chip">{{ handoffScaleBadge?.label }}</span>
-              <span class="scale-counts">{{ handoffScaleCounts }}</span>
-              <span v-if="handoffScaleTriggers" class="muted scale-triggers">{{ handoffScaleTriggers }}</span>
-              <button type="button" class="btn small" @click="openHandoff('04-PLAN.md')">查看 04-PLAN.md</button>
-            </div>
-            <button
-              v-for="file in handoffFiles"
-              :key="file.name"
-              type="button"
-              class="doc-link"
-              @click="openHandoff(file.name)"
-            >
-              <span>{{ file.name }}</span>
-              <small>{{ formatBytes(file.size) }}</small>
-            </button>
-          </template>
-        </section>
-
-        <section>
           <h3>文件变化</h3>
           <p v-if="!changedFiles.length" class="muted">Agent 写入文件后会出现在这里。</p>
-          <ul v-else class="file-list">
+          <ul v-else class="file-list" data-testid="dev-file-changes">
             <li v-for="file in changedFiles" :key="file.path">
               <code>{{ file.path }}</code>
               <span>{{ file.mode }}</span>
             </li>
           </ul>
         </section>
+
+        <section>
+          <h3>工作区</h3>
+          <p class="muted">
+            需求：<code>docs/requirements/</code><br />
+            设计：<code>docs/design/</code><br />
+            约定：<code>AGENTS.md</code>
+          </p>
+          <p class="muted">产物以文件为准；agent 修改后需求/设计视图会自动刷新。</p>
+        </section>
       </aside>
     </div>
-
-    <PhaseDialog
-      v-model="phaseDialogOpen"
-      :phases="phases"
-      :current-phase-id="selectedPhaseId ?? currentPhaseId"
-      :current-handoff-version="handoff?.version ?? null"
-      :handoff-version="phasesData?.handoffVersion ?? null"
-      :read-only="readOnly"
-      :busy="phaseBusy"
-      :busy-action="phaseBusyAction"
-      @start="startPhase"
-      @complete="completePhase"
-      @skip="skipPhase"
-      @reopen="reopenPhase"
-    />
+    <DesignTemplateCenter v-model="designCenterOpen" mode="browse" :selection="designCenterSelection" />
   </div>
 </template>
 
@@ -395,58 +343,48 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import Composer from './Composer.vue'
 import FormCard from './FormCard.vue'
 import PermissionCard from './PermissionCard.vue'
-import PhaseBar from './PhaseBar.vue'
-import PhaseDialog from './PhaseDialog.vue'
 import SessionList from './SessionList.vue'
 import StepCard from './StepCard.vue'
+import DesignTemplateCenter from '../workbench/DesignTemplateCenter.vue'
+import '../shared/reasoning.css'
 import {
-  DevApiError,
   activateDevSession,
   archiveDevSessionById,
+  checkDesignFidelity,
   compactDevSession,
-  completeDevPhase,
   connectDevEvents,
   createDevSession,
-  generateDevPhases,
-  getDevPhases,
   getDevState,
   interruptDevSession,
   listDevSessions,
   promptDevSession,
   renameDevSession,
-  reopenDevPhase,
   replyDevForm,
   replyDevPermission,
-  skipDevPhase,
-  startDevPhase,
   type DevEventConnection
 } from './api'
+import { getArtifacts } from '../workbench/api'
+import { getAppDesignSystem, type AppDesignSystem } from '../shared/design-system-api'
 import {
-  contextDetail,
-  contextHint,
-  contextLabel,
-  contextNeedsCompact,
-  contextTitle
-} from './dev-health.js'
-import {
-  executablePhases as executablePhaseList,
-  phaseActionState,
-  phaseGenerateConfirmText,
-  phaseOrderLabel,
-  phaseRefLabel,
-  phaseScopeLabel,
-  phaseStartConfirmText,
-  phaseStatusClass,
-  phaseStatusLabel
-} from './phase-labels.js'
-import {
-  displayTitle as sessionDisplayTitle,
-  handoffVersionMismatch,
-  sessionStatusLabel
-} from './session-labels.js'
+  buildModuleOptions,
+  designRefHint,
+  designRefSummary,
+  fidelityCheckLabel,
+  fidelityEmptyText,
+  fidelityStatusLabel,
+  fidelityStatusTone,
+  fidelitySummaryText,
+  moduleOptionOf,
+  pickModuleKey,
+  uiCheckHint,
+  uiCheckLabel,
+  uiCheckTone
+} from './design-ref.js'
+import { contextDetail, contextHint, contextLabel, contextNeedsCompact, contextTitle } from './dev-health.js'
+import { displayTitle as sessionDisplayTitle, sessionStatusLabel } from './session-labels.js'
+import { nextPending, pendingLabel, pendingTestId, shouldShowReasoning } from '../workbench/chat-status.js'
 import type {
-  DevPhaseView,
-  DevPhasesResponse,
+  DesignFidelityReport,
   DevSessionListItem,
   DevSessionMessage,
   DevSessionState,
@@ -454,15 +392,11 @@ import type {
   DevStep,
   FormInfo,
   FormValue,
-  HandoffSummary,
   PermissionRequest
 } from './types'
-import { completeApp } from '../workbench/api'
-import { getDesignHandoff, type DesignHandoffMeta } from '../design/api'
-import { scaleBadge, scaleCountsLabel, scaleTriggerLabels } from '../design/handoff-scale.js'
 
-const props = defineProps<{ appId: string; completed?: boolean }>()
-const emit = defineEmits<{ 'open-handoff': [file?: string]; 'app-changed': [] }>()
+const props = defineProps<{ appId: string }>()
+const emit = defineEmits<{ 'app-changed': [] }>()
 
 type ConnectionState = 'connecting' | 'open' | 'error' | 'closed'
 
@@ -477,11 +411,13 @@ const loading = ref(true)
 const refreshing = ref(false)
 const error = ref('')
 const data = ref<DevStateResponse | null>(null)
-const actionBusy = ref<'' | 'start' | 'send' | 'stop' | 'complete' | 'permission' | 'form' | 'switch' | 'rename' | 'archive' | 'activate' | 'compact'>('')
+const actionBusy = ref<
+  '' | 'start' | 'send' | 'stop' | 'permission' | 'form' | 'switch' | 'rename' | 'archive' | 'activate' | 'compact'
+>('')
 const composer = ref('')
+const pending = ref<ReturnType<typeof nextPending>>(null)
+let assistantBaseline = 0
 const startPrompt = ref('')
-const localCompleted = ref(false)
-const handoffMeta = ref<DesignHandoffMeta | null>(null)
 const connectionState = ref<ConnectionState>('closed')
 const hasNew = ref(false)
 const scroller = ref<HTMLElement | null>(null)
@@ -490,26 +426,20 @@ const composerRef = ref<InstanceType<typeof Composer> | null>(null)
 const sessions = ref<DevSessionListItem[]>([])
 const sessionsLoading = ref(false)
 const selectedSessionId = ref<string | null>(null)
-/** U7：阶段数据（最新交接包；历史只读由 route 注入验证） */
-const phasesData = ref<DevPhasesResponse | null>(null)
-const phaseDialogOpen = ref(false)
-const selectedPhaseId = ref<string | null>(null)
-const phaseBusy = ref(false)
-const phaseBusyAction = ref<'' | 'start' | 'complete' | 'skip' | 'reopen'>('')
-const phaseGenerating = ref(false)
-const phaseWarnings = ref<string[]>([])
-/** 有阶段时“普通会话（不关联阶段）”入口默认折叠 */
-const plainStartOpen = ref(false)
 const sidebarOpen = ref(true)
-/** 右侧会话信息/交接文档/文件变化；≤1024 折叠为抽屉 */
 const asideOpen = ref(true)
-/** 抽屉断点（与 CSS 的 1024 一致）：窄屏用遮罩 + 抽屉，宽屏用并列栏 */
 const narrow = ref(false)
 const maskVisible = computed(() => narrow.value && (sidebarOpen.value || asideOpen.value))
+const moduleOptions = ref<ReturnType<typeof buildModuleOptions>>([])
+const moduleKey = ref('')
+const designSystem = ref<AppDesignSystem | null>(null)
+const designCenterOpen = ref(false)
+const fidelityReport = ref<DesignFidelityReport | null>(null)
+const fidelityBusy = ref(false)
+const fidelityError = ref('')
+const MODULE_STORAGE_PREFIX = 'adw.dev.module.'
 
 let connection: DevEventConnection | null = null
-/** U7：阶段请求序号（只应用最新一次响应；切换 app 时递增以丢弃旧应用响应） */
-let phasesSeq = 0
 let refreshTimer: ReturnType<typeof setTimeout> | null = null
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let stick = true
@@ -518,49 +448,12 @@ const appName = computed(() => data.value?.app.name ?? props.appId)
 const session = computed(() => data.value?.session ?? null)
 const state = computed<DevSessionState | null>(() => data.value?.state ?? null)
 const readOnly = computed(() => data.value?.readOnly ?? false)
-const handoff = computed<HandoffSummary | null>(() => data.value?.app.handoff ?? null)
 const currentItem = computed<DevSessionListItem | null>(() => {
   const id = selectedSessionId.value ?? data.value?.session?.id ?? null
   if (!id) return null
   return sessions.value.find(item => item.id === id) ?? null
 })
 const headerTitle = computed(() => (currentItem.value ? sessionDisplayTitle(currentItem.value, appName.value) : appName.value))
-const changeSetLabel = computed(() => {
-  const changeSet = handoff.value?.changeSet
-  if (!changeSet) return ''
-  return changeSet.seq === 1 && changeSet.title === '初始开发' ? '初始开发' : `变更 #${changeSet.seq} · ${changeSet.title}`
-})
-const handoffReady = computed(() => data.value?.handoffReady ?? false)
-const handoffFiles = computed(() => handoffMeta.value?.files ?? [])
-/** I-09b-1（U6）：大交接包建议分阶段；normal/旧交接包不显示 */
-const handoffScale = computed(() => handoffMeta.value?.scale ?? null)
-const handoffScaleBadge = computed(() => scaleBadge(handoffScale.value))
-const handoffScaleCounts = computed(() => scaleCountsLabel(handoffScale.value))
-const handoffScaleTriggers = computed(() => scaleTriggerLabels(handoffScale.value).join('、'))
-/** U7：阶段列表/当前阶段/进度/可生成入口 */
-const phases = computed<DevPhaseView[]>(() => phasesData.value?.phases ?? [])
-const executablePhases = computed<DevPhaseView[]>(() => executablePhaseList(phases.value))
-const phasesGenerated = computed(() => phasesData.value?.generated === true)
-const phaseCurrentHandoffVersion = computed(() => handoff.value?.version ?? null)
-const currentPhaseId = computed<string | null>(() => {
-  const fromSession = session.value?.phase?.id ?? null
-  if (fromSession) return fromSession
-  return executablePhases.value.find(phase => phase.status === 'in_progress')?.id ?? null
-})
-const phaseTotal = computed(() => executablePhases.value.length)
-const currentPhase = computed<DevPhaseView | null>(
-  () => phases.value.find(phase => phase.id === currentPhaseId.value) ?? null
-)
-/** 大交接包（U6）+ 最新版本尚未生成阶段 */
-const canGeneratePhases = computed(
-  () => !readOnly.value && handoffScale.value?.suggested === true && phasesData.value?.canGenerate === true
-)
-const phaseReadOnlyReason = computed(
-  () => phaseActionState(currentPhase.value, phaseCurrentHandoffVersion.value, readOnly.value).reason
-)
-const phaseWarningsText = computed(() => phaseWarnings.value.join('；'))
-const asidePhaseLabel = computed(() => (session.value?.phase ? phaseRefLabel(session.value.phase) : '—'))
-const isCompleted = computed(() => localCompleted.value)
 const isRunning = computed(() => state.value?.status === 'running')
 const pendingPermissions = computed(() => (state.value?.pending.permissions ?? []) as unknown as PermissionRequest[])
 const pendingForms = computed(() => (state.value?.pending.forms ?? []) as unknown as FormInfo[])
@@ -570,7 +463,6 @@ const modelLabel = computed(() => {
 })
 const statusLabel = computed(() => {
   if (readOnly.value) return '只读查看'
-  if (localCompleted.value) return '已确认完成'
   if (!session.value) return '未开始'
   const status = state.value?.status
   if (status === 'running') return '运行中'
@@ -582,21 +474,17 @@ const statusLabel = computed(() => {
 })
 const statusClass = computed(() => ({
   running: isRunning.value,
-  done: localCompleted.value || state.value?.status === 'succeeded',
-  idle: Boolean(session.value) && !isRunning.value && !localCompleted.value
+  done: state.value?.status === 'succeeded',
+  idle: Boolean(session.value) && !isRunning.value
 }))
-const connectionLabel = computed(() => ({
-  connecting: '连接中',
-  open: '实时',
-  error: '连接异常',
-  closed: '未连接'
-})[connectionState.value])
+const connectionLabel = computed(
+  () => ({ connecting: '连接中', open: '实时', error: '连接异常', closed: '未连接' })[connectionState.value]
+)
 const tokenLabel = computed(() => {
   const tokens = state.value?.stats.tokens
   if (!tokens) return '—'
   return `${tokens.input} / ${tokens.output}`
 })
-/** I-09a：上下文健康度（只读会话不显示提示条/压缩按钮，但 chip 仍显示） */
 const contextInfo = computed(() => {
   const context = state.value?.context ?? null
   return {
@@ -608,6 +496,44 @@ const contextInfo = computed(() => {
     needsCompact: !readOnly.value && contextNeedsCompact(context)
   }
 })
+const selectedModule = computed(() => moduleOptionOf(moduleOptions.value, moduleKey.value))
+const uiCheckStatus = computed(() => selectedModule.value?.uiCheckStatus ?? 'missing')
+const uiCheckFlowPending = computed(() => Boolean(selectedModule.value) && uiCheckStatus.value !== 'filled')
+const designRef = computed(() => designRefSummary(designSystem.value))
+const designHint = computed(() => designRefHint(moduleOptions.value))
+const designCenterSelection = computed(() => {
+  const design = designSystem.value
+  if (!design || !design.pack || !design.applicationType || !design.style) return undefined
+  return { pack: design.pack.id, applicationType: design.applicationType.id, style: design.style.id }
+})
+const fidelityTone = computed(() => fidelityStatusTone(fidelityReport.value?.summary?.status ?? ''))
+const fidelityLabel = computed(() => fidelityStatusLabel(fidelityReport.value?.summary?.status ?? ''))
+const fidelitySummary = computed(() => fidelitySummaryText(fidelityReport.value))
+const fidelityEmpty = computed(() => fidelityEmptyText(fidelityReport.value))
+const fidelityScope = computed(() => {
+  const report = fidelityReport.value
+  if (!report) return ''
+  if (report.module) return `模块 ${report.module}`
+  if (report.modules.length) return `全部模块 ${report.modules.join('、')}`
+  return '无模块'
+})
+
+const pendingId = computed(() => pendingTestId(pending.value, 'dev'))
+const pendingText = computed(() => pendingLabel(pending.value))
+const assistantCount = computed(() => (state.value?.messages ?? []).filter(message => message.type === 'assistant').length)
+
+function applyPending(action: { type: string; message?: string }): void {
+  pending.value = nextPending(pending.value, action)
+}
+
+function beginPending(): void {
+  assistantBaseline = assistantCount.value
+  applyPending({ type: 'send' })
+}
+
+function showReasoning(message?: { reasoning?: string }): boolean {
+  return shouldShowReasoning(message)
+}
 
 const stepStarts = computed(() => {
   const map = new Map<string, DevStep[]>()
@@ -637,7 +563,6 @@ const entries = computed<TimelineEntry[]>(() => {
         consumed.add(step.id)
       }
     } else if (message.type === 'compaction' || message.kind === 'compaction' || message.kind === 'compaction-failed') {
-      // I-09a：压缩事件作为轻量系统提示，不进入 assistant 文本
       out.push({ key: `notice-${message.id}`, kind: 'notice', message })
     } else if (message.type === 'shell') {
       for (const step of stepStarts.value.get(message.id) ?? []) {
@@ -657,7 +582,8 @@ const changedFiles = computed(() => {
   for (const step of state.value?.steps ?? []) {
     for (const item of step.items) {
       if (item.diff?.path) files.set(item.diff.path, item.diff.mode === 'create' ? '新建' : '修改')
-      else if (['write', 'edit', 'patch', 'multiedit', 'apply_patch'].includes(item.name) && item.target) files.set(item.target, '写入')
+      else if (['write', 'edit', 'patch', 'multiedit', 'apply_patch'].includes(item.name) && item.target)
+        files.set(item.target, '写入')
     }
   }
   return [...files].slice(-30).map(([path, mode]) => ({ path, mode }))
@@ -665,10 +591,8 @@ const changedFiles = computed(() => {
 
 function applyData(next: DevStateResponse, preserveComposer = true): void {
   const previousSessionId = data.value?.session?.opencodeSessionId
-  const previousHandoffVersion = handoffMeta.value?.version ?? null
   data.value = next
   if (next.session && !selectedSessionId.value) selectedSessionId.value = next.session.id
-  localCompleted.value = next.app.status === 'completed'
   if (next.defaultPrompt && !startPrompt.value) startPrompt.value = next.defaultPrompt
   if (!preserveComposer && next.session) composer.value = ''
   // 新会话/切换会话后，旧 SSE 连接不会收到新会话事件；关闭后由 ensureEvents 重连
@@ -676,13 +600,12 @@ function applyData(next: DevStateResponse, preserveComposer = true): void {
     connection?.close()
     connection = null
   }
-  if (!handoffMeta.value || (next.app.handoff?.version ?? null) !== previousHandoffVersion) void loadHandoff()
 }
 
 async function loadSessions(): Promise<void> {
   sessionsLoading.value = true
   try {
-    const next = await listDevSessions(props.appId)
+    const next = await listDevSessions(props.appId, 'development')
     sessions.value = next.sessions
     if (!selectedSessionId.value) selectedSessionId.value = next.activeSessionId ?? data.value?.session?.id ?? null
     else if (!next.sessions.some(item => item.id === selectedSessionId.value)) {
@@ -695,226 +618,58 @@ async function loadSessions(): Promise<void> {
   }
 }
 
-async function loadHandoff(): Promise<void> {
+function moduleStorageKey(): string {
+  return `${MODULE_STORAGE_PREFIX}${props.appId}`
+}
+
+function readSavedModule(): string {
   try {
-    handoffMeta.value = (await getDesignHandoff(props.appId)).handoff
+    return localStorage.getItem(moduleStorageKey()) ?? ''
   } catch {
-    handoffMeta.value = null
+    return ''
   }
 }
 
-/** U7：阶段数据（失败静默保留上次值，不覆盖主时间线错误；handoffVersion 只用于历史只读查看） */
-async function loadPhases(handoffVersion?: number | null): Promise<void> {
-  // 请求序号：轮询/操作并发时只应用最新一次响应，避免旧响应覆盖新数据或新请求被丢弃
-  const seq = ++phasesSeq
+function persistModule(key: string): void {
   try {
-    const next = await getDevPhases(props.appId, handoffVersion ?? undefined)
-    if (seq === phasesSeq) phasesData.value = next
+    if (key) localStorage.setItem(moduleStorageKey(), key)
+    else localStorage.removeItem(moduleStorageKey())
   } catch {
-    // 阶段读取失败不覆盖主时间线错误；保留上次阶段数据
+    // 隐私模式/存储不可用：仅本次会话生效
   }
 }
 
-function handlePhaseError(err: unknown, hint = ''): void {
-  const message = err instanceof Error ? err.message : String(err)
-  ElMessage.error(hint ? `${message}；${hint}` : message)
-  if (err instanceof DevApiError && err.status === 409) void loadPhases()
+/** 读取 artifacts（模块 + ui-check 状态）与应用设计系统（只读参考） */
+async function loadDesignRef(): Promise<void> {
+  const [artifactsResult, designResult] = await Promise.allSettled([
+    getArtifacts(props.appId),
+    getAppDesignSystem(props.appId)
+  ])
+  if (designResult.status === 'fulfilled') designSystem.value = designResult.value
+  if (artifactsResult.status !== 'fulfilled') return
+  const options = buildModuleOptions(artifactsResult.value)
+  moduleOptions.value = options
+  const next = pickModuleKey(options, readSavedModule(), moduleKey.value)
+  moduleKey.value = next
+  persistModule(next)
 }
 
-/** 有阶段时“新会话”提示：新会话不关联阶段 */
-function newSessionConfirmText(): string {
-  const base = '当前会话会归档，新会话不会自动接续旧上下文；旧会话保留在左侧列表，可随时查看/恢复。'
-  return phasesGenerated.value ? `${base}\n\n新会话不会关联阶段；建议用阶段列表开始阶段。` : base
+function openDesignTemplates(): void {
+  designCenterOpen.value = true
 }
 
-async function generatePhases(): Promise<void> {
-  if (phaseGenerating.value || actionBusy.value || readOnly.value) return
+/** P7-6a：只读一致性检查；报告仅供查看，不自动改代码 */
+async function runFidelityCheck(): Promise<void> {
+  if (fidelityBusy.value) return
+  fidelityBusy.value = true
+  fidelityError.value = ''
   try {
-    await ElMessageBox.confirm(
-      phaseGenerateConfirmText(handoffScale.value?.phaseCount ?? 0, handoffScale.value?.modulePhaseCount ?? 0),
-      '按阶段开发',
-      { type: 'warning', confirmButtonText: '生成阶段', cancelButtonText: '取消' }
-    )
-  } catch {
-    return
-  }
-  phaseGenerating.value = true
-  try {
-    const next = await generateDevPhases(props.appId)
-    phasesData.value = next
-    await loadSessions()
-    await refresh(true)
-    await loadPhases()
-    ElMessage.success(`已生成 ${next.phases.length} 个开发阶段`)
+    fidelityReport.value = await checkDesignFidelity(props.appId, moduleKey.value || undefined)
   } catch (err) {
-    handlePhaseError(err, '请重新生成交接包')
+    fidelityReport.value = null
+    fidelityError.value = err instanceof Error ? err.message : String(err)
   } finally {
-    phaseGenerating.value = false
-  }
-}
-
-function openPhaseDialog(target?: string | DevPhaseView | null): void {
-  const id = typeof target === 'string' ? target : target?.id ?? currentPhaseId.value ?? null
-  selectedPhaseId.value = id
-  phaseDialogOpen.value = true
-  if (!phases.value.length) void loadPhases()
-}
-
-function phaseActionStateFor(phase: DevPhaseView | null) {
-  return phaseActionState(phase, phaseCurrentHandoffVersion.value, readOnly.value)
-}
-
-function phaseStartButtonLabel(phase: DevPhaseView): string {
-  if (phase.status === 'skipped') return '重新开始'
-  if (phase.status === 'in_progress') return '继续'
-  if (phase.status === 'completed') return '已完成'
-  return '开始'
-}
-
-/** 阶段切换后统一刷新：开发状态 → 阶段 → 会话列表 */
-async function refreshAfterPhaseChange(): Promise<void> {
-  connection?.close()
-  connection = null
-  await refresh(true)
-  await loadPhases()
-  await loadSessions()
-}
-
-async function startPhase(phase: DevPhaseView | null): Promise<void> {
-  if (!phase || phaseBusy.value || readOnly.value) return
-  const action = phaseActionStateFor(phase)
-  if (!action.canStart) {
-    ElMessage.warning(action.reason || '该阶段不可开始')
-    return
-  }
-  try {
-    await ElMessageBox.confirm(
-      phaseStartConfirmText(phase, phaseTotal.value, {
-        hasActiveSession: Boolean(session.value),
-        running: isRunning.value
-      }),
-      '开始阶段',
-      { type: 'warning', confirmButtonText: '开始阶段', cancelButtonText: '取消' }
-    )
-  } catch {
-    return
-  }
-  phaseBusy.value = true
-  phaseBusyAction.value = 'start'
-  phaseWarnings.value = []
-  try {
-    const next = await startDevPhase(props.appId, phase.id)
-    selectedSessionId.value = next.session?.id ?? null
-    applyData(next)
-    composer.value = next.defaultPrompt
-    ensureEvents()
-    await loadPhases()
-    await loadSessions()
-    phaseDialogOpen.value = false
-    emit('app-changed')
-    ElMessage.success(`已进入阶段 ${phase.order}，首条提示已放入输入框（未发送）`)
-    await nextTick()
-    composerRef.value?.focus()
-  } catch (err) {
-    handlePhaseError(err)
-  } finally {
-    phaseBusy.value = false
-    phaseBusyAction.value = ''
-  }
-}
-
-async function completePhase(phase: DevPhaseView | null): Promise<void> {
-  if (!phase || phaseBusy.value || readOnly.value) return
-  const action = phaseActionStateFor(phase)
-  if (!action.canComplete) {
-    ElMessage.warning(action.reason || '该阶段不可完成')
-    return
-  }
-  try {
-    await ElMessageBox.confirm(
-      `完成阶段 ${phase.order}「${phase.title}」只更新阶段状态，不归档会话、不检查 Git/测试；会尝试生成阶段摘要（失败回退最后一条回复）。`,
-      '完成阶段',
-      { type: 'warning', confirmButtonText: '完成阶段', cancelButtonText: '取消' }
-    )
-  } catch {
-    return
-  }
-  phaseBusy.value = true
-  phaseBusyAction.value = 'complete'
-  try {
-    const result = await completeDevPhase(props.appId, phase.id)
-    phaseWarnings.value = result.warnings
-    await refreshAfterPhaseChange()
-    if (result.warnings.length) ElMessage.warning(result.warnings.join('；'))
-    else {
-      phaseWarnings.value = []
-      ElMessage.success('阶段已完成')
-    }
-  } catch (err) {
-    handlePhaseError(err)
-  } finally {
-    phaseBusy.value = false
-    phaseBusyAction.value = ''
-  }
-}
-
-async function skipPhase(phase: DevPhaseView | null): Promise<void> {
-  if (!phase || phaseBusy.value || readOnly.value) return
-  const action = phaseActionStateFor(phase)
-  if (!action.canSkip) {
-    ElMessage.warning(action.reason || '该阶段不可跳过')
-    return
-  }
-  try {
-    await ElMessageBox.confirm(
-      `跳过阶段 ${phase.order}「${phase.title}」只更新阶段状态：不会删除会话或代码，可稍后重新开始；不会自动完成应用。`,
-      '跳过阶段',
-      { type: 'warning', confirmButtonText: '跳过', cancelButtonText: '取消' }
-    )
-  } catch {
-    return
-  }
-  phaseBusy.value = true
-  phaseBusyAction.value = 'skip'
-  try {
-    await skipDevPhase(props.appId, phase.id)
-    await refreshAfterPhaseChange()
-    ElMessage.success('阶段已跳过')
-  } catch (err) {
-    handlePhaseError(err)
-  } finally {
-    phaseBusy.value = false
-    phaseBusyAction.value = ''
-  }
-}
-
-async function reopenPhase(phase: DevPhaseView | null): Promise<void> {
-  if (!phase || phaseBusy.value || readOnly.value) return
-  const action = phaseActionStateFor(phase)
-  if (!action.canReopen) {
-    ElMessage.warning(action.reason || '该阶段不可重新打开')
-    return
-  }
-  try {
-    await ElMessageBox.confirm(
-      `重新打开阶段 ${phase.order}「${phase.title}」只把状态改回进行中：不会自动创建/切换会话，也不会移除摘要。`,
-      '重新打开阶段',
-      { type: 'warning', confirmButtonText: '重新打开', cancelButtonText: '取消' }
-    )
-  } catch {
-    return
-  }
-  phaseBusy.value = true
-  phaseBusyAction.value = 'reopen'
-  try {
-    await reopenDevPhase(props.appId, phase.id)
-    await refreshAfterPhaseChange()
-    ElMessage.success('阶段已重新打开')
-  } catch (err) {
-    handlePhaseError(err)
-  } finally {
-    phaseBusy.value = false
-    phaseBusyAction.value = ''
+    fidelityBusy.value = false
   }
 }
 
@@ -923,7 +678,7 @@ async function refresh(silent = true): Promise<void> {
   refreshing.value = true
   if (!silent) error.value = ''
   try {
-    const next = await getDevState(props.appId, selectedSessionId.value)
+    const next = await getDevState(props.appId, selectedSessionId.value, 'development')
     applyData(next)
     error.value = ''
     if (next.session && !next.readOnly) ensureEvents()
@@ -932,7 +687,6 @@ async function refresh(silent = true): Promise<void> {
       connection = null
       connectionState.value = 'closed'
     }
-    if (next.app.handoff) void loadPhases()
     void loadSessions()
   } catch (err) {
     if (!silent || !data.value) error.value = err instanceof Error ? err.message : String(err)
@@ -946,10 +700,29 @@ function ensureEvents(): void {
   if (connection) return
   connection = connectDevEvents(
     props.appId,
-    () => scheduleRefresh(),
-    connectionStateValue => {
-      connectionState.value = connectionStateValue
-    }
+    event => {
+      const type = String(event.type ?? '')
+      const data = (event.data ?? {}) as Record<string, unknown>
+      if (type === 'session.text.delta' || type === 'session.text.ended') {
+        applyPending({ type: 'content' })
+      } else if (type === 'session.execution.failed') {
+        const nested = (data.error ?? {}) as Record<string, unknown>
+        const message =
+          (typeof nested.message === 'string' && nested.message) ||
+          (typeof data.message === 'string' && data.message) ||
+          ''
+        applyPending({ type: 'failed', message })
+      } else if (type === 'session.execution.interrupted') {
+        applyPending({ type: 'interrupted' })
+      } else if (type === 'session.idle' || type === 'session.execution.succeeded') {
+        if (pending.value?.phase === 'awaiting') applyPending({ type: 'content' })
+      }
+      scheduleRefresh()
+    },
+    value => {
+      connectionState.value = value
+    },
+    'development'
   )
 }
 
@@ -970,15 +743,16 @@ async function start(): Promise<void> {
   }
   actionBusy.value = 'start'
   error.value = ''
+  beginPending()
   try {
-    const next = await createDevSession(props.appId)
+    const next = await createDevSession(props.appId, { view: 'development', module: moduleKey.value || undefined })
     selectedSessionId.value = next.session?.id ?? null
     applyData(next)
     ensureEvents()
-    await promptDevSession(props.appId, prompt)
+    await promptDevSession(props.appId, prompt, 'development', { module: moduleKey.value || undefined })
     composer.value = ''
     startPrompt.value = next.defaultPrompt
-    await refresh(true)
+    await Promise.all([refresh(true), loadDesignRef()])
     ElMessage.success('开发会话已开始')
     emit('app-changed')
     await nextTick()
@@ -986,6 +760,7 @@ async function start(): Promise<void> {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     error.value = message
+    applyPending({ type: 'failed', message })
     ElMessage.error(message)
   } finally {
     actionBusy.value = ''
@@ -996,7 +771,7 @@ async function newSession(): Promise<void> {
   if (actionBusy.value) return
   try {
     await ElMessageBox.confirm(
-      newSessionConfirmText(),
+      '当前会话会归档，新会话不会自动接续旧上下文；旧会话保留在左侧列表，可随时查看/恢复。',
       '新建开发会话',
       { type: 'warning', confirmButtonText: '新建', cancelButtonText: '取消' }
     )
@@ -1005,13 +780,14 @@ async function newSession(): Promise<void> {
   }
   actionBusy.value = 'start'
   error.value = ''
+  applyPending({ type: 'reset' })
   try {
-    const next = await createDevSession(props.appId, true)
+    const next = await createDevSession(props.appId, { new: true, view: 'development', module: moduleKey.value || undefined })
     selectedSessionId.value = next.session?.id ?? null
     applyData(next, false)
     composer.value = next.defaultPrompt
     ensureEvents()
-    await refresh(true)
+    await Promise.all([refresh(true), loadDesignRef()])
     await loadSessions()
     await nextTick()
     composerRef.value?.focus()
@@ -1041,7 +817,6 @@ function closePanes(): void {
   asideOpen.value = false
 }
 
-/** 断点切换时重置抽屉状态：窄屏默认全部收起，宽屏恢复并列三栏 */
 function syncPaneLayout(): void {
   const isNarrow = window.innerWidth <= 1024
   if (isNarrow === narrow.value) return
@@ -1061,19 +836,18 @@ async function selectSession(item: DevSessionListItem): Promise<void> {
     return
   }
   actionBusy.value = 'switch'
+  applyPending({ type: 'reset' })
   try {
     connection?.close()
     connection = null
     selectedSessionId.value = item.id
     if (narrow.value) sidebarOpen.value = false
-    const next = await getDevState(props.appId, item.id)
+    const next = await getDevState(props.appId, item.id, 'development')
     applyData(next)
-    phaseWarnings.value = []
     await loadSessions()
     if (!next.readOnly) ensureEvents()
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    ElMessage.error(message)
+    ElMessage.error(err instanceof Error ? err.message : String(err))
     await loadSessions()
   } finally {
     actionBusy.value = ''
@@ -1142,16 +916,12 @@ async function archiveSession(item: DevSessionListItem): Promise<void> {
 
 async function restoreSession(item: DevSessionListItem): Promise<void> {
   if (actionBusy.value) return
-  const mismatch = handoffVersionMismatch(item, handoff.value?.version)
-  const warning = mismatch
-    ? `该会话基于交接包 v${item.handoffVersion}，当前交接包 v${handoff.value?.version}；继续可能使用旧上下文，建议新建会话。\n\n`
-    : ''
   try {
-    await ElMessageBox.confirm(
-      `${warning}恢复会把当前会话归档，并让该会话成为当前会话。`,
-      '恢复为当前会话',
-      { type: 'warning', confirmButtonText: '恢复', cancelButtonText: '取消' }
-    )
+    await ElMessageBox.confirm('恢复会把当前会话归档，并让该会话成为当前会话。', '恢复为当前会话', {
+      type: 'warning',
+      confirmButtonText: '恢复',
+      cancelButtonText: '取消'
+    })
   } catch {
     return
   }
@@ -1159,12 +929,10 @@ async function restoreSession(item: DevSessionListItem): Promise<void> {
   try {
     connection?.close()
     connection = null
-    const next = await activateDevSession(props.appId, item.id)
+    const next = await activateDevSession(props.appId, item.id, 'development')
     selectedSessionId.value = item.id
     applyData(next)
-    phaseWarnings.value = []
     await loadSessions()
-    await loadPhases()
     ensureEvents()
     emit('app-changed')
     ElMessage.success('已恢复为当前会话')
@@ -1191,22 +959,12 @@ async function restoreCurrent(): Promise<void> {
       opencodeTitle: null,
       status: session.value.status,
       model: session.value.model,
+      view: 'development',
       createdAt: session.value.createdAt,
       updatedAt: session.value.updatedAt,
       lastActiveAt: session.value.lastActiveAt,
-      changeSetId: session.value.changeSetId,
-      changeSetSeq: null,
-      changeSetTitle: null,
-      changeSetStatus: null,
-      handoffVersion: session.value.handoffVersion,
-      handoffHash: session.value.handoffHash,
       opencodeExists: null,
-      active: false,
-      phaseId: session.value.phase?.id ?? null,
-      phaseKey: session.value.phase?.key ?? null,
-      phaseTitle: session.value.phase?.title ?? null,
-      phaseOrder: session.value.phase?.order ?? null,
-      phaseStatus: session.value.phase?.status ?? null
+      active: false
     })
   }
 }
@@ -1216,25 +974,18 @@ async function send(): Promise<void> {
   const text = composer.value.trim()
   actionBusy.value = 'send'
   error.value = ''
+  beginPending()
   try {
-    const wasCompleted = localCompleted.value
-    const result = await promptDevSession(props.appId, text)
+    await promptDevSession(props.appId, text, 'development', { module: moduleKey.value || undefined })
     composer.value = ''
-    if (wasCompleted) {
-      localCompleted.value = false
-      emit('app-changed')
-    }
     ensureEvents()
-    await refresh(true)
-    if (result.warning) {
-      ElMessage.warning(result.warning)
-      void loadPhases()
-    }
+    await Promise.all([refresh(true), loadDesignRef()])
     await nextTick()
     scrollToBottom(true)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     error.value = message
+    applyPending({ type: 'failed', message })
     ElMessage.error(message)
   } finally {
     actionBusy.value = ''
@@ -1245,7 +996,8 @@ async function stop(): Promise<void> {
   if (actionBusy.value || readOnly.value) return
   actionBusy.value = 'stop'
   try {
-    await interruptDevSession(props.appId)
+    await interruptDevSession(props.appId, 'development')
+    applyPending({ type: 'interrupted' })
     await refresh(true)
     ElMessage.success('已请求停止')
   } catch (err) {
@@ -1255,7 +1007,6 @@ async function stop(): Promise<void> {
   }
 }
 
-/** I-09a：二次确认后请求 opencode 原生 compact；只读会话不提供入口 */
 async function compactContext(): Promise<void> {
   if (actionBusy.value || readOnly.value) return
   try {
@@ -1269,33 +1020,9 @@ async function compactContext(): Promise<void> {
   }
   actionBusy.value = 'compact'
   try {
-    await compactDevSession(props.appId)
+    await compactDevSession(props.appId, 'development')
     ElMessage.success('已提交压缩请求，结果见时间线')
     await refresh(true)
-  } catch (err) {
-    ElMessage.error(err instanceof Error ? err.message : String(err))
-  } finally {
-    actionBusy.value = ''
-  }
-}
-
-async function completeDevelopment(): Promise<void> {
-  if (actionBusy.value) return
-  try {
-    await ElMessageBox.confirm('确认开发已完成？只记录完成状态，不检查 Git / 证据 / 测试门禁。', '确认完成开发', {
-      type: 'warning',
-      confirmButtonText: '确认完成',
-      cancelButtonText: '取消'
-    })
-  } catch {
-    return
-  }
-  actionBusy.value = 'complete'
-  try {
-    await completeApp(props.appId)
-    localCompleted.value = true
-    emit('app-changed')
-    ElMessage.success('已记录开发完成')
   } catch (err) {
     ElMessage.error(err instanceof Error ? err.message : String(err))
   } finally {
@@ -1307,7 +1034,7 @@ async function replyPermission(requestId: string, decision: 'once' | 'always' | 
   if (actionBusy.value) return
   actionBusy.value = 'permission'
   try {
-    await replyDevPermission(props.appId, requestId, decision, message)
+    await replyDevPermission(props.appId, requestId, decision, message, 'development')
     await refresh(true)
   } catch (err) {
     ElMessage.error(err instanceof Error ? err.message : String(err))
@@ -1320,7 +1047,7 @@ async function replyForm(formId: string, answer: Record<string, FormValue>): Pro
   if (actionBusy.value) return
   actionBusy.value = 'form'
   try {
-    await replyDevForm(props.appId, formId, answer)
+    await replyDevForm(props.appId, formId, answer, 'development')
     await refresh(true)
     ElMessage.success('表单已提交')
   } catch (err) {
@@ -1330,20 +1057,11 @@ async function replyForm(formId: string, answer: Record<string, FormValue>): Pro
   }
 }
 
-function openHandoff(file?: string): void {
-  emit('open-handoff', file)
-}
-
-function shortHash(hash: string): string {
-  return hash.length > 12 ? `${hash.slice(0, 12)}…` : hash
-}
-
 function formatTime(value: string): string {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString('zh-CN', { hour12: false })
 }
 
-/** 时间线事件时间：ms → HH:mm:ss */
 function formatClock(ms: number): string {
   const date = new Date(ms)
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString('zh-CN', { hour12: false })
@@ -1355,11 +1073,6 @@ function formatElapsed(ms: number | null | undefined): string {
   if (seconds < 60) return `${seconds}s`
   const minutes = Math.floor(seconds / 60)
   return `${minutes}m ${seconds % 60}s`
-}
-
-function formatBytes(size: number): string {
-  if (size < 1024) return `${size} B`
-  return `${(size / 1024).toFixed(1)} KB`
 }
 
 function onScroll(): void {
@@ -1388,10 +1101,25 @@ watch(
   }
 )
 
+watch(assistantCount, next => {
+  if (pending.value?.phase === 'awaiting' && next > assistantBaseline) applyPending({ type: 'content' })
+})
+
+watch(moduleKey, key => {
+  persistModule(key)
+  // 模块切换后旧报告不再对应，清空避免误读
+  fidelityReport.value = null
+  fidelityError.value = ''
+})
+
 watch(
-  () => props.completed,
-  value => {
-    if (typeof value === 'boolean') localCompleted.value = value
+  () => state.value?.status,
+  status => {
+    if (pending.value?.phase !== 'awaiting') return
+    if (status === 'failed') applyPending({ type: 'failed' })
+    else if (status === 'interrupted') applyPending({ type: 'interrupted' })
+    // P7-6c：完成事件可能丢失；GET development 收敛到 succeeded/idle 后清掉“思考中”
+    else if (status && status !== 'running') applyPending({ type: 'content' })
   }
 )
 
@@ -1402,18 +1130,19 @@ watch(
     connection = null
     loading.value = true
     data.value = null
-    handoffMeta.value = null
+    pending.value = null
     composer.value = ''
     startPrompt.value = ''
     sessions.value = []
     selectedSessionId.value = null
-    phasesSeq += 1
-    phasesData.value = null
-    selectedPhaseId.value = null
-    phaseDialogOpen.value = false
-    phaseWarnings.value = []
-    plainStartOpen.value = false
-    void refresh(false)
+    moduleOptions.value = []
+    moduleKey.value = ''
+    designSystem.value = null
+    designCenterOpen.value = false
+    fidelityReport.value = null
+    fidelityError.value = ''
+    fidelityBusy.value = false
+    void refresh(false).then(() => loadDesignRef())
   }
 )
 
@@ -1424,6 +1153,7 @@ onMounted(async () => {
   window.addEventListener('resize', syncPaneLayout)
   window.addEventListener('keydown', onKeydown)
   await refresh(false)
+  await loadDesignRef()
   pollTimer = setInterval(() => {
     if (session.value && !readOnly.value) void refresh(true)
   }, 5000)
@@ -1467,422 +1197,431 @@ onUnmounted(() => {
 }
 .dev-title {
   flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 8px;
   min-width: 0;
-}
-.pane-toggle {
-  flex-shrink: 0;
-  border: 1px solid var(--rg-border, #e4e7ec);
-  background: var(--rg-surface, #fff);
-  color: var(--rg-text-2, #4b5563);
-  border-radius: 6px;
-  width: 26px;
-  height: 26px;
-  font-size: 12px;
-  line-height: 1;
-  cursor: pointer;
-}
-.pane-toggle:hover {
-  border-color: var(--rg-border-strong, #d4d9e2);
-  background: var(--rg-hover, #f6f7f9);
-  color: var(--rg-text, #1f2937);
-}
-.pane-toggle.active {
-  border-color: var(--rg-ai-border, #d9d9f7);
-  background: var(--rg-ai-soft, #eeeefc);
-  color: var(--rg-ai, #5b5bd6);
-}
-.readonly-chip {
-  flex-shrink: 0;
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 10px;
-  color: var(--rg-warn, #a05e03);
-  background: var(--rg-warn-soft, #fdf4e3);
-}
-.badge {
-  flex-shrink: 0;
-  border-radius: 999px;
-  padding: 2px 8px;
-  background: var(--rg-ai-soft, #eeeefc);
-  color: var(--rg-ai, #5b5bd6);
-  font-size: 10.5px;
-}
-.dev-title strong {
-  font-size: 13px;
-  min-width: 0;
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.meta {
-  color: var(--rg-text-3, #8a93a3);
-  font-size: 11px;
-  white-space: nowrap;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.dev-actions {
-  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  justify-content: flex-end;
+}
+.badge {
+  border-radius: 999px;
+  background: var(--rg-ai-soft);
+  color: var(--rg-ai);
+  font-size: 10.5px;
+  padding: 2px 9px;
+}
+.dev-title strong {
+  font-size: 13px;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.meta {
+  font-size: 11px;
+  color: var(--rg-text-3);
+}
+.module-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--rg-text-3);
+}
+.module-pick select {
+  max-width: 240px;
+  min-height: 26px;
+  border: 1px solid var(--rg-border-strong);
+  border-radius: 7px;
+  padding: 2px 7px;
+  background: var(--rg-surface);
+  color: var(--rg-text);
+  font-size: 11.5px;
+}
+.ui-check.ok {
+  color: var(--rg-ok);
+}
+.ui-check.warn {
+  color: var(--rg-warn);
+}
+.ui-check.muted {
+  color: var(--rg-text-3);
+}
+.muted.warn {
+  color: var(--rg-warn);
+}
+.readonly-chip {
+  font-size: 10.5px;
+  color: var(--rg-warn);
+  background: var(--rg-warn-soft);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.dev-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
 }
 .ctx-chip {
   font-size: 10.5px;
   border-radius: 999px;
-  padding: 2px 8px;
-  border: 1px solid transparent;
-  background: var(--rg-fill-2, #eef0f4);
-  color: var(--rg-text-2, #4b5563);
-  white-space: nowrap;
-  cursor: default;
+  padding: 3px 9px;
+  background: var(--rg-fill-2);
+  color: var(--rg-text-2);
 }
 .ctx-chip.warn {
-  background: var(--rg-warn-soft, #fdf4e3);
-  color: var(--rg-warn, #a05e03);
-  border-color: var(--rg-warn-border, #f2d9a8);
+  background: var(--rg-warn-soft);
+  color: var(--rg-warn);
 }
 .ctx-chip.danger {
-  background: var(--rg-danger-soft, #fdeeef);
-  color: var(--rg-danger, #c23a45);
-  border-color: var(--rg-danger-border, #f5c7cb);
+  background: var(--rg-danger-soft);
+  color: var(--rg-danger);
 }
-.ctx-chip.unknown {
-  color: var(--rg-text-3, #8a93a3);
-}
-.compact-btn.highlight {
-  border-color: var(--rg-warn, #a05e03);
-  color: var(--rg-warn, #a05e03);
-  background: var(--rg-warn-soft, #fdf4e3);
-}
-.compact-btn.highlight.danger {
-  border-color: var(--rg-danger, #c23a45);
-  color: var(--rg-danger, #c23a45);
-  background: var(--rg-danger-soft, #fdeeef);
-}
-.context-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border-radius: 8px;
-  padding: 9px 11px;
-  font-size: 12px;
-}
-.context-banner.warn {
-  background: var(--rg-warn-soft, #fdf4e3);
-  color: var(--rg-warn, #a05e03);
-}
-.context-banner.danger {
-  background: var(--rg-danger-soft, #fdeeef);
-  color: var(--rg-danger, #c23a45);
-}
-.timeline-notice {
-  align-self: center;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  max-width: 92%;
-  border-radius: 999px;
-  padding: 5px 12px;
-  font-size: 11.5px;
-  border: 1px solid var(--rg-border, #e4e7ec);
-  background: var(--rg-fill, #f4f5f7);
-  color: var(--rg-text-2, #4b5563);
-  text-align: left;
-}
-.timeline-notice .notice-text {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.timeline-notice.failed {
-  border-color: var(--rg-danger-border, #f5c7cb);
-  background: var(--rg-danger-soft, #fdeeef);
-  color: var(--rg-danger, #c23a45);
-}
-.timeline-notice .notice-icon {
-  font-size: 12px;
-  opacity: 0.7;
-}
-.timeline-notice .notice-time {
-  color: var(--rg-text-3, #8a93a3);
+.conn {
   font-size: 10.5px;
-}
-.ctx-detail.ok {
-  color: var(--rg-text-2, #4b5563);
-}
-.ctx-detail.warn {
-  color: var(--rg-warn, #a05e03);
-}
-.ctx-detail.danger {
-  color: var(--rg-danger, #c23a45);
-}
-.conn,
-.run-status {
-  font-size: 10.5px;
-  border-radius: 999px;
-  padding: 2px 8px;
-  background: var(--rg-fill-2, #eef0f4);
-  color: var(--rg-text-3, #8a93a3);
-}
-.conn.open {
-  color: var(--rg-ok, #12855f);
-  background: var(--rg-ok-soft, #e8f5ef);
+  color: var(--rg-text-3);
 }
 .conn.error {
-  color: var(--rg-danger, #c23a45);
-  background: var(--rg-danger-soft, #fdeeef);
+  color: var(--rg-danger);
+}
+.run-status {
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: var(--rg-fill-2);
+  color: var(--rg-text-2);
 }
 .run-status.running {
-  color: var(--rg-ai, #5b5bd6);
-  background: var(--rg-ai-soft, #eeeefc);
+  background: var(--rg-ai-soft);
+  color: var(--rg-ai);
 }
 .run-status.done {
-  color: var(--rg-ok, #12855f);
-  background: var(--rg-ok-soft, #e8f5ef);
+  background: var(--rg-ok-soft);
+  color: var(--rg-ok);
 }
 .dev-body {
   flex: 1;
   min-height: 0;
-  display: flex;
-  position: relative;
-  overflow: hidden;
+  display: grid;
+  grid-template-columns: 268px minmax(0, 1fr) 280px;
 }
-.dev-mask {
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-  background: var(--rg-overlay, rgba(20, 24, 31, 0.42));
-  border: 0;
-  padding: 0;
+.dev-body.sidebar-collapsed {
+  grid-template-columns: 0 minmax(0, 1fr) 280px;
+}
+.dev-body.aside-collapsed {
+  grid-template-columns: 268px minmax(0, 1fr) 0;
+}
+.dev-body.sidebar-collapsed.aside-collapsed {
+  grid-template-columns: 0 minmax(0, 1fr) 0;
+}
+.dev-sessions,
+.dev-side {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--rg-surface-2, #fafbfc);
 }
 .dev-sessions {
-  width: 260px;
-  flex-shrink: 0;
-  min-width: 0;
-  min-height: 0;
   border-right: 1px solid var(--rg-border, #e4e7ec);
-  background: var(--rg-surface, #fff);
-  display: flex;
 }
-.dev-body.sidebar-collapsed .dev-sessions {
-  display: none;
-}
-.timeline {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-/* Composer/只读条移入 timeline 后，滚动区与“回到最新”共用这一层，按钮不再压住输入框 */
-.timeline-main {
-  flex: 1;
-  min-height: 0;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-.timeline-scroll {
-  flex: 1;
-  overflow: auto;
-  padding: 18px 20px;
-}
-.timeline-content {
-  width: min(880px, 100%);
-  margin: 0 auto;
+.dev-side {
+  border-left: 1px solid var(--rg-border, #e4e7ec);
+  overflow-y: auto;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
-.center-card,
-.start-card {
-  margin: 40px auto;
-  width: min(720px, calc(100% - 40px));
-  background: var(--rg-surface, #fff);
-  border: 1px solid var(--rg-border, #e4e7ec);
-  border-radius: 14px;
-  padding: 22px;
+.dev-side h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--rg-text-2);
+}
+.dev-side dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dev-side dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+}
+.dev-side dt {
+  color: var(--rg-text-3);
+  flex-shrink: 0;
+}
+.dev-side dd {
+  margin: 0;
+  text-align: right;
+  color: var(--rg-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dev-side dd.mono {
+  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  font-size: 10.5px;
+}
+.ctx-detail.warn {
+  color: var(--rg-warn);
+}
+.ctx-detail.danger {
+  color: var(--rg-danger);
+}
+.side-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.fidelity-report {
+  margin-top: 10px;
+  border: 1px solid var(--rg-border);
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: var(--rg-surface);
+}
+.fidelity-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fidelity-status {
+  font-size: 10.5px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: var(--rg-fill-2);
+  color: var(--rg-text-2);
+}
+.fidelity-status.ok {
+  background: var(--rg-ok-soft);
+  color: var(--rg-ok);
+}
+.fidelity-status.warn {
+  background: var(--rg-warn-soft);
+  color: var(--rg-warn);
+}
+.fidelity-status.fail {
+  background: var(--rg-danger-soft);
+  color: var(--rg-danger);
+}
+.fidelity-checks {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.fidelity-item {
+  border-left: 2px solid var(--rg-border-strong);
+  padding: 2px 0 2px 7px;
+}
+.fidelity-item.pass {
+  border-left-color: var(--rg-ok);
+}
+.fidelity-item.warn {
+  border-left-color: var(--rg-warn);
+}
+.fidelity-item.fail {
+  border-left-color: var(--rg-danger);
+}
+.fidelity-item-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.fidelity-badge {
+  font-size: 10px;
+  border-radius: 4px;
+  padding: 1px 5px;
+  background: var(--rg-fill-2);
+  color: var(--rg-text-3);
+}
+.fidelity-badge.ok {
+  color: var(--rg-ok);
+}
+.fidelity-badge.warn {
+  color: var(--rg-warn);
+}
+.fidelity-badge.fail {
+  color: var(--rg-danger);
+}
+.fidelity-item p {
+  margin: 2px 0 0;
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--rg-text-3);
+  word-break: break-word;
+}
+.fidelity-item .fidelity-hint {
+  color: var(--rg-warn);
+}
+.muted {
+  font-size: 11px;
+  color: var(--rg-text-3);
+  line-height: 1.7;
+  margin: 0;
+}
+.file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10.5px;
+}
+.file-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.file-list code {
+  word-break: break-all;
+  color: var(--rg-text-2);
+}
+.timeline {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--rg-bg, #f4f5f7);
 }
 .center-card {
+  margin: 60px auto;
+  min-width: 300px;
+  max-width: 520px;
+  background: var(--rg-surface);
+  border: 1px solid var(--rg-border);
+  border-radius: 12px;
+  padding: 22px;
   text-align: center;
   font-size: 12.5px;
-  color: var(--rg-text-3, #8a93a3);
+  color: var(--rg-text-2);
 }
 .error-card p {
-  color: var(--rg-danger, #c23a45);
+  color: var(--rg-danger);
   white-space: pre-wrap;
+  line-height: 1.6;
 }
 .center-actions,
 .start-actions {
   display: flex;
   gap: 8px;
   justify-content: center;
-  margin-top: 14px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.start-card {
+  margin: 26px auto;
+  max-width: 640px;
+  background: var(--rg-surface);
+  border: 1px solid var(--rg-border);
+  border-radius: 12px;
+  padding: 18px;
+  font-size: 12.5px;
+  color: var(--rg-text-2);
 }
 .start-head {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
   gap: 10px;
-  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
-.start-card h2 {
+.start-head h2 {
   margin: 0;
-  font-size: 19px;
+  font-size: 15px;
+  color: var(--rg-text);
+}
+.start-head .hint {
+  font-size: 11px;
+  color: var(--rg-text-3);
 }
 .start-card p {
-  margin: 0 0 12px;
-  font-size: 12.5px;
   line-height: 1.7;
-  color: var(--rg-text-2, #4b5563);
+}
+.start-card .warn {
+  color: var(--rg-warn);
 }
 .start-card textarea {
   width: 100%;
-  border: 1px solid var(--rg-border-strong, #d4d9e2);
+  box-sizing: border-box;
+  border: 1px solid var(--rg-border);
   border-radius: 9px;
-  padding: 10px 12px;
-  font-family: inherit;
+  padding: 9px 11px;
   font-size: 12.5px;
-  line-height: 1.65;
-  color: var(--rg-text, #1f2937);
-  background: var(--rg-surface-2, #fafbfc);
+  line-height: 1.6;
   resize: vertical;
-  outline: none;
+  background: var(--rg-surface);
+  color: var(--rg-text);
 }
-.start-card textarea::placeholder {
-  color: var(--rg-text-3, #8a93a3);
+.timeline-main {
+  flex: 1;
+  min-height: 0;
+  position: relative;
 }
-.start-card textarea:focus {
-  border-color: var(--rg-ai, #5b5bd6);
-  background: var(--rg-surface, #fff);
-  box-shadow: 0 0 0 3px var(--rg-ai-soft, #eeeefc);
+.timeline-scroll {
+  height: 100%;
+  overflow-y: auto;
+  padding: 14px clamp(12px, 3vw, 26px);
 }
-.start-actions {
-  justify-content: flex-start;
+.timeline-content {
+  max-width: 900px;
+  margin: 0 auto;
 }
-/* U7：开始卡片里的阶段快捷列表 */
-.phase-start-list {
-  list-style: none;
-  margin: 4px 0 12px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.phase-start-item {
-  border: 1px solid var(--rg-border, #e4e7ec);
-  background: var(--rg-surface-2, #fafbfc);
+.readonly-banner,
+.context-banner,
+.error-banner {
   border-radius: 9px;
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-.phase-start-item.current {
-  border-color: var(--rg-ai-border, #d9d9f7);
-}
-.psi-main {
+  padding: 8px 12px;
+  font-size: 11.5px;
+  line-height: 1.7;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   flex-wrap: wrap;
-  gap: 5px 7px;
-  min-width: 0;
 }
-.psi-title {
-  flex: 1 1 200px;
-  min-width: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--rg-text, #1f2937);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.readonly-banner {
+  background: var(--rg-fill-2);
+  color: var(--rg-text-2);
 }
-.phase-chip {
-  flex-shrink: 0;
-  border-radius: 999px;
-  padding: 1px 7px;
-  font-size: 9.5px;
-  border: 1px solid transparent;
-  background: var(--rg-fill-2, #eef0f4);
-  color: var(--rg-text-3, #8a93a3);
-  white-space: nowrap;
+.context-banner {
+  background: var(--rg-fill-2);
+  color: var(--rg-text-2);
 }
-.phase-chip.in-progress {
-  background: var(--rg-ai-soft, #eeeefc);
-  color: var(--rg-ai, #5b5bd6);
+.context-banner.warn {
+  background: var(--rg-warn-soft);
+  color: var(--rg-warn);
 }
-.phase-chip.completed {
-  background: var(--rg-ok-soft, #e8f5ef);
-  color: var(--rg-ok, #12855f);
+.context-banner.danger {
+  background: var(--rg-danger-soft);
+  color: var(--rg-danger);
 }
-.phase-chip.skipped,
-.phase-chip.unknown {
-  background: var(--rg-fill-2, #eef0f4);
-  color: var(--rg-text-3, #8a93a3);
+.error-banner {
+  background: var(--rg-danger-soft);
+  color: var(--rg-danger);
 }
-.phase-chip.not-started {
-  color: var(--rg-text-3, #8a93a3);
-}
-.psi-session {
-  flex-shrink: 0;
-  font-size: 9.5px;
-  color: var(--rg-ai, #5b5bd6);
-}
-.psi-goal {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.6;
-  color: var(--rg-text-3, #8a93a3);
-  overflow-wrap: anywhere;
-}
-.psi-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.plain-toggle {
-  border: 0;
-  background: transparent;
-  padding: 2px 0;
-  margin-bottom: 6px;
-  font-size: 11.5px;
-  color: var(--rg-ai, #5b5bd6);
-  cursor: pointer;
-  text-align: left;
-}
-.plain-toggle:hover {
-  text-decoration: underline;
-}
-.hint,
-.muted {
-  font-size: 11px;
-  color: var(--rg-text-3, #8a93a3);
-}
-.warn {
-  color: var(--rg-warn, #a05e03);
-  background: var(--rg-warn-soft, #fdf4e3);
-  border-radius: 8px;
-  padding: 8px 10px;
+.user-message,
+.assistant-message {
+  margin: 0 0 12px;
+  border: 1px solid var(--rg-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--rg-surface);
 }
 .user-message {
-  align-self: flex-end;
-  max-width: 78%;
-  background: var(--rg-user-bubble, #20242e);
-  color: var(--rg-user-bubble-text, #fff);
-  border-radius: 12px 12px 4px 12px;
-  padding: 9px 12px;
+  background: var(--rg-surface-2);
 }
 .user-message pre,
 .assistant-message pre {
@@ -1892,85 +1631,48 @@ onUnmounted(() => {
   font-family: inherit;
   font-size: 12.5px;
   line-height: 1.7;
+  color: var(--rg-text);
 }
-.assistant-message {
-  align-self: flex-start;
-  max-width: 90%;
-  background: var(--rg-surface, #fff);
-  border: 1px solid var(--rg-border, #e4e7ec);
-  border-radius: 4px 12px 12px 12px;
-  padding: 10px 13px;
+.timeline-notice {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
+  font-size: 11.5px;
+  color: var(--rg-text-2);
+  background: var(--rg-fill-2);
+  border-radius: 9px;
+  padding: 7px 11px;
+  margin-bottom: 10px;
 }
-.reasoning {
-  border-left: 2px solid var(--rg-border-strong, #d4d9e2);
-  padding-left: 9px;
-  color: var(--rg-text-3, #8a93a3);
+.timeline-notice.failed {
+  color: var(--rg-danger);
 }
-.reasoning-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.reasoning pre {
-  font-size: 11.5px !important;
+.notice-time {
+  margin-left: auto;
+  color: var(--rg-text-3);
+  font-size: 10.5px;
 }
 .pending-stack {
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  margin-top: 4px;
-}
-.completed-banner {
-  border-radius: 8px;
-  background: var(--rg-ok-soft, #e8f5ef);
-  color: var(--rg-ok, #12855f);
-  padding: 9px 11px;
-  font-size: 12px;
-}
-.readonly-banner {
-  border-radius: 8px;
-  background: var(--rg-warn-soft, #fdf4e3);
-  color: var(--rg-warn, #a05e03);
-  padding: 9px 11px;
-  font-size: 12px;
-}
-.readonly-bar {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-top: 1px solid var(--rg-border, #e4e7ec);
-  background: var(--rg-warn-soft, #fdf4e3);
-  color: var(--rg-warn, #a05e03);
-  padding: 10px 16px;
-  font-size: 12px;
-}
-.error-banner {
-  border-radius: 8px;
-  background: var(--rg-danger-soft, #fdeeef);
-  color: var(--rg-danger, #c23a45);
-  padding: 9px 11px;
-  font-size: 12px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 .working-row {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 11.5px;
-  color: var(--rg-text-3, #8a93a3);
-  padding: 4px 2px;
+  color: var(--rg-text-2);
+  padding: 6px 2px;
 }
 .spinner {
   width: 12px;
   height: 12px;
+  border: 2px solid var(--rg-border-strong);
+  border-top-color: var(--rg-ai);
   border-radius: 50%;
-  border: 2px solid var(--rg-border, #e4e7ec);
-  border-top-color: var(--rg-ai, #5b5bd6);
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.9s linear infinite;
 }
 @keyframes spin {
   to {
@@ -1978,296 +1680,139 @@ onUnmounted(() => {
   }
 }
 .empty-timeline {
-  color: var(--rg-text-3, #8a93a3);
-  font-size: 12.5px;
+  font-size: 12px;
+  color: var(--rg-text-3);
   text-align: center;
-  padding: 40px 0;
+  padding: 28px 0;
 }
 .back-latest {
   position: absolute;
-  left: 50%;
-  bottom: 12px;
-  transform: translateX(-50%);
-  border: 1px solid var(--rg-border, #e4e7ec);
-  background: var(--rg-surface, #fff);
-  color: var(--rg-text-2, #4b5563);
+  right: 18px;
+  bottom: 16px;
+  border: 1px solid var(--rg-border-strong);
+  background: var(--rg-surface);
+  color: var(--rg-text-2);
   border-radius: 999px;
   padding: 5px 12px;
-  font-size: 11.5px;
-  box-shadow: var(--rg-shadow-2, 0 2px 6px rgba(16, 24, 40, 0.08));
+  font-size: 11px;
   cursor: pointer;
+  box-shadow: var(--rg-shadow-1);
 }
-.back-latest:hover {
-  border-color: var(--rg-border-strong, #d4d9e2);
-  color: var(--rg-text, #1f2937);
-}
-.dev-side {
-  width: 260px;
-  flex-shrink: 0;
-  min-width: 0;
-  border-left: 1px solid var(--rg-border, #e4e7ec);
-  background: var(--rg-surface, #fff);
-  overflow: auto;
-  padding: 14px;
+.readonly-bar {
   display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.dev-body.aside-collapsed .dev-side {
-  display: none;
-}
-.dev-side section {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.dev-side h3 {
-  margin: 0;
-  font-size: 11.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--rg-text-3, #8a93a3);
-}
-.dev-side dl {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 11.5px;
-}
-.dev-side dl div {
-  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
-}
-.dev-side dt {
-  color: var(--rg-text-3, #8a93a3);
-}
-.dev-side dd {
-  margin: 0;
-  text-align: right;
-  color: var(--rg-text-2, #4b5563);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.mono {
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 10.5px;
-}
-.side-actions {
-  display: flex;
-  gap: 6px;
-}
-.doc-link {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  border: 1px solid var(--rg-border, #e4e7ec);
-  background: var(--rg-fill, #f4f5f7);
-  border-radius: 7px;
-  padding: 6px 8px;
-  font-size: 11px;
-  color: var(--rg-text-2, #4b5563);
-  cursor: pointer;
-  text-align: left;
-}
-.doc-link:hover {
-  border-color: var(--rg-border-strong, #d4d9e2);
-  background: var(--rg-fill-2, #eef0f4);
-}
-.doc-link:focus-visible {
-  outline: 2px solid var(--rg-focus-ring);
-  outline-offset: 1px;
-}
-.doc-link small {
-  color: var(--rg-text-3, #8a93a3);
-  font-size: 10px;
-  flex-shrink: 0;
-}
-.handoff-scale {
-  display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  border: 1px solid var(--rg-warn-border, #f0dcae);
-  background: var(--rg-warn-soft, #fdf4e3);
+  padding: 10px 16px;
+  border-top: 1px solid var(--rg-border);
+  background: var(--rg-surface);
+  font-size: 11.5px;
+  color: var(--rg-text-2);
+}
+.pane-toggle {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--rg-border);
   border-radius: 7px;
+  background: var(--rg-surface);
+  color: var(--rg-text-2);
+  cursor: pointer;
 }
-.handoff-scale .scale-chip {
-  font-size: 10px;
-  font-weight: 600;
-  border-radius: 999px;
-  padding: 1px 7px;
-  color: var(--rg-warn, #a05e03);
-  background: var(--rg-surface, #fff);
-  border: 1px solid var(--rg-warn-border, #f0dcae);
-  white-space: nowrap;
+.pane-toggle.active {
+  border-color: var(--rg-border-strong);
+  color: var(--rg-text);
 }
-.handoff-scale .scale-counts {
-  font-size: 11px;
-  color: var(--rg-text-2, #4b5563);
-}
-.handoff-scale .scale-triggers {
-  font-size: 10.5px;
-}
-.handoff-scale .btn {
-  margin-left: auto;
-}
-.file-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.file-list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 10.5px;
-  color: var(--rg-text-3, #8a93a3);
-}
-.file-list code {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-}
-.file-list span {
-  flex-shrink: 0;
+.dev-mask {
+  display: none;
 }
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--rg-border, #e4e7ec);
-  background: var(--rg-surface, #fff);
-  color: var(--rg-text-2, #4b5563);
-  border-radius: 7px;
-  padding: 6px 10px;
-  font-size: 11.5px;
+  min-height: 30px;
+  border: 1px solid var(--rg-border-strong);
+  background: var(--rg-surface);
+  color: var(--rg-text-2);
+  border-radius: 8px;
+  padding: 5px 11px;
+  font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
 }
 .btn:hover:not(:disabled) {
-  border-color: var(--rg-border-strong, #d4d9e2);
-  background: var(--rg-hover, #f6f7f9);
-  color: var(--rg-text, #1f2937);
+  border-color: var(--rg-text-3);
+  background: var(--rg-hover);
+  color: var(--rg-text);
 }
 .btn.primary {
-  background: var(--rg-ink, #20242e);
-  border-color: var(--rg-ink, #20242e);
-  color: var(--rg-ink-contrast, #fff);
-}
-.btn.primary:hover:not(:disabled) {
-  background: var(--rg-ink-hover, #333846);
-  border-color: var(--rg-ink-hover, #333846);
-  color: var(--rg-ink-contrast, #fff);
+  background: var(--rg-ink);
+  border-color: var(--rg-ink);
+  color: var(--rg-ink-contrast);
 }
 .btn.small {
-  padding: 4px 8px;
+  min-height: 26px;
+  padding: 3px 9px;
   font-size: 11px;
 }
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
+.compact-btn.warn {
+  border-color: var(--rg-warn-border);
+  color: var(--rg-warn);
+}
+.compact-btn.danger,
+.compact-btn.highlight {
+  border-color: var(--rg-danger-border);
+  color: var(--rg-danger);
+}
 code {
-  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
   font-size: 11px;
-  background: var(--rg-fill-2, #eef0f4);
+  background: var(--rg-fill-2);
   border-radius: 4px;
   padding: 1px 5px;
 }
-@media (max-width: 1280px) {
-  .dev-sessions {
-    width: 224px;
-  }
-  .dev-side {
-    width: 236px;
-    padding: 12px;
-  }
-  .dev-head {
-    gap: 6px 10px;
-    padding: 6px 12px;
-  }
-}
-/* ≤1024：会话栏与右侧 aside 折叠为抽屉（遮罩 + Esc/点遮罩关闭），时间线全宽 */
 @media (max-width: 1024px) {
-  .handoff-meta {
-    display: none;
+  .dev-body,
+  .dev-body.sidebar-collapsed,
+  .dev-body.aside-collapsed,
+  .dev-body.sidebar-collapsed.aside-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+    position: relative;
   }
   .dev-sessions,
   .dev-side {
     position: absolute;
     top: 0;
     bottom: 0;
-    z-index: 40;
     width: min(320px, 86vw);
-    box-shadow: var(--rg-shadow-2, 0 8px 28px rgba(16, 24, 40, 0.18));
+    z-index: 20;
+    box-shadow: var(--rg-shadow-2);
+    transition: transform 0.18s ease;
   }
   .dev-sessions {
     left: 0;
-    border-right: 1px solid var(--rg-border, #e4e7ec);
+    transform: translateX(-105%);
   }
   .dev-side {
     right: 0;
-    border-left: 1px solid var(--rg-border, #e4e7ec);
+    transform: translateX(105%);
   }
-}
-/* ≤768：单栏 + 抽屉；顶栏两行、Composer/只读条贴底 */
-@media (max-width: 768px) {
-  .dev-head {
-    padding: 6px 10px;
+  .dev-body:not(.sidebar-collapsed) .dev-sessions {
+    transform: translateX(0);
   }
-  .dev-title {
-    flex-basis: 100%;
+  .dev-body:not(.aside-collapsed) .dev-side {
+    transform: translateX(0);
   }
-  .dev-actions {
-    margin-left: 0;
-    width: 100%;
-    justify-content: flex-start;
-    gap: 6px;
-  }
-  .dev-actions .conn {
-    display: none;
-  }
-  .timeline-scroll {
-    padding: 12px 10px;
-  }
-  .timeline-content {
-    gap: 10px;
-  }
-  .user-message {
-    max-width: 92%;
-  }
-  .assistant-message {
-    max-width: 100%;
-  }
-  .center-card,
-  .start-card {
-    width: calc(100% - 24px);
-    margin: 20px auto;
-    padding: 16px;
-  }
-  .start-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-  .start-card h2 {
-    font-size: 17px;
-  }
-  .readonly-bar {
-    flex-wrap: wrap;
-  }
-  .dev-sessions,
-  .dev-side {
-    width: min(320px, calc(100vw - 40px));
+  .dev-mask {
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.32);
+    z-index: 15;
   }
 }
 </style>

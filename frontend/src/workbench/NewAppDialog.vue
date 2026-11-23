@@ -46,24 +46,30 @@
                 }}
               </small>
             </label>
-            <label class="field">
-              <span>设计原型模板</span>
-              <select v-model="form.prototypeTemplateId" :disabled="templatesLoading">
-                <option value="">默认（企业级专业管理）</option>
-                <option v-for="template in prototypeTemplates" :key="template.id" :value="template.id">
-                  {{ template.name }} · {{ TEMPLATE_CATEGORY_LABELS[template.category] }}
-                </option>
-              </select>
-              <small>
-                {{
-                  selectedPrototypeTemplate?.description ||
-                  (templatesLoading ? '模板加载中…' : '之后可在设计阶段切换原型模板。')
-                }}
-              </small>
-            </label>
+            <div class="field">
+              <span>设计模板</span>
+              <div class="design-picker">
+                <div class="design-current" data-testid="new-app-design-summary">
+                  <strong>{{ designSummaryLabel }}</strong>
+                  <span v-if="designPack?.origin?.kind === 'custom'" class="custom-template-tag">自定义模板</span>
+                  <small>{{ designSummary.detail }}</small>
+                </div>
+                <button
+                  type="button"
+                  class="btn quiet"
+                  :disabled="designLoading"
+                  data-testid="new-app-design-picker"
+                  @click="designPickerOpen = true"
+                >
+                  {{ designLoading ? '加载中…' : '选择设计模板' }}
+                </button>
+              </div>
+              <small>应用类型 + 视觉风格；创建后可在设计视图的「模板页面库」查看页面。</small>
+              <small v-if="designNotice" class="design-notice">{{ designNotice }}</small>
+            </div>
           </div>
           <p class="templates-hint">
-            设计原型模板也会用于需求阶段的粗略原型预览；之后在设计阶段切换模板，需求预览会同步更新。
+            模板库是全局权威；应用内会生成对应的 adw-template-req-&lt;id&gt; skill 与设计模板 skill（adw-template-proto-&lt;applicationType&gt;），之后随全局模板保存自动同步。
           </p>
           <p v-if="templatesNotice" class="templates-notice">{{ templatesNotice }}</p>
 
@@ -145,15 +151,30 @@
         </form>
       </div>
     </div>
+    <DesignTemplateCenter
+      v-model="designPickerOpen"
+      mode="picker"
+      :selection="currentDesignSelection"
+      @select="applyDesignSelection"
+    />
   </Teleport>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { ApiError, createApp, type AppInfo } from './api'
-import { listTemplates, type RequirementTemplate } from '../requirements/api'
-import { listPrototypeTemplates } from '../design/api'
-import { TEMPLATE_CATEGORY_LABELS, type PrototypeTemplate } from '../design/types'
+import DesignTemplateCenter from './DesignTemplateCenter.vue'
+import {
+  listRequirementTemplates,
+  type RequirementTemplate
+} from '../shared/template-api'
+import {
+  getDesignPack,
+  listDesignPacks,
+  type AppDesignSystemSelection,
+  type DesignPack
+} from '../shared/design-system-api'
+import { describeNewAppDesignSelection, resolveDesignSelection } from './design-template-helpers.js'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -162,7 +183,6 @@ const emit = defineEmits<{
 }>()
 
 const DEFAULT_REQUIREMENT_TEMPLATE_ID = 'builtin-prd'
-const DEFAULT_PROTOTYPE_TEMPLATE_ID = 'builtin-prototype-enterprise'
 
 const busy = ref(false)
 const error = ref('')
@@ -170,15 +190,21 @@ const advancedOpen = ref(false)
 const templatesLoading = ref(false)
 const templatesNotice = ref('')
 const requirementTemplates = ref<RequirementTemplate[]>([])
-const prototypeTemplates = ref<PrototypeTemplate[]>([])
+const designPickerOpen = ref(false)
+const designLoading = ref(false)
+const designNotice = ref('')
+const designPack = ref<DesignPack | null>(null)
 let templateLoadToken = 0
+let designLoadToken = 0
 
 const form = reactive({
   id: '',
   name: '',
   description: '',
   requirementTemplateId: '',
-  prototypeTemplateId: '',
+  designPack: '',
+  designApplicationType: '',
+  designStyle: '',
   backendPort: 8081,
   eosSysKey: '',
   dbHost: '',
@@ -194,9 +220,54 @@ const form = reactive({
 const selectedRequirementTemplate = computed(
   () => requirementTemplates.value.find(template => template.id === form.requirementTemplateId) ?? null
 )
-const selectedPrototypeTemplate = computed(
-  () => prototypeTemplates.value.find(template => template.id === form.prototypeTemplateId) ?? null
+const designSummary = computed(() =>
+  describeNewAppDesignSelection({
+    packId: form.designPack,
+    designPack: designPack.value,
+    selection: {
+      applicationType: form.designApplicationType,
+      style: form.designStyle
+    },
+    loading: designLoading.value,
+    notice: designNotice.value
+  })
 )
+const designSummaryLabel = computed(() => designSummary.value.label)
+const currentDesignSelection = computed<AppDesignSystemSelection>(() => ({
+  pack: form.designPack || undefined,
+  applicationType: form.designApplicationType || undefined,
+  style: form.designStyle || undefined
+}))
+
+async function applyDesignSelection(selection: AppDesignSystemSelection): Promise<void> {
+  const packId = selection.pack ?? ''
+  form.designPack = packId
+  form.designApplicationType = selection.applicationType ?? ''
+  form.designStyle = selection.style ?? ''
+  designNotice.value = ''
+  if (!packId) {
+    designLoadToken += 1
+    designPack.value = null
+    return
+  }
+  // 同一 pack（内置快速路径）：详情已加载，行为不变
+  if (packId === designPack.value?.id) return
+
+  // 切换到另一个 pack：先清空旧详情并进入加载态，避免摘要用旧（内置）pack 回退
+  const token = (designLoadToken += 1)
+  designPack.value = null
+  designLoading.value = true
+  try {
+    const detail = await getDesignPack(packId)
+    if (token !== designLoadToken) return
+    designPack.value = detail
+  } catch (err) {
+    if (token !== designLoadToken) return
+    designNotice.value = `设计模板详情加载失败（${err instanceof Error ? err.message : String(err)}），创建时由后端校验`
+  } finally {
+    if (token === designLoadToken) designLoading.value = false
+  }
+}
 
 function resetForm(): void {
   Object.assign(form, {
@@ -204,7 +275,9 @@ function resetForm(): void {
     name: '',
     description: '',
     requirementTemplateId: '',
-    prototypeTemplateId: '',
+    designPack: '',
+    designApplicationType: '',
+    designStyle: '',
     backendPort: 8081,
     eosSysKey: '',
     dbHost: '',
@@ -216,6 +289,9 @@ function resetForm(): void {
     mailUsername: '',
     mailPassword: ''
   })
+  designPack.value = null
+  designPickerOpen.value = false
+  designNotice.value = ''
 }
 
 /** 默认选中内置模板；不存在时回退列表第一项（列表为空则不传，后端用默认） */
@@ -227,29 +303,47 @@ function pickDefaultTemplate<T extends { id: string }>(list: T[], preferredId: s
 async function loadTemplates(): Promise<void> {
   const token = ++templateLoadToken
   templatesLoading.value = true
+  designLoading.value = true
   templatesNotice.value = ''
-  const [requirementResult, prototypeResult] = await Promise.allSettled([
-    listTemplates({ stage: 'requirements' }),
-    listPrototypeTemplates()
+  designNotice.value = ''
+  const [requirementResult, designResult] = await Promise.allSettled([
+    listRequirementTemplates(),
+    listDesignPacks()
   ])
   if (token !== templateLoadToken) return
   let failed = false
   if (requirementResult.status === 'fulfilled') {
-    requirementTemplates.value = requirementResult.value
+    requirementTemplates.value = requirementResult.value.filter(template => template.stage === 'requirements')
   } else {
     requirementTemplates.value = []
-    failed = true
-  }
-  if (prototypeResult.status === 'fulfilled') {
-    prototypeTemplates.value = prototypeResult.value
-  } else {
-    prototypeTemplates.value = []
     failed = true
   }
   templatesLoading.value = false
   if (failed) templatesNotice.value = '模板列表加载失败，将使用默认模板'
   form.requirementTemplateId = pickDefaultTemplate(requirementTemplates.value, DEFAULT_REQUIREMENT_TEMPLATE_ID)
-  form.prototypeTemplateId = pickDefaultTemplate(prototypeTemplates.value, DEFAULT_PROTOTYPE_TEMPLATE_ID)
+
+  const designSummaries = designResult.status === 'fulfilled' ? designResult.value : []
+  if (!designSummaries.length) {
+    designPack.value = null
+    designNotice.value = designResult.status === 'rejected' ? '设计模板加载失败，创建时将由后端使用默认设计模板' : '没有可用的设计模板包，创建时将由后端使用默认设计模板'
+    designLoading.value = false
+    return
+  }
+  try {
+    const detail = await getDesignPack(designSummaries[0].id)
+    if (token !== templateLoadToken) return
+    designPack.value = detail
+    const resolved = resolveDesignSelection(detail, {})
+    form.designPack = resolved.pack
+    form.designApplicationType = resolved.applicationType
+    form.designStyle = resolved.style
+  } catch (err) {
+    if (token !== templateLoadToken) return
+    designPack.value = null
+    designNotice.value = `设计模板加载失败（${err instanceof Error ? err.message : String(err)}），创建时将由后端使用默认设计模板`
+  } finally {
+    if (token === templateLoadToken) designLoading.value = false
+  }
 }
 
 watch(
@@ -258,14 +352,15 @@ watch(
     if (!open) {
       // 关闭后丢弃未完成的模板请求，避免下一次打开被旧结果覆盖
       templateLoadToken += 1
+      designLoadToken += 1
       templatesLoading.value = false
+      designLoading.value = false
       return
     }
     resetForm()
     error.value = ''
     advancedOpen.value = false
     requirementTemplates.value = []
-    prototypeTemplates.value = []
     templatesNotice.value = ''
     void loadTemplates()
   }
@@ -305,7 +400,9 @@ async function submit(): Promise<void> {
       description: form.description,
       backendPort: Number(form.backendPort),
       ...(form.requirementTemplateId ? { requirementTemplateId: form.requirementTemplateId } : {}),
-      ...(form.prototypeTemplateId ? { prototypeTemplateId: form.prototypeTemplateId } : {}),
+      ...(form.designPack ? { designPack: form.designPack } : {}),
+      ...(form.designApplicationType ? { designApplicationType: form.designApplicationType } : {}),
+      ...(form.designStyle ? { designStyle: form.designStyle } : {}),
       ...(form.eosSysKey ? { eosSysKey: form.eosSysKey } : {}),
       ...(form.dbHost ? { dbHost: form.dbHost } : {}),
       ...(form.dbPort ? { dbPort: form.dbPort } : {}),
@@ -469,6 +566,56 @@ async function submit(): Promise<void> {
   font-size: 11px;
   color: var(--rg-text-3);
   line-height: 1.5;
+}
+.field small.design-notice {
+  color: var(--rg-warn);
+}
+.design-picker {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+}
+.design-current {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+  border: 1px solid var(--rg-border-strong);
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: var(--rg-surface-2);
+}
+.design-current strong {
+  font-size: 12.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.design-current small {
+  font-size: 10.5px;
+  color: var(--rg-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.custom-template-tag {
+  align-self: flex-start;
+  font-size: 9.5px;
+  line-height: 1.5;
+  color: #8a5a00;
+  background: #fff9ed;
+  border: 1px solid #f0d9a8;
+  border-radius: 999px;
+  padding: 0 6px;
+}
+.btn.quiet {
+  flex-shrink: 0;
+  min-height: auto;
+  padding: 7px 11px;
 }
 .advanced-toggle {
   align-self: flex-start;

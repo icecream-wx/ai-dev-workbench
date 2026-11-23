@@ -1,0 +1,22 @@
+{
+  "pm-input": "input",
+  "pm-input-text": "input",
+  "pm-textarea": "textarea",
+  "pm-input-number": "number",
+  "pm-number": "number",
+  "pm-switch": "boolean",
+  "pm-date": "date",
+  "pm-datepicker": "date",
+  "pm-date-picker": "date",
+  "pm-datetimepicker": "datetime",
+  "pm-datetime-picker": "datetime",
+  "pm-select": "select",
+  "pm-select-user": "select-user",
+  "pm-select-org": "select-org",
+  "pm-select-tree": "select",
+  "pm-radio": "radio",
+  "pm-checkbox": "checkbox",
+  "pm-upload": "upload",
+  "pm-image": "image",
+  "pm-image-upload": "image"
+}

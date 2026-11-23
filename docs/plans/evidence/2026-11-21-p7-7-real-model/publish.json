@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "pack": {
+    "id": "supplier-management",
+    "version": "1.0.0",
+    "revision": 1
+  },
+  "warnings": []
+}

@@ -1,6 +1,6 @@
 ﻿import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildProgress, buildSteps, contextUsedTokens, diffLines, normalizeMessages, scrubText, truncateText } from './timeline'
+import { buildProgress, buildSteps, contextUsedTokens, diffLines, displayUserText, normalizeMessages, scrubText, truncateText } from './timeline'
 
 function messages(): unknown[] {
   return [
@@ -80,13 +80,31 @@ test('buildProgress 返回状态/统计/消息', () => {
     appDir: 'E:/app',
     now: 2000
   })
-  assert.equal(progress.status, 'running')
+  // P7-6c：末条 idle 消息是权威收尾记录，优先于滞后的 outcome
+  assert.equal(progress.status, 'succeeded')
   assert.equal(progress.stats.toolTotal, 3)
   assert.equal(progress.stats.tokens.input, 10)
   assert.equal(progress.stats.tokens.cacheRead, 3)
   assert.equal(progress.steps.length, 3)
   assert.equal(progress.messages[0].type, 'user')
   assert.equal(progress.messages[1].text, '我先看一下现有代码。')
+})
+
+test('buildProgress：无 idle 消息时按 outcome/busy 判定，不误报完成', () => {
+  const running = buildProgress({
+    info: { outcome: 'running', time: { created: 1000, busy: 1 } },
+    messages: messages().filter(message => (message as { type?: string }).type !== 'idle'),
+    now: 2000
+  })
+  assert.equal(running.status, 'running')
+
+  const interrupted = buildProgress({
+    info: { outcome: 'running', time: { created: 1000, busy: 1 } },
+    messages: [...messages(), { id: 'i2', type: 'idle', outcome: 'interrupted', time: { created: 2000 } }],
+    now: 3000
+  })
+  assert.equal(interrupted.status, 'interrupted')
+  assert.equal(interrupted.endedAt, 2000)
 })
 
 test('diffLines 统计增删并保留上下文', () => {
@@ -200,5 +218,46 @@ test('I-09a：空会话 compact（opencode 返回 failed）显示未执行原因
   assert.equal(other.kind, 'compaction-failed')
   assert.match(other.text ?? '', /上下文压缩未执行/)
   assert.doesNotMatch(other.text ?? '', /secret-value/)
+})
+
+test('displayUserText：带视图框架的 user 消息只保留用户原文', () => {
+  const framed =
+    '当前视图：开发。\n' +
+    '本轮目标模块：MOD-001（如果用户目标明显不同，按用户目标判断）。\n' +
+    '产物是工作区代码与 docs/ 下的需求/设计文件。\n' +
+    '先读 AGENTS.md、docs/requirements/ 与 docs/design/ 下相关产物，以及现有代码，再动手实现。\n\n' +
+    '用户消息：\n给 backend/README.md 补一节运行说明。'
+  assert.equal(displayUserText(framed), '给 backend/README.md 补一节运行说明。')
+
+  // 只认第一个 marker：用户原文里再次出现“用户消息：”也完整保留
+  const nested = `当前视图：需求。\n本轮目标模块：未指定。\n\n用户消息：\n第一行\n用户消息：\n第二段`
+  assert.equal(displayUserText(nested), '第一行\n用户消息：\n第二段')
+
+  // 归一化后的 user 消息同样只显示原文
+  const normalized = normalizeMessages([
+    { id: 'u1', type: 'user', text: framed, time: { created: 1 } }
+  ])[0]
+  assert.equal(normalized.text, '给 backend/README.md 补一节运行说明。')
+})
+
+test('displayUserText：不带框架 / 无 marker 的 user 消息原样返回', () => {
+  assert.equal(displayUserText('直接输入的一句话'), '直接输入的一句话')
+  assert.equal(displayUserText('当前视图：开发。\n只有框架，没有用户消息标记。'), '当前视图：开发。\n只有框架，没有用户消息标记。')
+  assert.equal(displayUserText(''), '')
+})
+
+test('system 消息即使包含“用户消息：”也不裁剪', () => {
+  const systemText = '当前视图：开发。\n用户消息：\n系统注入的说明'
+  const normalized = normalizeMessages([{ id: 's1', type: 'system', text: systemText, time: { created: 1 } }])[0]
+  assert.equal(normalized.text, systemText)
+})
+
+test('displayUserText：用户原文的换行/特殊字符完整保留', () => {
+  const original = '第一行\n- 第二行：包含 <tag> 与 "引号" & 符号\n\n最后一行'
+  assert.equal(displayUserText(`当前视图：开发。\n产物路径：docs/\n\n用户消息：\n${original}`), original)
+  const normalized = normalizeMessages([
+    { id: 'u2', type: 'user', text: `当前视图：设计。\n\n用户消息：\n${original}`, time: { created: 2 } }
+  ])[0]
+  assert.equal(normalized.text, original)
 })
 

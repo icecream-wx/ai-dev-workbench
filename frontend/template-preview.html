@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>自定义模板预览</title>
+    <style>
+      html, body { height: 100%; }
+      body { margin: 0; background: #eef3fa; }
+      #app { height: 100%; }
+      #template-preview-boot {
+        height: 100vh; display: flex; align-items: center; justify-content: center;
+        color: #64748b; font-size: 13px;
+        font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"><div id="template-preview-boot">正在加载自定义模板预览…</div></div>
+    <script type="module" src="/src/template-preview/main.ts"></script>
+  </body>
+</html>

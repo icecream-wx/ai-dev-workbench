@@ -1,0 +1,65 @@
+{
+  "generatedAt": "2026-11-23T03:09:17.916Z",
+  "repoDirs": {
+    "backend/src": {
+      "before": 90,
+      "after": 90,
+      "added": [],
+      "removed": [],
+      "changed": []
+    },
+    "frontend/src": {
+      "before": 251,
+      "after": 251,
+      "added": [],
+      "removed": [],
+      "changed": []
+    },
+    "templates": {
+      "before": 210,
+      "after": 210,
+      "added": [],
+      "removed": [],
+      "changed": []
+    },
+    "frontend/dist": {
+      "before": 97,
+      "after": 97,
+      "added": [],
+      "removed": [],
+      "changed": []
+    },
+    "backend/dist": {
+      "before": 182,
+      "after": 182,
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "realData": {
+    "entriedBefore": 122,
+    "entriesAfter": 122,
+    "diff": []
+  },
+  "realProjects": {
+    "before": {
+      "count": 28968,
+      "bytes": 828471575,
+      "maxMtime": 1795401232101.045,
+      "top": [
+        "app1/"
+      ]
+    },
+    "after": {
+      "count": 28968,
+      "bytes": 828471575,
+      "maxMtime": 1795401232101.045,
+      "top": [
+        "app1/"
+      ]
+    },
+    "unchanged": true
+  },
+  "repoChangedTotal": 0
+}

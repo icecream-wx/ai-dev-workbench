@@ -1,0 +1,21 @@
+{
+  "stopped": true,
+  "portsAfter": [
+    {
+      "port": 3487,
+      "listening": false
+    },
+    {
+      "port": 4787,
+      "listening": false
+    },
+    {
+      "port": 3300,
+      "listening": false
+    },
+    {
+      "port": 4771,
+      "listening": false
+    }
+  ]
+}

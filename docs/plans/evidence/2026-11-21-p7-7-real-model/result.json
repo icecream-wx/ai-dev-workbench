@@ -1,0 +1,50 @@
+{
+  "ok": true,
+  "assertions": 71,
+  "resumed": true,
+  "model": {
+    "providerID": "packycode-deepseek",
+    "modelID": "deepseek-flash"
+  },
+  "specPages": [
+    {
+      "id": "supplier-list",
+      "kind": "reference"
+    },
+    {
+      "id": "supplier-form",
+      "kind": "contract",
+      "recipe": "dialog-form"
+    },
+    {
+      "id": "supplier-detail",
+      "kind": "contract",
+      "recipe": "detail"
+    }
+  ],
+  "baseType": "operations-management",
+  "shortBaseClass": "application-type-operations",
+  "publish": {
+    "id": "supplier-management",
+    "version": "1.0.0"
+  },
+  "png": {
+    "pages": [
+      "supplier-detail",
+      "supplier-form",
+      "supplier-list"
+    ],
+    "sample": {
+      "width": 2880,
+      "height": 1800,
+      "primaryMatches": 2011
+    }
+  },
+  "fidelity": {
+    "pass": 5,
+    "warn": 8,
+    "fail": 0,
+    "total": 13,
+    "status": "warn"
+  }
+}

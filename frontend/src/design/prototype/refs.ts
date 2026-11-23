@@ -8,7 +8,7 @@ import type { SpecEntity } from './spec-types'
  * store 查询 `moduleId = 'design'` 同样恒为空。这里保持同样的行为：
  * 外部引用只解析出 moduleId/entityId，不做实体查找。
  */
-export function isExternalRef(target: string): boolean {
+function isExternalRef(target: string): boolean {
   return typeof target === 'string' && target.includes(':')
 }
 

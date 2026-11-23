@@ -1,0 +1,324 @@
+{
+  "scannedAt": "2026-11-21T10:31:48.146Z",
+  "types": [
+    "enterprise-application-platform",
+    "operations-management",
+    "data-governance-workbench",
+    "incident-response-console"
+  ],
+  "perType": [
+    {
+      "type": "enterprise-application-platform",
+      "rules": 112,
+      "uniqueSelectorKeys": 111,
+      "mediaRules": 14,
+      "file": "application-types/enterprise-application-platform/structure.css"
+    },
+    {
+      "type": "operations-management",
+      "rules": 212,
+      "uniqueSelectorKeys": 211,
+      "mediaRules": 11,
+      "file": "application-types/operations-management/structure.css"
+    },
+    {
+      "type": "data-governance-workbench",
+      "rules": 273,
+      "uniqueSelectorKeys": 273,
+      "mediaRules": 14,
+      "file": "application-types/data-governance-workbench/structure.css"
+    },
+    {
+      "type": "incident-response-console",
+      "rules": 196,
+      "uniqueSelectorKeys": 196,
+      "mediaRules": 10,
+      "file": "application-types/incident-response-console/structure.css"
+    }
+  ],
+  "totalRules": 793,
+  "unionSelectorKeys": 509,
+  "uniqueSelectorBodyPairs": 514,
+  "mergedRuleCountIfDedup": 514,
+  "dedupSaved": 279,
+  "identicalSharedCases": 275,
+  "sharedSelectorCount": 131,
+  "conflictCount": 3,
+  "withinTypeRepeatedSelectorVariants": 2,
+  "sharedExamples": [
+    {
+      "key": "||.pm-chart",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "position:relative;min-height:180px;overflow:hidden;"
+    },
+    {
+      "key": "||.pm-chart-grid",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "position:absolute;inset:8px 8px 28px 8px;background:repeating-linear-gradient(to bottom,transparent 0,transparent 24%,var(--template-border-light) 25%);"
+    },
+    {
+      "key": "||.pm-chart-bars",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "position:absolute;inset:10px 8px 0;display:flex;align-items:stretch;gap:14px;"
+    },
+    {
+      "key": "||.pm-chart-column",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "min-width:28px;flex:1;display:grid;grid-template-rows:18px 1fr 24px;align-items:end;text-align:center;"
+    },
+    {
+      "key": "||.pm-chart-column i",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "width:min(36px,74%);min-height:8px;margin:0 auto;display:block;border-radius:var(--template-radius-small) var(--template-radius-small) 0 0;background:linear-gradient(180deg,var(--template-primary),var(--template-secondary));opacity:.9;"
+    },
+    {
+      "key": "||.pm-chart-value",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "color:var(--template-text-soft);font-size:11px;"
+    },
+    {
+      "key": "||.pm-chart-column small",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "padding-top:6px;color:var(--template-text-soft);font-size:11px;"
+    },
+    {
+      "key": "||.pm-upload-copy span",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "color:var(--template-text-soft);font-size:12px;"
+    },
+    {
+      "key": "||.pm-richtext",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "overflow:hidden;border:1px solid var(--template-border);border-radius:var(--template-radius-small);background:#fff;"
+    },
+    {
+      "key": "||.pm-richtext-toolbar",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "min-height:38px;padding:5px 8px;display:flex;gap:4px;border-bottom:1px solid var(--template-border-light);background:var(--template-surface-soft);"
+    },
+    {
+      "key": "||.pm-richtext-toolbar button",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "min-width:30px;padding:0 8px;color:var(--template-text);border:0;background:transparent;cursor:pointer;"
+    },
+    {
+      "key": "||.pm-richtext-toolbar button:hover",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "color:var(--template-primary);background:var(--template-primary-soft);"
+    },
+    {
+      "key": "||.pm-richtext-editor",
+      "types": [
+        "enterprise-application-platform",
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "min-height:150px;padding:14px;color:var(--template-text);line-height:1.7;outline:none;"
+    },
+    {
+      "key": "||.pm-search",
+      "types": [
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "width:100%;"
+    },
+    {
+      "key": "||.pm-search-main .el-input",
+      "types": [
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "min-width:0;flex:1;"
+    },
+    {
+      "key": "||.pm-search-body .el-form-item",
+      "types": [
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "min-width:160px;margin:0;"
+    },
+    {
+      "key": "||.optimized-suite",
+      "types": [
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "height:100%;min-height:700px;overflow:auto;color:var(--template-text);background:var(--template-bg);font-family:Inter,\"PingFang SC\",\"Microsoft YaHei\",sans-serif;"
+    },
+    {
+      "key": "||.optimized-suite *",
+      "types": [
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "box-sizing:border-box;"
+    },
+    {
+      "key": "||.optimized-suite button,.optimized-suite input,.optimized-suite textarea",
+      "types": [
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "font-family:inherit;"
+    },
+    {
+      "key": "||.template-gallery",
+      "types": [
+        "operations-management",
+        "data-governance-workbench",
+        "incident-response-console"
+      ],
+      "body": "width:min(1120px,calc(100% - 64px));margin:0 auto;padding:42px 0 56px;"
+    }
+  ],
+  "withinTypeRepeats": [
+    {
+      "key": "||.application-type-enterprise-platform.afcenter-template",
+      "type": "enterprise-application-platform",
+      "variants": 2
+    },
+    {
+      "key": "||.application-type-operations",
+      "type": "operations-management",
+      "variants": 2
+    }
+  ],
+  "conflicts": [
+    {
+      "key": "||.pm-upload-copy",
+      "entries": [
+        {
+          "type": "enterprise-application-platform",
+          "body": "padding:18px;display:flex;flex-direction:column;gap:6px;color:var(--template-text);"
+        },
+        {
+          "type": "operations-management",
+          "body": "padding:18px;display:flex;flex-direction:column;gap:6px;color:var(--template-text);"
+        },
+        {
+          "type": "data-governance-workbench",
+          "body": "padding:18px;display:flex;align-items:center;flex-direction:column;gap:6px;color:var(--template-text);"
+        },
+        {
+          "type": "incident-response-console",
+          "body": "padding:18px;display:flex;flex-direction:column;gap:6px;color:var(--template-text);"
+        }
+      ]
+    },
+    {
+      "key": "||.pm-search-main",
+      "entries": [
+        {
+          "type": "operations-management",
+          "body": "display:flex;align-items:center;gap:8px;"
+        },
+        {
+          "type": "data-governance-workbench",
+          "body": "position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;padding:5px;border:1px solid var(--template-strong-border);border-radius:10px;background:var(--template-surface);box-shadow:0 5px 16px rgba(32,72,111,.06);"
+        },
+        {
+          "type": "incident-response-console",
+          "body": "display:flex;align-items:center;gap:8px;"
+        }
+      ]
+    },
+    {
+      "key": "||.pm-search-body",
+      "entries": [
+        {
+          "type": "operations-management",
+          "body": "margin-top:12px;display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px;"
+        },
+        {
+          "type": "data-governance-workbench",
+          "body": "margin-top:10px;padding:10px;display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px;border-left:2px solid var(--template-secondary);background:linear-gradient(90deg,var(--template-secondary-soft),transparent);"
+        },
+        {
+          "type": "incident-response-console",
+          "body": "margin-top:12px;display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px;"
+        }
+      ]
+    }
+  ],
+  "mergeAlgorithm": {
+    "order": [
+      "enterprise-application-platform",
+      "operations-management",
+      "data-governance-workbench",
+      "incident-response-console"
+    ],
+    "unit": "@media 条件 + 规范化选择器 + 规范化规则体（三元组完全相同才去重）",
+    "dedup": "三元组完全相同 → 只写一份（保留首次出现位置）",
+    "conflict": "同选择器不同规则体 → 按固定顺序全部保留（后者生效）并记录冲突清单；不静默删除，发布前可人工确认",
+    "comments": "输出文件按来源应用类型分节加注释，便于溯源；同一文件内重复选择器的级联顺序保持不变"
+  }
+}

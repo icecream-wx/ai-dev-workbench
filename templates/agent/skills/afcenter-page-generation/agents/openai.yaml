@@ -1,0 +1,5 @@
+interface:
+  display_name: "AFCenter 页面生成"
+  short_description: "组合平台组件与完整页面模板、Primeton 组件及偏好设置生成业务页面"
+  default_prompt: "使用 $afcenter-page-generation，根据需求和当前工程选择合适的页面结构或完整视觉模板，生成符合平台布局、组件规范及偏好设置的业务页面。"
+# Modified by AI on 2026-11-08 16:20:52

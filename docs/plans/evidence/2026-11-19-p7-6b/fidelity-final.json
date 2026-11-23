@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "empty": false,
+  "generatedAt": "2026-11-19T09:39:42.429Z",
+  "module": "MOD-001",
+  "modules": [
+    "MOD-001"
+  ],
+  "designSystem": {
+    "exists": true,
+    "valid": true,
+    "pack": "afcenter-app-templates-v1",
+    "applicationType": "enterprise-application-platform",
+    "style": "platform-blue",
+    "styleName": "平台蓝白",
+    "pageCount": 5,
+    "blueprintRoot": "docs/design/template"
+  },
+  "checks": [
+    {
+      "id": "design-system",
+      "label": "应用设计系统",
+      "status": "pass",
+      "evidence": "afcenter-app-templates-v1 v1.0.0 · enterprise-application-platform · platform-blue · 5 页蓝图"
+    },
+    {
+      "id": "page-contract",
+      "label": "页面契约",
+      "status": "pass",
+      "evidence": "2 页均含 recipe 与 blueprint/catalogRef"
+    },
+    {
+      "id": "blueprint-files",
+      "label": "蓝图文件",
+      "status": "pass",
+      "evidence": "2 个蓝图文件均存在（例如 docs/design/template/enterprise-application-platform/pages/OrganizationUsers.vue）"
+    },
+    {
+      "id": "implementation",
+      "label": "实现视图/路由",
+      "status": "pass",
+      "evidence": "视图匹配 2/2；路由 2 条；org-list→OrganizationView.vue、org-form→OrganizationView.vue"
+    },
+    {
+      "id": "page-templates",
+      "label": "PageTemplates",
+      "status": "pass",
+      "evidence": "已导入 PageTemplates：FormSection、RowActions、ThreePartPagination"
+    },
+    {
+      "id": "pm-components",
+      "label": "pm-* 组件",
+      "status": "pass",
+      "evidence": "6 个：pm-input、pm-tree、pm-select、pm-table、pm-form-dialog、pm-switch"
+    },
+    {
+      "id": "form-dialog",
+      "label": "表单弹窗/FormSection",
+      "status": "pass",
+      "evidence": "1 个表单页均使用 pm-form-dialog/FormSection"
+    },
+    {
+      "id": "auto-height",
+      "label": "列表 v-auto-height",
+      "status": "pass",
+      "evidence": "1 个列表页均使用 v-auto-height"
+    },
+    {
+      "id": "global-preference",
+      "label": "GlobalPreference",
+      "status": "pass",
+      "evidence": "已引用：views/OrganizationView.vue"
+    },
+    {
+      "id": "style-imports",
+      "label": "结构/风格导入",
+      "status": "pass",
+      "evidence": "命中 2 个文件（含 visual-style-*）：bootstrap.js、views/OrganizationView.vue"
+    },
+    {
+      "id": "ui-check",
+      "label": "ui-check 对照表",
+      "status": "pass",
+      "evidence": "MOD-001: 已填"
+    },
+    {
+      "id": "prototypes",
+      "label": "PNG 原型",
+      "status": "warn",
+      "evidence": "MOD-001: 未导出",
+      "hint": "PNG 未导出不影响静态一致性检查；需要视觉参考时在设计视图导出。"
+    }
+  ],
+  "summary": {
+    "pass": 11,
+    "warn": 1,
+    "fail": 0,
+    "total": 12,
+    "status": "warn"
+  }
+}

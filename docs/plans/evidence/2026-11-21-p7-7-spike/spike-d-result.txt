@@ -1,0 +1,21 @@
+[spike-d] JSON 写入 C:\Users\icecream\AppData\Local\Temp\workbench-p7-7-spike\spike-d-css.json
+[spike-d] 每类型规则数：
+  enterprise-application-platform	规则=112	唯一选择器键=111	@media 内=14
+  operations-management	规则=212	唯一选择器键=211	@media 内=11
+  data-governance-workbench	规则=273	唯一选择器键=273	@media 内=14
+  incident-response-console	规则=196	唯一选择器键=196	@media 内=10
+[spike-d] 合计规则=793 唯一选择器键=509 最大去重节省=279 完全相同的跨类型共享=131 冲突=3
+[spike-d] 冲突（同选择器不同规则体）样例：
+  ||.pm-upload-copy
+    enterprise-application-platform: padding:18px;display:flex;flex-direction:column;gap:6px;color:var(--template-text);
+    operations-management: padding:18px;display:flex;flex-direction:column;gap:6px;color:var(--template-text);
+    data-governance-workbench: padding:18px;display:flex;align-items:center;flex-direction:column;gap:6px;color:var(--template-text);
+    incident-response-console: padding:18px;display:flex;flex-direction:column;gap:6px;color:var(--template-text);
+  ||.pm-search-main
+    operations-management: display:flex;align-items:center;gap:8px;
+    data-governance-workbench: position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;padding:5px;border:1px solid var(--template-strong-border);border-radius:10px;bac
+    incident-response-console: display:flex;align-items:center;gap:8px;
+  ||.pm-search-body
+    operations-management: margin-top:12px;display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px;
+    data-governance-workbench: margin-top:10px;padding:10px;display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px;border-left:2px solid var(--template-secondary);background:linear-gradient(90deg,var(--templa
+    incident-response-console: margin-top:12px;display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px;

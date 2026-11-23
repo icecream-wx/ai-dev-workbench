@@ -1,92 +1,135 @@
 <template>
-  <div>
-    <!-- Tabs 形态 -->
-    <template v-if="isTabs && tabGroups.length">
-      <div class="wf-tabs" data-wf-anchor="tabs">
-        <span
-          v-for="(tab, ti) in tabGroups"
-          :key="ti"
-          :class="['wf-tab', { on: activeTab === ti }]"
-          :data-wf-anchor="`tab:${ti}`"
-          @click="activeTab = ti"
-        >{{ tabTitle(tab, ti) }}</span>
-      </div>
-      <div class="wf-form-grid">
-        <div v-for="field in tabGroups[activeTab]?.fields ?? []" :key="field.name" class="wf-field" :data-wf-anchor="`field:${field.name}`" :style="{ gridColumn: `span ${fieldSpan(field, layout)}` }">
-          <div class="wf-field-label">
-            <span v-if="field.required" class="req">*</span>{{ field.label }}
-          </div>
-          <FieldControl :field="field" :layout="layout" :mobile="mobile" :row="rows?.[0]" />
+  <div :class="dialog ? 'wf-dialog-demo' : ''">
+    <!-- 弹窗演示：背景假列表（搜索条 + 4 行骨架）+ 居中弹窗表单 -->
+    <template v-if="dialog">
+      <div class="wf-dialog-bg" aria-hidden="true">
+        <div class="wf-dialog-bg-search" />
+        <div v-for="row in 4" :key="row" class="wf-dialog-bg-row">
+          <span class="wf-dialog-bg-cell w1" />
+          <span class="wf-dialog-bg-cell w2" />
+          <span class="wf-dialog-bg-cell w3" />
+          <span class="wf-dialog-bg-cell w4" />
         </div>
       </div>
+      <div class="wf-dialog-mask" aria-hidden="true" />
     </template>
-
-    <!-- 分组形态 -->
-    <template v-else>
-      <div v-for="(group, gi) in groups" :key="gi" class="wf-form-section">
-        <div v-if="group.title" class="wf-form-section-title" :data-wf-anchor="`group:${gi}`">{{ group.title }}</div>
-        <div class="wf-form-grid">
-          <div v-for="field in group.fields" :key="field.name" class="wf-field" :data-wf-anchor="`field:${field.name}`" :style="{ gridColumn: `span ${fieldSpan(field, layout)}` }">
-            <div class="wf-field-label">
-              <span v-if="field.required" class="req">*</span>{{ field.label }}
-            </div>
-            <FieldControl :field="field" :layout="layout" :mobile="mobile" :row="rows?.[0]" />
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <!-- 子表格：按实体一对多关系自动渲染 -->
     <div
-      v-for="(st, si) in visibleSubTables"
-      :key="st.relationName"
-      class="wf-subtable-section"
-      :data-wf-anchor="`subtable:${si}`"
+      :class="dialog ? 'wf-dialog' : ''"
+      :style="dialog ? { width: `${view.width}px` } : undefined"
+      :data-testid="dialog ? 'wf-dialog' : undefined"
     >
-      <div class="wf-subtable-head">
-        <span class="wf-btn wf-subtable-add" @click="emit('notify', '添加行')">＋ 添加行</span>
-        <span class="wf-subtable-title">{{ st.title }}</span>
-        <span class="wf-subtable-entity">{{ st.targetEntity.name }}</span>
+      <div v-if="dialog" class="wf-dialog-head">
+        <span class="wf-dialog-title">{{ page.title }}</span>
+        <span class="wf-dialog-close">×</span>
       </div>
-      <!-- 手机：子卡片列表 -->
-      <div v-if="mobile" class="wf-m-list">
-        <div v-for="(row, ri) in subRows(st)" :key="ri" class="wf-m-card">
-          <div class="wf-m-card-avatar small" />
-          <div class="wf-m-card-body">
-            <div class="wf-m-card-title">
-              <span>{{ subTitle(st, row) }}</span>
-              <span v-if="enumCol(st)" class="wf-tag">{{ subValue(row, enumCol(st)) }}</span>
-            </div>
-            <div v-for="meta in st.columns.filter(c => c.type !== 'enum').slice(0, 2)" :key="meta.name" class="wf-m-card-meta">
-              <span class="wf-m-card-label">{{ meta.label }}</span>
-              <span>{{ subValue(row, meta) }}</span>
+      <div :class="dialog ? 'wf-dialog-body' : ''">
+        <!-- Tabs 形态 -->
+        <template v-if="isTabs && tabGroups.length">
+          <div class="wf-tabs" data-wf-anchor="tabs">
+            <span
+              v-for="(tab, ti) in tabGroups"
+              :key="ti"
+              :class="['wf-tab', { on: activeTab === ti }]"
+              :data-wf-anchor="`tab:${ti}`"
+              @click="activeTab = ti"
+            >{{ tabTitle(tab, ti) }}</span>
+          </div>
+          <div class="wf-form-grid">
+            <div v-for="field in tabGroups[activeTab]?.fields ?? []" :key="field.name" class="wf-field" :data-wf-anchor="`field:${field.name}`" :style="{ gridColumn: `span ${fieldSpanWithColumns(field, layout)}` }">
+              <div class="wf-field-label">
+                <span v-if="field.required" class="req">*</span>{{ field.label }}
+              </div>
+              <FieldControl :field="field" :layout="layout" :mobile="mobile" :row="rows?.[0]" />
             </div>
           </div>
-        </div>
-      </div>
-      <!-- 桌面：内嵌小表格 -->
-      <table v-else class="wf-table wf-subtable">
-        <thead>
-          <tr>
-            <th v-for="col in st.columns" :key="col.name">{{ col.label }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, ri) in subRows(st)" :key="ri">
-            <td v-for="col in st.columns" :key="col.name">
-              <span v-if="col.type === 'enum'" class="wf-tag ok">{{ subValue(row, col) }}</span>
-              <template v-else>{{ subValue(row, col) }}</template>
-            </td>
-          </tr>
-          <tr v-if="!st.columns.length"><td class="wf-empty">目标实体暂无字段</td></tr>
-        </tbody>
-      </table>
-    </div>
+        </template>
 
-    <div v-if="!groups.length" class="wf-empty">页面未绑定实体或实体暂无字段，先在「实体」页签完善</div>
-    <div class="wf-footer" data-wf-anchor="footer">
-      <span class="wf-btn" @click="emit('nav', 'back')">取消</span>
-      <span v-for="action in submitActions" :key="action" class="wf-btn wf-btn-primary" @click="emit('notify', actionLabel(action))">{{ actionLabel(action) }}</span>
+        <!-- 分组形态 -->
+        <template v-else>
+          <div v-for="(group, gi) in groups" :key="gi" class="wf-form-section">
+            <div v-if="group.title" class="wf-form-section-title" :data-wf-anchor="`group:${gi}`">{{ group.title }}</div>
+            <div class="wf-form-grid">
+              <div v-for="field in group.fields" :key="field.name" class="wf-field" :data-wf-anchor="`field:${field.name}`" :style="{ gridColumn: `span ${fieldSpanWithColumns(field, layout)}` }">
+                <div class="wf-field-label">
+                  <span v-if="field.required" class="req">*</span>{{ field.label }}
+                </div>
+                <FieldControl :field="field" :layout="layout" :mobile="mobile" :row="rows?.[0]" />
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- 子表格：按实体一对多关系自动渲染；mode=tab 时用页签 -->
+        <div v-if="visibleSubTables.length" class="wf-subtable-block">
+          <div v-if="subMode === 'tabs'" class="wf-subtabs" data-testid="wf-subtabs" data-wf-anchor="subtabs">
+            <span
+              v-for="(st, si) in visibleSubTables"
+              :key="st.relationName"
+              :class="['wf-subtab', { on: activeSub === si }]"
+              :data-testid="`wf-subtab-${si}`"
+              @click="activeSub = si"
+            >{{ st.title }}</span>
+          </div>
+          <div
+            v-for="(st, si) in visibleSubTables"
+            v-show="subMode !== 'tabs' || activeSub === si"
+            :key="st.relationName"
+            class="wf-subtable-section"
+            :data-wf-anchor="`subtable:${si}`"
+          >
+            <div class="wf-subtable-head">
+              <span class="wf-btn wf-subtable-add" @click="emit('notify', '添加行')">＋ 添加行</span>
+              <span class="wf-subtable-title">{{ st.title }}</span>
+              <span class="wf-subtable-entity">{{ st.targetEntity.name }}</span>
+            </div>
+            <!-- 手机：子卡片列表 -->
+            <div v-if="mobile" class="wf-m-list">
+              <div v-for="(row, ri) in subRows(st)" :key="ri" class="wf-m-card">
+                <div class="wf-m-card-avatar small" />
+                <div class="wf-m-card-body">
+                  <div class="wf-m-card-title">
+                    <span>{{ subTitle(st, row) }}</span>
+                    <span v-if="enumCol(st)" class="wf-tag">{{ subValue(row, enumCol(st)) }}</span>
+                  </div>
+                  <div v-for="meta in st.columns.filter(c => c.type !== 'enum').slice(0, 2)" :key="meta.name" class="wf-m-card-meta">
+                    <span class="wf-m-card-label">{{ meta.label }}</span>
+                    <span>{{ subValue(row, meta) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 桌面：内嵌小表格 -->
+            <table v-else class="wf-table wf-subtable">
+              <thead>
+                <tr>
+                  <th v-for="col in st.columns" :key="col.name">{{ col.label }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, ri) in subRows(st)" :key="ri">
+                  <td v-for="col in st.columns" :key="col.name">
+                    <span v-if="col.type === 'enum'" class="wf-tag ok">{{ subValue(row, col) }}</span>
+                    <template v-else>{{ subValue(row, col) }}</template>
+                  </td>
+                </tr>
+                <tr v-if="!st.columns.length"><td class="wf-empty">目标实体暂无字段</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div v-if="!groups.length" class="wf-empty">页面未绑定实体或实体暂无字段，先在「实体」页签完善</div>
+      </div>
+
+      <div :class="dialog ? 'wf-dialog-foot' : 'wf-footer'" data-wf-anchor="footer">
+        <span class="wf-btn" @click="emit('nav', 'back')">取消</span>
+        <template v-if="dialog">
+          <span class="wf-btn wf-btn-primary" @click="emit('notify', '提交')">提交</span>
+        </template>
+        <template v-else>
+          <span v-for="action in submitActions" :key="action" class="wf-btn wf-btn-primary" @click="emit('notify', actionLabel(action))">{{ actionLabel(action) }}</span>
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -96,7 +139,8 @@ import { computed, ref } from 'vue'
 import type { MockRow } from './mock'
 import { displayValue, mockRows } from './mock'
 import type { PageLayout, SpecEntity, SpecPage, SpecField } from './spec-types'
-import { actionLabel, controlOf, effectiveFields, fieldGroups, fieldSpan, subTableModels } from './layout'
+import { actionLabel, effectiveFields, fieldGroups, subTableModels } from './layout'
+import { fieldSpanWithColumns, formView, subTableView } from './contract-view.js'
 import FieldControl from './FieldControl.vue'
 
 const props = defineProps<{
@@ -109,6 +153,8 @@ const props = defineProps<{
   rows?: MockRow[]
   /** 当前模块 id（解析子表跨模块关系） */
   moduleId?: string
+  /** 当前模块全部实体（设计视图解析子表目标；可选） */
+  entities?: SpecEntity[]
 }>()
 
 const emit = defineEmits<{
@@ -116,7 +162,15 @@ const emit = defineEmits<{
   notify: [action: string]
 }>()
 
-const groups = computed(() => fieldGroups(effectiveFields(props.page, props.entity, props.layout), props.layout))
+const view = computed(() => formView(props.layout, props.page))
+/** 手机不做弹窗（保持整页表单，避免变形） */
+const dialog = computed(() => view.value.dialog && !props.mobile)
+
+const groupsLayout = computed<PageLayout | undefined>(() => {
+  if (props.layout?.groups?.length || !view.value.groups.length) return props.layout
+  return { ...(props.layout ?? {}), groups: view.value.groups }
+})
+const groups = computed(() => fieldGroups(effectiveFields(props.page, props.entity, props.layout), groupsLayout.value))
 const groupMode = computed(() => props.layout?.groupMode ?? 'groups')
 const isTabs = computed(() => groupMode.value === 'tabs' && groups.value.length > 0)
 
@@ -127,7 +181,12 @@ function tabTitle(tab: { title: string }, index: number): string {
   return tab.title || (index === 0 ? '基本信息' : `分组 ${index + 1}`)
 }
 
-const visibleSubTables = computed(() => subTableModels(props.entity, props.layout, props.moduleId ?? '').filter(st => !st.hidden))
+const visibleSubTables = computed(() =>
+  subTableModels(props.entity, props.layout, props.moduleId ?? '', props.entities).filter(st => !st.hidden)
+)
+/** 子表形态：tab 页签（桌面）/ 其他堆叠；手机保持堆叠 */
+const subMode = computed(() => (!props.mobile && subTableView(props.layout).tabs ? 'tabs' : 'flow'))
+const activeSub = ref(0)
 
 const subRowCache = computed(() => {
   const map = new Map<string, MockRow[]>()

@@ -7,6 +7,7 @@
  */
 import { db, nowIso } from '../db'
 import { BUILTIN_TEMPLATES, DEFAULT_TEMPLATE_ID } from './builtin-templates'
+import { removeTemplateAssets, syncTemplateToApps, templateUsage } from '../templates/distribution'
 import {
   TEMPLATE_SECTION_KINDS,
   TEMPLATE_STAGES,
@@ -54,7 +55,7 @@ interface TemplateRow {
 
 const SECTION_KEY_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/
 
-export function isTemplateStage(value: unknown): value is TemplateStage {
+function isTemplateStage(value: unknown): value is TemplateStage {
   return typeof value === 'string' && (TEMPLATE_STAGES as string[]).includes(value)
 }
 
@@ -66,7 +67,7 @@ function asString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-export function normalizeSections(raw: unknown): TemplateSectionDef[] {
+function normalizeSections(raw: unknown): TemplateSectionDef[] {
   if (!Array.isArray(raw)) throw new RequirementDocError(400, '模板章节需要是数组')
   const sections: TemplateSectionDef[] = []
   const seen = new Set<string>()
@@ -114,7 +115,7 @@ function rowToTemplate(row: TemplateRow): RequirementTemplate {
 }
 
 /** 内置模板 seed：存在则更新结构/提示词（内置只读，不会覆盖用户模板） */
-export function seedBuiltinTemplates(): void {
+function seedBuiltinTemplates(): void {
   const now = nowIso()
   const upsert = db.prepare(`
     INSERT INTO requirement_templates
@@ -238,6 +239,7 @@ export function createTemplate(body: Record<string, unknown>): RequirementTempla
       (id, name, stage, category, description, prompt, sections_json, builtin, visibility, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'private', ?, ?)
   `).run(id, input.name, input.stage, input.category, input.description, input.prompt, JSON.stringify(input.sections), now, now)
+  syncTemplateToApps('requirement', id)
   return getTemplateOrThrow(id)
 }
 
@@ -255,20 +257,22 @@ export function updateTemplate(id: string, body: Record<string, unknown>): Requi
     SET name = ?, stage = ?, category = ?, description = ?, prompt = ?, sections_json = ?, updated_at = ?
     WHERE id = ?
   `).run(input.name, input.stage, input.category, input.description, input.prompt, JSON.stringify(input.sections), nowIso(), id)
+  syncTemplateToApps('requirement', id)
   return getTemplateOrThrow(id)
 }
 
 export function deleteTemplate(id: string): void {
   requirePrivateTemplate(id)
-  // M2：模板使用方按“应用”计数（一个应用可有多个模块文档）
-  const usage = db.prepare('SELECT COUNT(DISTINCT app_id) AS count FROM app_requirement_docs WHERE template_id = ?').get(id) as
-    | { count: number }
-    | undefined
-  const count = usage?.count ?? 0
-  if (count > 0) {
-    throw new RequirementDocError(400, `模板正在被 ${count} 个应用使用，不能删除；请先把这些应用切换到其他模板`)
+  // 全局删除保护：仍被模块 frontmatter 引用 → 409 并列出引用位置
+  const usage = templateUsage('requirement', id)
+  if (usage.apps.length) {
+    const where = usage.apps
+      .map(app => `${app.appName}（${app.modules.map(module => `${module.module || '未命名'} @ ${module.file}`).join('、')}）`)
+      .join('；')
+    throw new RequirementDocError(409, `模板仍被 ${usage.apps.length} 个应用的模块引用：${where}。请先在对话中让 agent 改掉这些模块的 template`)
   }
   db.prepare('DELETE FROM requirement_templates WHERE id = ?').run(id)
+  removeTemplateAssets('requirement', id)
 }
 
 export function duplicateTemplate(id: string, name?: unknown): RequirementTemplate {

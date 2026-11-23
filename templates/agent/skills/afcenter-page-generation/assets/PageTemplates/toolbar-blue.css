@@ -1,0 +1,64 @@
+/* 列表2顶部操作栏；在 PmToolbar 或按钮共同父容器添加此类。 */
+.pt-toolbar-blue {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pt-toolbar-blue .el-button:not(.el-button--primary) {
+  --el-button-text-color: #0b1c30;
+  --el-button-bg-color: #eff4ff;
+  --el-button-border-color: transparent;
+  --el-button-hover-text-color: #0037b0;
+  --el-button-hover-bg-color: #e5eeff;
+  --el-button-hover-border-color: transparent;
+  --el-button-active-text-color: #0037b0;
+  --el-button-active-bg-color: #dce9ff;
+  --el-button-active-border-color: transparent;
+  --el-button-disabled-text-color: #747686;
+  --el-button-disabled-bg-color: #eff4ff;
+  --el-button-disabled-border-color: transparent;
+  height: auto;
+  min-height: 34px;
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+  transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+
+
+/* text/link 保留图标工具的轻量形态，禁用状态仍由组件控制。 */
+.pt-toolbar-blue .el-button:not(.el-button--primary).is-text,
+.pt-toolbar-blue .el-button:not(.el-button--primary).is-link {
+  --el-button-bg-color: transparent;
+  padding: 6px;
+  box-shadow: none;
+}
+
+.pt-toolbar-blue .el-button:not(.el-button--primary) > span { display: inline-flex; align-items: center; gap: 4px; }
+.pt-toolbar-blue .el-button:not(.el-button--primary) .el-icon { font-size: 18px; }
+.pt-toolbar-blue .el-button:not(.el-button--primary).is-disabled { box-shadow: none; }
+.pt-toolbar-blue .el-button:not(.el-button--primary):focus-visible { outline: 2px solid #0037b0; outline-offset: 2px; }
+
+/* 主按钮沿用平台配色，仅移除边框线。 */
+.pt-toolbar-blue .el-button.el-button--primary {
+  border: 0;
+}
+
+/* 公共 PmToolbar 自带分组外框；独立按钮布局移除外框并在实际容器上设置间距。 */
+.pt-toolbar-blue.pm-toolbar .pm-toolbar__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+/* Modified by AI on 2026-11-12 14:58:57 */

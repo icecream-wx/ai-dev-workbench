@@ -1,0 +1,883 @@
+{
+  "draft": {
+    "schemaVersion": 1,
+    "id": "supplier-management",
+    "name": "供应商管理模板",
+    "style": "data-cyan",
+    "baseApplicationType": "enterprise-application-platform",
+    "status": "draft",
+    "createdAt": "2026-11-21T13:35:19.511Z",
+    "updatedAt": "2026-11-21T13:35:19.511Z",
+    "publishedVersion": null,
+    "lastSpecHash": null
+  },
+  "spec": {
+    "schemaVersion": 1,
+    "id": "supplier-management",
+    "name": "供应商管理模板",
+    "description": "供应商主数据台账：列表检索与批量操作、弹窗新建/编辑、详情查看。",
+    "baseApplicationType": "operations-management",
+    "style": "data-cyan",
+    "pages": [
+      {
+        "id": "supplier-list",
+        "name": "供应商列表",
+        "kind": "reference",
+        "description": "复用运营管理后台列表页：左侧检索与概况、右侧台账表格、行内筛选与紧凑分页。",
+        "source": {
+          "pack": "afcenter-app-templates-v1",
+          "applicationType": "operations-management",
+          "pageId": "list"
+        }
+      },
+      {
+        "id": "supplier-form",
+        "name": "供应商新建/编辑",
+        "kind": "contract",
+        "type": "form",
+        "recipe": "dialog-form",
+        "description": "弹窗内分组维护供应商基础信息、合作与结算、联系信息及补充说明。",
+        "contract": {
+          "form": {
+            "presentation": "dialog",
+            "columns": 2,
+            "width": 900,
+            "groups": [
+              {
+                "title": "基础信息",
+                "fields": [
+                  "code",
+                  "name",
+                  "category",
+                  "level"
+                ]
+              },
+              {
+                "title": "合作与结算",
+                "fields": [
+                  "status",
+                  "settleTerm",
+                  "creditLimit",
+                  "cooperationDate"
+                ]
+              },
+              {
+                "title": "联系信息",
+                "fields": [
+                  "contact",
+                  "phone",
+                  "email",
+                  "region"
+                ]
+              },
+              {
+                "title": "补充说明",
+                "fields": [
+                  "owner",
+                  "address",
+                  "remark"
+                ]
+              }
+            ]
+          },
+          "components": {
+            "category": "pm-select",
+            "level": "pm-select",
+            "status": "pm-select",
+            "settleTerm": "pm-select",
+            "creditLimit": "pm-number",
+            "cooperationDate": "pm-datepicker",
+            "owner": "pm-select-user",
+            "address": "pm-textarea",
+            "remark": "pm-textarea"
+          }
+        },
+        "sampleEntity": {
+          "id": "supplier",
+          "name": "供应商",
+          "fields": [
+            {
+              "name": "code",
+              "label": "供应商编号",
+              "type": "string",
+              "required": true,
+              "unique": true
+            },
+            {
+              "name": "name",
+              "label": "供应商名称",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "category",
+              "label": "供应品类",
+              "type": "enum",
+              "options": [
+                "原材料",
+                "包装材料",
+                "物流服务",
+                "设备配件",
+                "办公用品"
+              ]
+            },
+            {
+              "name": "level",
+              "label": "供应商等级",
+              "type": "enum",
+              "options": [
+                "战略供应商",
+                "核心供应商",
+                "普通供应商",
+                "备选供应商"
+              ]
+            },
+            {
+              "name": "status",
+              "label": "合作状态",
+              "type": "enum",
+              "options": [
+                "合作中",
+                "待审核",
+                "已暂停",
+                "已淘汰"
+              ]
+            },
+            {
+              "name": "settleTerm",
+              "label": "结算方式",
+              "type": "enum",
+              "options": [
+                "月结30天",
+                "月结60天",
+                "货到付款",
+                "预付款"
+              ]
+            },
+            {
+              "name": "creditLimit",
+              "label": "授信额度（元）",
+              "type": "decimal"
+            },
+            {
+              "name": "cooperationDate",
+              "label": "合作起始日期",
+              "type": "date"
+            },
+            {
+              "name": "contact",
+              "label": "联系人",
+              "type": "string"
+            },
+            {
+              "name": "phone",
+              "label": "联系电话",
+              "type": "string"
+            },
+            {
+              "name": "email",
+              "label": "邮箱",
+              "type": "string"
+            },
+            {
+              "name": "region",
+              "label": "所在地区",
+              "type": "string"
+            },
+            {
+              "name": "owner",
+              "label": "采购负责人",
+              "type": "ref",
+              "ref": "user"
+            },
+            {
+              "name": "address",
+              "label": "详细地址",
+              "type": "text"
+            },
+            {
+              "name": "remark",
+              "label": "备注",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      {
+        "id": "supplier-detail",
+        "name": "供应商详情",
+        "kind": "contract",
+        "type": "detail",
+        "recipe": "detail",
+        "description": "展示供应商主数据、合作状态、结算方式、授信额度与联系信息。",
+        "contract": {
+          "columns": [
+            "code",
+            "name",
+            "category",
+            "level",
+            "status",
+            "settleTerm",
+            "creditLimit",
+            "cooperationDate",
+            "contact",
+            "phone",
+            "email",
+            "region",
+            "owner",
+            "address",
+            "remark"
+          ]
+        },
+        "sampleEntity": {
+          "id": "supplier",
+          "name": "供应商",
+          "fields": [
+            {
+              "name": "code",
+              "label": "供应商编号",
+              "type": "string",
+              "required": true,
+              "unique": true
+            },
+            {
+              "name": "name",
+              "label": "供应商名称",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "category",
+              "label": "供应品类",
+              "type": "enum",
+              "options": [
+                "原材料",
+                "包装材料",
+                "物流服务",
+                "设备配件",
+                "办公用品"
+              ]
+            },
+            {
+              "name": "level",
+              "label": "供应商等级",
+              "type": "enum",
+              "options": [
+                "战略供应商",
+                "核心供应商",
+                "普通供应商",
+                "备选供应商"
+              ]
+            },
+            {
+              "name": "status",
+              "label": "合作状态",
+              "type": "enum",
+              "options": [
+                "合作中",
+                "待审核",
+                "已暂停",
+                "已淘汰"
+              ]
+            },
+            {
+              "name": "settleTerm",
+              "label": "结算方式",
+              "type": "enum",
+              "options": [
+                "月结30天",
+                "月结60天",
+                "货到付款",
+                "预付款"
+              ]
+            },
+            {
+              "name": "creditLimit",
+              "label": "授信额度（元）",
+              "type": "decimal"
+            },
+            {
+              "name": "cooperationDate",
+              "label": "合作起始日期",
+              "type": "date"
+            },
+            {
+              "name": "contact",
+              "label": "联系人",
+              "type": "string"
+            },
+            {
+              "name": "phone",
+              "label": "联系电话",
+              "type": "string"
+            },
+            {
+              "name": "email",
+              "label": "邮箱",
+              "type": "string"
+            },
+            {
+              "name": "region",
+              "label": "所在地区",
+              "type": "string"
+            },
+            {
+              "name": "owner",
+              "label": "采购负责人",
+              "type": "ref",
+              "ref": "user"
+            },
+            {
+              "name": "address",
+              "label": "详细地址",
+              "type": "text"
+            },
+            {
+              "name": "remark",
+              "label": "备注",
+              "type": "text"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "specError": null,
+  "packSummary": {
+    "id": "supplier-management",
+    "version": "1.0.0",
+    "revision": 0,
+    "pageCount": 3,
+    "pages": [
+      {
+        "id": "supplier-list",
+        "name": "供应商列表",
+        "kind": "reference",
+        "recipe": "list",
+        "source": "operations-management/list",
+        "blueprint": "application-types/supplier-management/pages/supplier-list.vue"
+      },
+      {
+        "id": "supplier-form",
+        "name": "供应商新建/编辑",
+        "kind": "contract",
+        "recipe": "dialog-form"
+      },
+      {
+        "id": "supplier-detail",
+        "name": "供应商详情",
+        "kind": "contract",
+        "recipe": "detail"
+      }
+    ]
+  },
+  "pack": {
+    "schemaVersion": 1,
+    "id": "supplier-management",
+    "name": "供应商管理模板",
+    "version": "1.0.0",
+    "defaultApplicationType": "supplier-management",
+    "defaultStyle": "data-cyan",
+    "origin": {
+      "kind": "custom",
+      "draftId": "supplier-management",
+      "builtFrom": {
+        "pack": "afcenter-app-templates-v1",
+        "version": "1.0.0"
+      },
+      "baseApplicationType": "operations-management",
+      "style": "data-cyan",
+      "revision": 0,
+      "specHash": "sha256:a6496a823628cd809858b9fc0428d84a150a0145108f39bf82b5de6b8366917c"
+    },
+    "applicationTypes": [
+      {
+        "id": "supplier-management",
+        "name": "供应商管理模板",
+        "category": "custom",
+        "description": "供应商主数据台账：列表检索与批量操作、弹窗新建/编辑、详情查看。",
+        "structure": "application-types/supplier-management/structure.css",
+        "assets": [
+          "application-types/supplier-management/assets/ledger-workflow.svg"
+        ],
+        "defaultStyle": "data-cyan",
+        "pages": [
+          {
+            "id": "supplier-list",
+            "name": "供应商列表",
+            "type": "list",
+            "recipe": "list",
+            "preview": "list",
+            "description": "复用运营管理后台列表页：左侧检索与概况、右侧台账表格、行内筛选与紧凑分页。",
+            "kind": "reference",
+            "components": [
+              "pm-form-dialog",
+              "pm-input",
+              "pm-pagination",
+              "pm-search",
+              "pm-select",
+              "pm-table",
+              "pm-toolbar",
+              "pm-toolbar-item"
+            ],
+            "source": {
+              "pack": "afcenter-app-templates-v1",
+              "applicationType": "operations-management",
+              "pageId": "list",
+              "blueprint": "application-types/operations-management/pages/OperationsList.vue",
+              "sha256": "f2ddc5715e987733bf17131d3beea918eb319dcb90feb2a6b616dbed080c621a"
+            },
+            "blueprint": "application-types/supplier-management/pages/supplier-list.vue"
+          },
+          {
+            "id": "supplier-form",
+            "name": "供应商新建/编辑",
+            "type": "form",
+            "recipe": "dialog-form",
+            "preview": "form",
+            "description": "弹窗内分组维护供应商基础信息、合作与结算、联系信息及补充说明。",
+            "kind": "contract",
+            "components": [
+              "pm-select",
+              "pm-number",
+              "pm-datepicker",
+              "pm-select-user",
+              "pm-textarea",
+              "pm-form-dialog",
+              "FormSection"
+            ],
+            "blocks": 0,
+            "contract": {
+              "form": {
+                "presentation": "dialog",
+                "columns": 2,
+                "width": 900,
+                "groups": [
+                  {
+                    "title": "基础信息",
+                    "fields": [
+                      "code",
+                      "name",
+                      "category",
+                      "level"
+                    ]
+                  },
+                  {
+                    "title": "合作与结算",
+                    "fields": [
+                      "status",
+                      "settleTerm",
+                      "creditLimit",
+                      "cooperationDate"
+                    ]
+                  },
+                  {
+                    "title": "联系信息",
+                    "fields": [
+                      "contact",
+                      "phone",
+                      "email",
+                      "region"
+                    ]
+                  },
+                  {
+                    "title": "补充说明",
+                    "fields": [
+                      "owner",
+                      "address",
+                      "remark"
+                    ]
+                  }
+                ]
+              },
+              "components": {
+                "category": "pm-select",
+                "level": "pm-select",
+                "status": "pm-select",
+                "settleTerm": "pm-select",
+                "creditLimit": "pm-number",
+                "cooperationDate": "pm-datepicker",
+                "owner": "pm-select-user",
+                "address": "pm-textarea",
+                "remark": "pm-textarea"
+              }
+            },
+            "sampleEntity": {
+              "id": "supplier",
+              "name": "供应商",
+              "fields": [
+                {
+                  "name": "code",
+                  "label": "供应商编号",
+                  "type": "string",
+                  "required": true,
+                  "unique": true
+                },
+                {
+                  "name": "name",
+                  "label": "供应商名称",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "category",
+                  "label": "供应品类",
+                  "type": "enum",
+                  "options": [
+                    "原材料",
+                    "包装材料",
+                    "物流服务",
+                    "设备配件",
+                    "办公用品"
+                  ]
+                },
+                {
+                  "name": "level",
+                  "label": "供应商等级",
+                  "type": "enum",
+                  "options": [
+                    "战略供应商",
+                    "核心供应商",
+                    "普通供应商",
+                    "备选供应商"
+                  ]
+                },
+                {
+                  "name": "status",
+                  "label": "合作状态",
+                  "type": "enum",
+                  "options": [
+                    "合作中",
+                    "待审核",
+                    "已暂停",
+                    "已淘汰"
+                  ]
+                },
+                {
+                  "name": "settleTerm",
+                  "label": "结算方式",
+                  "type": "enum",
+                  "options": [
+                    "月结30天",
+                    "月结60天",
+                    "货到付款",
+                    "预付款"
+                  ]
+                },
+                {
+                  "name": "creditLimit",
+                  "label": "授信额度（元）",
+                  "type": "decimal"
+                },
+                {
+                  "name": "cooperationDate",
+                  "label": "合作起始日期",
+                  "type": "date"
+                },
+                {
+                  "name": "contact",
+                  "label": "联系人",
+                  "type": "string"
+                },
+                {
+                  "name": "phone",
+                  "label": "联系电话",
+                  "type": "string"
+                },
+                {
+                  "name": "email",
+                  "label": "邮箱",
+                  "type": "string"
+                },
+                {
+                  "name": "region",
+                  "label": "所在地区",
+                  "type": "string"
+                },
+                {
+                  "name": "owner",
+                  "label": "采购负责人",
+                  "type": "ref",
+                  "ref": "user"
+                },
+                {
+                  "name": "address",
+                  "label": "详细地址",
+                  "type": "text"
+                },
+                {
+                  "name": "remark",
+                  "label": "备注",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          {
+            "id": "supplier-detail",
+            "name": "供应商详情",
+            "type": "detail",
+            "recipe": "detail",
+            "preview": "detail",
+            "description": "展示供应商主数据、合作状态、结算方式、授信额度与联系信息。",
+            "kind": "contract",
+            "components": [
+              "detail sections",
+              "related lists"
+            ],
+            "blocks": 0,
+            "contract": {
+              "columns": [
+                "code",
+                "name",
+                "category",
+                "level",
+                "status",
+                "settleTerm",
+                "creditLimit",
+                "cooperationDate",
+                "contact",
+                "phone",
+                "email",
+                "region",
+                "owner",
+                "address",
+                "remark"
+              ]
+            },
+            "sampleEntity": {
+              "id": "supplier",
+              "name": "供应商",
+              "fields": [
+                {
+                  "name": "code",
+                  "label": "供应商编号",
+                  "type": "string",
+                  "required": true,
+                  "unique": true
+                },
+                {
+                  "name": "name",
+                  "label": "供应商名称",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "category",
+                  "label": "供应品类",
+                  "type": "enum",
+                  "options": [
+                    "原材料",
+                    "包装材料",
+                    "物流服务",
+                    "设备配件",
+                    "办公用品"
+                  ]
+                },
+                {
+                  "name": "level",
+                  "label": "供应商等级",
+                  "type": "enum",
+                  "options": [
+                    "战略供应商",
+                    "核心供应商",
+                    "普通供应商",
+                    "备选供应商"
+                  ]
+                },
+                {
+                  "name": "status",
+                  "label": "合作状态",
+                  "type": "enum",
+                  "options": [
+                    "合作中",
+                    "待审核",
+                    "已暂停",
+                    "已淘汰"
+                  ]
+                },
+                {
+                  "name": "settleTerm",
+                  "label": "结算方式",
+                  "type": "enum",
+                  "options": [
+                    "月结30天",
+                    "月结60天",
+                    "货到付款",
+                    "预付款"
+                  ]
+                },
+                {
+                  "name": "creditLimit",
+                  "label": "授信额度（元）",
+                  "type": "decimal"
+                },
+                {
+                  "name": "cooperationDate",
+                  "label": "合作起始日期",
+                  "type": "date"
+                },
+                {
+                  "name": "contact",
+                  "label": "联系人",
+                  "type": "string"
+                },
+                {
+                  "name": "phone",
+                  "label": "联系电话",
+                  "type": "string"
+                },
+                {
+                  "name": "email",
+                  "label": "邮箱",
+                  "type": "string"
+                },
+                {
+                  "name": "region",
+                  "label": "所在地区",
+                  "type": "string"
+                },
+                {
+                  "name": "owner",
+                  "label": "采购负责人",
+                  "type": "ref",
+                  "ref": "user"
+                },
+                {
+                  "name": "address",
+                  "label": "详细地址",
+                  "type": "text"
+                },
+                {
+                  "name": "remark",
+                  "label": "备注",
+                  "type": "text"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "styles": [
+      {
+        "id": "data-cyan",
+        "name": "数据蓝青",
+        "className": "visual-style-data-cyan",
+        "css": "styles/data-cyan/style.css",
+        "description": "蓝青冷色、卡片层次、轻网格和偏数据科技的视觉表达。",
+        "signature": "#145FBA",
+        "tokens": {
+          "primary": "#145fba",
+          "accent": "#07858d",
+          "neutral": "#66758a",
+          "background": "#f3f7fb",
+          "radius": 12,
+          "density": "compact"
+        }
+      }
+    ],
+    "skills": [
+      "afcenter-page-generation",
+      "pm-components-usage"
+    ],
+    "componentMap": {
+      "string": "pm-input",
+      "text": "pm-textarea",
+      "number": "pm-number",
+      "decimal": "pm-number",
+      "boolean": "pm-switch",
+      "date": "pm-datepicker",
+      "datetime": "pm-datepicker",
+      "enum": "pm-select",
+      "ref": "pm-select-entity",
+      "ref:user": "pm-select-user",
+      "ref:org": "pm-select-org",
+      "ref:position": "pm-select-position",
+      "ref:tree": "pm-select-tree",
+      "upload": "pm-upload"
+    },
+    "pageRecipes": {
+      "list": [
+        "BusinessListPage",
+        "QueryPanel",
+        "RowActions",
+        "ThreePartPagination"
+      ],
+      "tree-list": [
+        "TreeListPage",
+        "TreePanel",
+        "QueryPanel",
+        "RowActions"
+      ],
+      "dialog-form": [
+        "pm-form-dialog",
+        "FormSection"
+      ],
+      "page-form": [
+        "StandardFormPage",
+        "FormSection"
+      ],
+      "main-sub": [
+        "StandardFormPage",
+        "FormSection",
+        "el-tabs"
+      ],
+      "detail": [
+        "detail sections",
+        "related lists"
+      ],
+      "dashboard": [
+        "metric cards",
+        "pm-echarts"
+      ],
+      "wizard": [
+        "pm-steps",
+        "FormSection"
+      ]
+    },
+    "conformance": [
+      "列表/树/表单优先使用 PageTemplates",
+      "新增/编辑默认 pm-form-dialog",
+      "所有 el-table 使用 v-auto-height",
+      "业务字段 > 8 使用双列；多行文本 pt-field-full",
+      "批量操作放 batch-actions；树节点菜单 MoreFilled",
+      "统一导入 GlobalPreference；预设只在页面 computed 合并",
+      "禁止自造一套表格/表单样式替代模板"
+    ]
+  },
+  "generation": {
+    "generatedAt": "2026-11-21T13:36:10.064Z",
+    "specHash": "sha256:a6496a823628cd809858b9fc0428d84a150a0145108f39bf82b5de6b8366917c",
+    "pageCount": 3,
+    "pack": {
+      "id": "supplier-management",
+      "name": "供应商管理模板",
+      "version": "1.0.0",
+      "revision": 0,
+      "pageCount": 3
+    },
+    "sources": [
+      "operations-management"
+    ],
+    "css": {
+      "sources": [
+        "operations-management"
+      ],
+      "totalRules": 212,
+      "rules": 212,
+      "deduped": 0,
+      "atRules": 1,
+      "conflicts": [],
+      "conflictDetails": []
+    },
+    "warnings": [],
+    "errors": []
+  },
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  },
+  "referencedApps": []
+}

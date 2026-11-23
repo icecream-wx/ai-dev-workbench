@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "pack": "goods-hub",
+  "packName": "商品管理模板",
+  "packVersion": "1.0.0",
+  "origin": {
+    "kind": "custom",
+    "draftId": "goods-hub",
+    "baseApplicationType": "operations-management"
+  },
+  "applicationType": "goods-hub",
+  "applicationTypeName": "商品管理模板",
+  "style": "data-cyan",
+  "styleName": "数据蓝青",
+  "styleClassName": "visual-style-data-cyan",
+  "blueprintRoot": "docs/design/template",
+  "templateDir": "docs/design/template/goods-hub",
+  "structure": "docs/design/template/goods-hub/structure.css",
+  "styles": {
+    "shared": "docs/design/template/styles/shared.css",
+    "style": "docs/design/template/styles/data-cyan/style.css",
+    "styleId": "data-cyan"
+  },
+  "preview": {
+    "kind": "custom",
+    "baseApplicationType": "operations-management",
+    "structure": "docs/design/template/goods-hub/structure.css",
+    "structureUrl": "/api/apps/p77-dev-real/design-system/asset?path=goods-hub%2Fstructure.css",
+    "styleClassName": "visual-style-data-cyan",
+    "packVersion": "1.0.0"
+  },
+  "pages": [
+    {
+      "id": "goods-list",
+      "name": "商品列表",
+      "type": "list",
+      "recipe": "list",
+      "description": "行内筛选、边框表格、批量操作与紧凑分页。",
+      "kind": "reference",
+      "blueprint": "docs/design/template/goods-hub/pages/goods-list.vue",
+      "packBlueprint": "application-types/goods-hub/pages/goods-list.vue",
+      "source": {
+        "pack": "afcenter-app-templates-v1",
+        "applicationType": "operations-management",
+        "pageId": "list"
+      },
+      "components": [
+        "pm-form-dialog",
+        "pm-input",
+        "pm-pagination",
+        "pm-search",
+        "pm-select",
+        "pm-table",
+        "pm-toolbar",
+        "pm-toolbar-item"
+      ]
+    },
+    {
+      "id": "goods-form",
+      "name": "商品新增/编辑",
+      "type": "form",
+      "recipe": "dialog-form",
+      "description": "商品新增/编辑（按页面契约实现）",
+      "kind": "contract",
+      "contractFile": "docs/design/template/goods-hub/contracts/goods-form.json",
+      "components": [
+        "pm-select",
+        "pm-number",
+        "pm-select-user",
+        "pm-textarea",
+        "pm-form-dialog",
+        "FormSection"
+      ],
+      "blocks": 0
+    }
+  ],
+  "skills": [
+    "afcenter-page-generation",
+    "pm-components-usage"
+  ]
+}

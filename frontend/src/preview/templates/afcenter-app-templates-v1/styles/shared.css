@@ -1,0 +1,125 @@
+.visual-style-host {
+  min-height: 100%;
+  color: var(--template-text);
+  background: var(--template-bg);
+}
+
+.visual-style-host .optimized-suite {
+  color: var(--template-text);
+  background-color: var(--template-bg);
+}
+
+.visual-style-host .panel,
+.visual-style-host .metric-card,
+.visual-style-host .template-page-card,
+.visual-style-host .af-panel,
+.visual-style-host .af-metric,
+.visual-style-host .af-app-card,
+.visual-style-host .el-card {
+  border-color: var(--template-border);
+  border-radius: var(--template-radius);
+  background-color: var(--template-surface);
+  box-shadow: var(--template-shadow);
+}
+
+.visual-style-host .page-heading,
+.visual-style-host .detail-hero,
+.visual-style-host .editor-heading,
+.visual-style-host .af-page-header {
+  border-color: var(--template-border);
+}
+
+.visual-style-host .page-heading h1,
+.visual-style-host .detail-hero h1,
+.visual-style-host .editor-heading h1,
+.visual-style-host .af-page-header h1,
+.visual-style-host .panel-title,
+.visual-style-host .af-panel-title {
+  color: var(--template-heading);
+  font-family: var(--template-heading-font);
+  font-weight: var(--template-title-weight);
+  letter-spacing: var(--template-title-spacing);
+}
+
+.visual-style-host .el-button {
+  border-radius: var(--template-radius-small);
+}
+
+.visual-style-host .el-button--primary {
+  color: var(--template-primary-contrast) !important;
+  border-color: var(--template-primary) !important;
+  background: var(--template-primary) !important;
+}
+
+.visual-style-host .el-button--primary:hover,
+.visual-style-host .el-button--primary:focus {
+  border-color: var(--template-primary-dark) !important;
+  background: var(--template-primary-dark) !important;
+}
+
+.visual-style-host .el-input__wrapper,
+.visual-style-host .el-select__wrapper,
+.visual-style-host .el-textarea__inner,
+.visual-style-host .el-date-editor.el-input__wrapper {
+  border-radius: var(--template-radius-small);
+  background: var(--template-surface);
+  box-shadow: 0 0 0 1px var(--template-border) inset;
+}
+
+.visual-style-host .el-table {
+  border-color: var(--template-border);
+  border-radius: var(--template-radius);
+  --el-table-border-color: var(--template-border-light);
+  --el-table-header-bg-color: var(--template-table-head);
+  --el-table-header-text-color: var(--template-table-head-text);
+  --el-table-row-hover-bg-color: var(--template-primary-soft);
+  --el-table-text-color: var(--template-text);
+}
+
+.visual-style-host .el-table th.el-table__cell {
+  color: var(--template-table-head-text) !important;
+  border-color: var(--template-border);
+  background: var(--template-table-head) !important;
+}
+
+.visual-style-host .el-table td.el-table__cell {
+  border-color: var(--template-border-light);
+  background: var(--template-surface);
+}
+
+.visual-style-host .el-pagination.is-background .el-pager li.is-active {
+  color: var(--template-primary-contrast);
+  background: var(--template-primary);
+}
+
+.visual-style-host .el-dialog {
+  border: 1px solid var(--template-border);
+  border-radius: var(--template-radius);
+  background: var(--template-surface);
+  box-shadow: var(--template-shadow-hover);
+}
+
+.visual-style-host .el-dialog__header,
+.visual-style-host .el-dialog__footer {
+  border-color: var(--template-border);
+  background: var(--template-surface-soft);
+}
+
+.visual-style-host .af-page,
+.visual-style-host .template-stage {
+  background-color: var(--template-bg);
+}
+
+.visual-style-host .af-panel,
+.visual-style-host .af-metric,
+.visual-style-host .af-app-card {
+  border-color: var(--template-border);
+  border-radius: var(--template-radius);
+  background: var(--template-surface);
+  box-shadow: var(--template-shadow);
+}
+
+.visual-style-host .af-status,
+.visual-style-host .status-chip {
+  border-radius: var(--template-pill-radius);
+}

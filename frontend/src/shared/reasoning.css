@@ -1,0 +1,82 @@
+/**
+ * 对话“思考”折叠块（AgentChatPanel / DevView 共用）
+ * 深色/浅色都用 --rg-* token；结构：<details class="rg-reasoning"><summary>思考</summary><pre>…</pre></details>
+ */
+.rg-reasoning {
+  margin: 0 0 8px;
+  border-left: 2px solid var(--rg-border-strong);
+  padding-left: 9px;
+}
+.rg-reasoning > summary {
+  cursor: pointer;
+  font-size: 10.5px;
+  color: var(--rg-text-3);
+  list-style: none;
+  user-select: none;
+}
+.rg-reasoning > summary::-webkit-details-marker {
+  display: none;
+}
+.rg-reasoning > summary::before {
+  content: '▸ ';
+  color: var(--rg-text-3);
+}
+.rg-reasoning[open] > summary::before {
+  content: '▾ ';
+}
+.rg-reasoning > summary:hover {
+  color: var(--rg-text);
+}
+.rg-reasoning > pre {
+  margin: 5px 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--rg-text-2);
+}
+
+/* 本地占位气泡（发送后、首个内容前） */
+.rg-pending {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  color: var(--rg-text-2);
+  background: var(--rg-fill-2);
+  border: 1px dashed var(--rg-border-strong);
+  border-radius: 9px;
+  padding: 7px 10px;
+}
+.rg-pending .rg-pending-spinner {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  border: 2px solid var(--rg-border-strong);
+  border-top-color: var(--rg-ai);
+  border-radius: 50%;
+  animation: rg-pending-spin 0.9s linear infinite;
+}
+.rg-pending.failed {
+  color: var(--rg-danger);
+  background: var(--rg-danger-soft);
+  border-color: var(--rg-danger-border);
+}
+.rg-pending.interrupted {
+  color: var(--rg-warn);
+  background: var(--rg-warn-soft);
+  border-color: var(--rg-warn-border);
+}
+@keyframes rg-pending-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 运行中工具行 */
+.rg-running-tool {
+  font-size: 11px;
+  color: var(--rg-text-3);
+  padding: 2px 2px 0;
+}

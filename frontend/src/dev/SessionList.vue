@@ -19,8 +19,6 @@
         <button type="button" class="group-head" @click="toggleGroup(group.key)">
           <span class="chevron" :class="{ open: isOpen(group) }">›</span>
           <span class="group-title">{{ group.label }}</span>
-          <span v-if="group.statusLabel" class="group-chip">{{ group.statusLabel }}</span>
-          <span v-if="group.handoffVersion !== null" class="group-version">交接包 v{{ group.handoffVersion }}</span>
           <span class="group-count">{{ group.sessions.length }}</span>
         </button>
 
@@ -29,6 +27,7 @@
             v-for="item in group.sessions"
             :key="item.id"
             :class="['item', { selected: item.id === selectedId, active: item.status === 'active' }]"
+            data-testid="session-item"
             role="button"
             tabindex="0"
             @click="emit('select', item)"
@@ -42,21 +41,12 @@
             <div class="item-meta">
               <span>{{ sessionTimeLabel(item) }}</span>
               <span>{{ modelShort(item.model) }}</span>
-              <span v-if="item.handoffVersion !== null">交接包 v{{ item.handoffVersion }}</span>
             </div>
-            <p
-              v-if="phaseChipLabel(item)"
-              class="item-phase"
-              :title="phaseChipLabel(item)"
-              data-testid="session-phase-chip"
-            >
-              {{ phaseChipLabel(item) }}
-            </p>
             <p v-if="item.note" class="item-note">{{ item.note }}</p>
             <div class="item-actions" @click.stop>
-              <button type="button" class="mini" @click="emit('rename', item)">重命名</button>
-              <button v-if="item.status === 'active'" type="button" class="mini" @click="emit('archive', item)">归档</button>
-              <button v-else-if="item.status === 'archived'" type="button" class="mini" @click="emit('restore', item)">恢复</button>
+              <button type="button" class="mini" data-testid="session-rename" @click="emit('rename', item)">重命名</button>
+              <button v-if="item.status === 'active'" type="button" class="mini" data-testid="session-archive" @click="emit('archive', item)">归档</button>
+              <button v-else-if="item.status === 'archived'" type="button" class="mini" data-testid="session-restore" @click="emit('restore', item)">恢复</button>
             </div>
           </li>
         </ul>
@@ -77,7 +67,6 @@ import {
   sessionStatusLabel,
   sessionTimeLabel
 } from './session-labels.js'
-import { phaseChipLabel } from './phase-labels.js'
 
 const props = defineProps<{
   sessions: DevSessionListItem[]
@@ -219,18 +208,6 @@ function toggleGroup(key: string): void {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.group-chip {
-  border-radius: 999px;
-  padding: 1px 6px;
-  background: var(--rg-fill-2, #eef0f4);
-  font-size: 9.5px;
-  white-space: nowrap;
-}
-.group-version {
-  font-size: 9.5px;
-  color: var(--rg-ai, #5b5bd6);
-  white-space: nowrap;
-}
 .group-count {
   margin-left: auto;
   font-size: 10px;
@@ -312,19 +289,6 @@ function toggleGroup(key: string): void {
   color: var(--rg-text-3, #8a93a3);
   white-space: nowrap;
   overflow: hidden;
-}
-.item-phase {
-  margin: 0;
-  align-self: flex-start;
-  max-width: 100%;
-  border-radius: 999px;
-  padding: 1px 7px;
-  font-size: 9.5px;
-  background: var(--rg-ai-soft, #eeeefc);
-  color: var(--rg-ai, #5b5bd6);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .item-note {
   margin: 0;

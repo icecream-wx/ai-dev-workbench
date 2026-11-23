@@ -1,0 +1,27 @@
+[spike-e] JSON 写入 C:\Users\icecream\AppData\Local\Temp\workbench-p7-7-spike\spike-e-contract.json
+[spike-e] OK  adaptDesign 页面数
+[spike-e] OK  adaptDesign 实体字段数
+[spike-e] OK  list: resolveContractRecipe
+[spike-e] OK  list: buildColumns
+   {"columns":[{"prop":"code","label":"供应商编码","minWidth":130},{"prop":"name","label":"供应商名称","minWidth":130},{"prop":"status","label":"状态","width":110,"scope":"status"},{"prop":"owner","label":"负责人","minWidth":130},{"prop":"amount","label":"年度金额","width":120},{"prop":"createdAt","label":"创建时间","width":165}],"skipped":["ghostColumn"]}
+[spike-e] OK  list: buildFilters
+   {"fields":[{"name":"name","label":"供应商名称","type":"string"},{"name":"status","label":"状态","type":"enum","options":["启用","停用","草稿"]},{"name":"org","label":"所属机构","type":"string"}],"skipped":["unknownField"]}
+[spike-e] OK  list: buildToolbar
+[spike-e] OK  list: buildRowActions
+[spike-e] OK  list: selectionEnabled
+[spike-e] OK  list: pageSizeOf
+[spike-e] OK  tree-list: resolveContractRecipe
+[spike-e] OK  tree-list: buildTreeRows（重复行）
+   {"titleField":"org","nodes":[{"id":"tree-0","label":"总部","children":[{"id":"tree-1","label":"华东事业部"},{"id":"tree-2","label":"华南事业部"},{"id":"tree-3","label":"研发中心"}]},{"id":"tree-1","label":"华东事业部"},{"id":"tree-2","label":"华南事业部"},{"id":"tree-3","label":"研发中心"}],"flat":false,"note":""}
+[spike-e] OK  tree-list: buildTreeRows（去重行）
+   {"titleField":"org","nodes":[{"id":"tree-0","label":"总部","children":[{"id":"tree-1","label":"华东事业部"},{"id":"tree-2","label":"华南事业部"},{"id":"tree-3","label":"研发中心"}]}],"flat":false,"note":""}
+[spike-e] OK  dialog-form: resolveContractRecipe
+[spike-e] OK  dialog-form: buildForm
+   {"dialog":true,"columns":2,"width":900,"groupCount":2,"groups":[{"title":"基本信息","fields":["name","code","status","org"]},{"title":"扩展信息","fields":["owner","amount","enabled"]}],"skipped":["missingField"]}
+[spike-e] OK  dashboard: resolveContractRecipe
+[spike-e] OK  dashboard: buildDashboardModel
+   {"metricCount":3,"chartType":"pie","columnCount":6}
+[spike-e] OK  detail: resolveContractRecipe
+[spike-e] OK  detail: buildDetailModel
+   {"fieldCount":10,"hasHero":true,"timelineCount":1,"statusClass":"status-success"}
+[spike-e] 总计 18/18 通过

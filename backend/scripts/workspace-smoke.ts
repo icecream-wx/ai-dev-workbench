@@ -1,15 +1,15 @@
 /**
- * P1 底座冒烟：工作区 + 模板分发 + 模块文件 + artifacts + 事件
+ * P1/D1 底座冒烟：工作区 + 模板分发 + 单需求文档 + artifacts + 事件
  *
  * 真实 Express + 临时 SQLite/projects；默认不启动 opencode（OPENCODE_AUTO_START=false）。
  *
  * 覆盖：
  * 1. 建应用 → 工作区结构（AGENTS.md/README.md/opencode.json/docs/.opencode/backend）
- * 2. skills/commands 资产就位（SKILL.md 有 name+description；5 个 command）
- * 3. POST /requirements-modules → 生成 docs/requirements/MOD-001-*.md（frontmatter + 章节）
- * 4. artifacts 解析模块与设计（合法/非法 design.json）
+ * 2. skills/commands 资产就位（SKILL.md 有 name+description；6 个 command）
+ * 3. scaffold → docs/requirements/requirements.md（title/template + Epic 骨架，不覆盖）
+ * 4. artifacts 解析单需求文档 + entities.json/pages.json（合法/非法）
  * 5. 全局模板保存 → 同步应用副本 + manifest hash；POST /templates/.../sync 幂等
- * 6. 删除被模块引用的模板 → 409
+ * 6. 删除被单需求文档引用的模板 → 409
  * 7. docs/ 变化 → SSE artifacts-changed
  *
  * 运行：npm run smoke:workspace --prefix backend
@@ -135,6 +135,7 @@ async function main(): Promise<void> {
     'README.md',
     'opencode.json',
     'docs/requirements',
+    'docs/requirements/requirements.md',
     'docs/design',
     'backend/pom.xml',
     '.opencode/skills/adw-requirements-document/SKILL.md',
@@ -146,9 +147,13 @@ async function main(): Promise<void> {
     '.opencode/skills/adw-template-proto-enterprise-application-platform/SKILL.md',
     '.opencode/skills/adw-template-proto-enterprise-application-platform/assets/design-system.json',
     '.opencode/skills/adw-design-artifacts/SKILL.md',
-    '.opencode/skills/adw-design-artifacts/references/design.schema.json',
+    '.opencode/skills/adw-design-artifacts/references/entities.schema.json',
+    '.opencode/skills/adw-design-artifacts/references/pages.schema.json',
     '.opencode/skills/adw-design-artifacts/scripts/validate.mjs',
     '.opencode/skills/adw-frontend-implementation/SKILL.md',
+    '.opencode/skills/adw-api-design/SKILL.md',
+    '.opencode/skills/adw-api-design/scripts/lib/api-design-core.cjs',
+    '.opencode/skills/adw-api-design/scripts/validate-api-design.mjs',
     'frontend/package.json',
     'frontend/setting.json',
     'frontend/build/mfp.config.js',
@@ -168,13 +173,14 @@ async function main(): Promise<void> {
   assert(!fs.existsSync(path.join(appDir, '.opencode', 'agents')), '不应创建 .opencode/agents')
 
   // 2. skills / commands 资产
-  for (const kind of ['adw-requirements-document', 'adw-design-artifacts', 'adw-frontend-implementation']) {
+  for (const kind of ['adw-requirements-document', 'adw-design-artifacts', 'adw-api-design', 'adw-frontend-implementation']) {
     const skill = read(path.join(appDir, '.opencode', 'skills', kind, 'SKILL.md'))
     assert(/^---\nname: .+/m.test(skill), `${kind} 缺少 frontmatter name`)
     assert(/^description: .+/m.test(skill), `${kind} 缺少 frontmatter description`)
   }
   const commands = fs.readdirSync(path.join(appDir, '.opencode', 'commands')).filter(name => name.endsWith('.md'))
-  assert(commands.length === 5, `commands 应有 5 个，实际 ${commands.length}`)
+  assert(commands.length === 6, `commands 应有 6 个，实际 ${commands.length}`)
+  assert(commands.includes('generate-api-design.md'), '缺少 generate-api-design command')
   assert(commands.includes('check-design-fidelity.md'), '缺少 check-design-fidelity command')
   assert(
     fs.existsSync(
@@ -251,43 +257,57 @@ async function main(): Promise<void> {
     'design-system.json styles.style 应指向 styles/<styleId>/style.css'
   )
   assert((designSummary.pages as unknown[]).length === 5, 'design-system.json 页面数应为 5')
-  for (const method of ['adw-requirements-document', 'adw-design-artifacts', 'adw-frontend-implementation']) {
+  for (const method of ['adw-requirements-document', 'adw-design-artifacts', 'adw-api-design', 'adw-frontend-implementation']) {
     assert(!fs.existsSync(path.join(appDir, '.opencode', 'skills', method, '_manifest.json')), `${method} 不应再有旧 manifest`)
   }
 
-  // 3. 模块文件
-  const moduleCreated = assertOk(
-    await request('POST', '/apps/smoke-app/requirements-modules', { title: '商品管理' }),
-    '新建模块'
-  )
-  const module = moduleCreated.module as { key: string; file: string }
-  assert(module.key === 'MOD-001', `首个模块 key 应为 MOD-001，实际 ${module.key}`)
-  const moduleFile = path.join(appDir, module.file)
-  const moduleText = read(moduleFile)
-  assert(/^---\nmodule: MOD-001\n/.test(moduleText), '模块文件缺少 frontmatter module')
-  assert(/^title: "商品管理"$/m.test(moduleText), '模块文件缺少 frontmatter title')
-  assert(/^order: 1$/m.test(moduleText), '模块文件缺少 frontmatter order')
-  assert(/^template: builtin-prd-lite$/m.test(moduleText), '模块文件缺少 frontmatter template')
-  assert((moduleText.match(/^## /gm) ?? []).length === 6, '精简 PRD 应渲染 6 个二级章节')
+  // 3. 单需求文档（scaffold 已生成；POST 不覆盖）
+  const doc = assertOk(await request('GET', '/apps/smoke-app/requirements-document'), '读取需求文档')
+  assert(doc.requirement.exists === true, '需求文档应存在')
+  const docFile = path.join(appDir, 'docs', 'requirements', 'requirements.md')
+  const docText = read(docFile)
+  assert(/^---\ntitle: ".*"\n/.test(docText), '需求文档缺少 frontmatter title')
+  assert(/^template: builtin-prd-lite$/m.test(docText), '需求文档缺少 frontmatter template')
+  assert(!/^module:/m.test(docText), '需求文档不应再有 module')
+  const docAgain = assertOk(await request('POST', '/apps/smoke-app/requirements-document'), '生成需求文档骨架')
+  assert(docAgain.skipped === true, '已存在的需求文档不应被覆盖')
 
-  // 4. artifacts（模块 + 设计校验）
+  // 4. artifacts（单文档 + 实体/页面集）
   const artifacts = assertOk(await request('GET', '/apps/smoke-app/artifacts'), '读取 artifacts')
-  const modules = artifacts.modules as Array<{ key: string; sections: unknown[] }>
-  assert(modules.length === 1 && modules[0].key === 'MOD-001', 'artifacts 模块解析不正确')
+  assert(artifacts.requirement.exists === true, 'artifacts 应解析需求文档')
+  assert(Array.isArray(artifacts.errors) && (artifacts.errors as unknown[]).length === 0, '初始 artifacts 不应有错误')
   assert(typeof artifacts.hashes === 'object' && artifacts.hashes !== null, 'hashes 应为对象')
 
-  const designDir = path.join(appDir, 'docs', 'design', 'MOD-001')
+  const designDir = path.join(appDir, 'docs', 'design')
   fs.mkdirSync(designDir, { recursive: true })
-  const designFile = path.join(designDir, 'design.json')
   fs.writeFileSync(
-    designFile,
+    path.join(designDir, 'entities.json'),
     JSON.stringify(
       {
-        module: 'MOD-001',
-        title: '商品管理',
-        entities: [{ id: 'product', name: '商品', fields: [{ name: '名称', type: 'string' }] }],
-        relations: [],
-        pages: [{ id: 'product-list', name: '商品列表', type: 'list', entity: 'product' }]
+        schemaVersion: 2,
+        entities: [{ id: 'product', name: '商品', fields: [{ code: 'productName', name: '名称', type: 'string' }] }],
+        relations: []
+      },
+      null,
+      2
+    ),
+    'utf8'
+  )
+  fs.writeFileSync(
+    path.join(designDir, 'pages.json'),
+    JSON.stringify(
+      {
+        schemaVersion: 2,
+        pageSets: [
+          {
+            id: 'product',
+            epic: 'EP-001',
+            title: '商品管理',
+            pages: [
+              { id: 'product-list', name: '商品列表', type: 'list', entity: 'product', columns: ['productName'] }
+            ]
+          }
+        ]
       },
       null,
       2
@@ -296,16 +316,13 @@ async function main(): Promise<void> {
   )
   const valid = assertOk(await request('GET', '/apps/smoke-app/artifacts'), '读取合法设计')
   assert((valid.errors as unknown[]).length === 0, `合法设计不应有错误：${JSON.stringify(valid.errors)}`)
-  assert((valid.designs as Array<{ module: string }>)[0]?.module === 'MOD-001', '设计模块解析不正确')
+  assert((valid.pages as { pageSets: unknown[] }).pageSets.length === 1, '页面集解析不正确')
+  assert((valid.entities as { entities: unknown[] }).entities.length === 1, '实体解析不正确')
 
-  // 4b. 一致性检查 API（P7-6a；规则与脚本一致）
-  const fidelity = assertOk(
-    await request('POST', '/apps/smoke-app/design-fidelity', { module: 'MOD-001' }),
-    '一致性检查'
-  )
-  assert(fidelity.module === 'MOD-001', '一致性检查应回显模块')
-  assert((fidelity.checks as unknown[]).length === 13, '一致性检查应有 13 项')
-  assert((fidelity.summary as { total: number }).total === 13, '一致性检查 summary.total 应为 13')
+  // 4b. 一致性检查 API（应用级 14 项；规则与脚本一致）
+  const fidelity = assertOk(await request('POST', '/apps/smoke-app/design-fidelity', {}), '一致性检查')
+  assert((fidelity.checks as unknown[]).length === 14, '一致性检查应有 14 项')
+  assert((fidelity.summary as { total: number }).total === 14, '一致性检查 summary.total 应为 14')
   assert(
     (fidelity.designSystem as { pack?: string }).pack === 'afcenter-app-templates-v1',
     '一致性检查应回显设计系统 pack'
@@ -314,18 +331,17 @@ async function main(): Promise<void> {
     (fidelity.checks as Array<{ id: string }>).some(check => check.id === 'ui-check'),
     '一致性检查应包含 ui-check 项'
   )
-  assertStatus(
-    await request('POST', '/apps/smoke-app/design-fidelity', { module: '../escape' }),
-    400,
-    '一致性检查模块非法'
-  )
+  assert(!('module' in fidelity) && !('modules' in fidelity), '一致性检查不再有 module 字段')
   assertStatus(await request('POST', '/apps/no-such-app/design-fidelity', {}), 404, '一致性检查应用不存在')
 
-  fs.writeFileSync(designFile, JSON.stringify({ module: 'MOD-001', title: '商品管理', entities: 'oops' }, null, 2), 'utf8')
+  fs.writeFileSync(
+    path.join(designDir, 'entities.json'),
+    JSON.stringify({ schemaVersion: 2, entities: 'oops' }, null, 2),
+    'utf8'
+  )
   const invalid = assertOk(await request('GET', '/apps/smoke-app/artifacts'), '读取非法设计')
   const invalidErrors = invalid.errors as Array<{ path: string; message: string }>
   assert(invalidErrors.some(item => item.path === 'entities'), '非法设计应返回 entities 类型错误')
-  assert(invalidErrors.some(item => item.path === 'pages'), '非法设计应返回 pages 缺失错误')
 
   // 5. 模板保存同步 + 幂等 sync
   const custom = assertOk(
@@ -385,31 +401,28 @@ async function main(): Promise<void> {
   const manifestAfter = JSON.parse(read(manifestPath)) as { hash: string }
   assert(manifestAfter.hash === manifestBefore.hash, '幂等同步不应改变 hash')
 
-  // 6. 删除保护（模块仍引用）
-  const addModule = assertOk(
-    await request('POST', '/apps/smoke-app-2/requirements-modules', { title: '订单管理', templateId: customId }),
-    '应用二新建模块'
-  )
+  // 6. 删除保护（单需求文档仍引用）
   assertStatus(await request('DELETE', `/requirement-templates/${customId}`), 409, '删除被引用模板')
   const usage = assertOk(await request('GET', `/templates/requirement/${customId}/usage`), '读取模板引用')
   assert((usage.apps as unknown[]).length === 1, '模板引用应列出 1 个应用')
 
-  const moduleKey = (addModule.module as { key: string }).key
-  assertOk(
-    await request('PATCH', `/apps/smoke-app-2/requirements-modules/${moduleKey}`, { template: 'builtin-prd-lite', order: 2 }),
-    '改模块模板'
-  )
+  const doc2 = path.join(projects, 'smoke-app-2', 'docs', 'requirements', 'requirements.md')
+  fs.writeFileSync(doc2, '---\ntitle: "应用二"\ntemplate: builtin-prd-lite\n---\n\n# 应用二\n', 'utf8')
+  assertOk(await request('POST', '/apps/smoke-app-2/requirements-document'), '刷新需求文档')
   assertOk(await request('DELETE', `/requirement-templates/${customId}`), '解除引用后删除模板')
   assert(!fs.existsSync(customSkillDir), '删除模板后应用内模板 skill 应被移除')
 
   // 7. 事件（docs 变化）
   const eventPromise = waitForEvent('smoke-app', frame => frame.type === 'artifacts-changed')
   await new Promise(resolve => setTimeout(resolve, 300))
-  fs.appendFileSync(moduleFile, '\n补充一行说明。\n', 'utf8')
+  fs.appendFileSync(docFile, '\n补充一行说明。\n', 'utf8')
   const event = await eventPromise
   assert(event.type === 'artifacts-changed', 'SSE 未收到 artifacts-changed')
   const changedPaths = event.paths as string[]
-  assert(changedPaths.some(item => item.includes('MOD-001')), `事件 paths 应包含模块文件：${JSON.stringify(changedPaths)}`)
+  assert(
+    changedPaths.some(item => item.includes('requirements.md')),
+    `事件 paths 应包含需求文档：${JSON.stringify(changedPaths)}`
+  )
   assert(Boolean(event.hashes), '事件应带 hashes')
 
   // 清理：删除应用

@@ -15,6 +15,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { chromium, type Browser, type Page } from 'playwright'
+import { writeRequirementsDoc } from './ui-shots-fixtures'
 
 const backendDir = path.resolve(__dirname, '..')
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'workbench-ui2b-shots-'))
@@ -222,15 +223,21 @@ const chatStatePattern = new RegExp(`/api/apps/${appId}/development\\?`)
 
 async function main(): Promise<void> {
   await startHarness()
+  const harnessState = await readState()
 
   const browser: Browser = await chromium.launch()
   try {
     // ---- 需求视图（1440）：空态 / 加载 / 错误 ----
     const requirements = await createPage(browser, 1440, 900)
     try {
+      fs.rmSync(path.join(harnessState.appDir, 'docs', 'requirements', 'requirements.md'), { force: true })
       await gotoAndWait(requirements.page, `#/apps/${appId}/requirements`, 'requirements-empty')
       await requirements.page.locator('[data-testid=chat-empty]').waitFor({ state: 'visible', timeout: 15000 })
       await capture(requirements.page, 'ui2b-requirements-empty-1440.png', '需求 · AI 面板空态（示例 + 上下文）')
+      writeRequirementsDoc(harnessState.appDir)
+      await requirements.page.reload({ waitUntil: 'domcontentloaded' })
+      await requirements.page.locator('[data-testid=requirements-view]').waitFor({ state: 'visible', timeout: 15000 })
+      await delay(600)
 
       await withDelayedRoute(requirements.page, chatStatePattern, async () => {
         await requirements.page.reload({ waitUntil: 'domcontentloaded' })
@@ -253,16 +260,12 @@ async function main(): Promise<void> {
       await requirements.close()
     }
 
-    // 设计/工作室需要一个需求模块
-    const created = await request('POST', `/apps/${appId}/requirements-modules`, { title: '空态示例' })
-    if (created.status !== 201) throw new Error(`准备模块失败（HTTP ${created.status}）`)
-
     // ---- 设计视图（1440）：AI 面板空态 ----
     const design = await createPage(browser, 1440, 900)
     try {
       await gotoAndWait(design.page, `#/apps/${appId}/design`, 'design-empty')
       await design.page.locator('[data-testid=chat-empty]').waitFor({ state: 'visible', timeout: 15000 })
-      await capture(design.page, 'ui2b-design-empty-1440.png', '设计 · AI 面板空态（模块 pill + 示例）')
+      await capture(design.page, 'ui2b-design-empty-1440.png', '设计 · AI 面板空态（示例/上下文）')
     } finally {
       await design.close()
     }

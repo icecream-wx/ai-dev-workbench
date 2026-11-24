@@ -12,7 +12,7 @@
  * 4. 应用内资产接口（css 200 / json 400 / .. 400 / 缺失 404）；
  * 5. 设计视图「原型」：design-preview 使用自定义 structure + base 短类 + data-cyan 风格；contract dialog-form；
  *    模板风格 PNG 导出（宽高 + 主色像素）；
- * 6. 开发视图：digest 识别契约页（prompt）、ui-check 页面表/状态、fidelity 13 项（template-contract）；
+ * 6. 开发视图：digest 识别契约页（prompt）、ui-check 页面表/状态、fidelity 14 项（template-contract + api-design）；
  * 7. 全程 0 console error / pageerror / 请求失败（忽略 iframe abort）/ 外部请求。
  *
  * 端口/目录：默认 **3430/4430** 起（自动找空闲端口）；数据落在 `%TEMP%/workbench-p7-7c-e2e-*`；
@@ -245,57 +245,78 @@ function fixtureSpec(): Record<string, unknown> {
   }
 }
 
-/** 应用工作区 fixture：需求模块 + design.json（引用自定义模板两页） */
+/** 应用工作区 fixture：单需求文档 + 实体/页面集（引用自定义模板两页） */
 function seedAppWorkspace(appDir: string): void {
   write(
-    path.join(appDir, 'docs/requirements/MOD-001-供应商管理.md'),
-    '---\nmodule: MOD-001\ntitle: "供应商管理"\norder: 1\ntemplate: builtin-prd-lite\n---\n\n# 供应商管理\n\n## 1. 目标\n\n维护供应商台账。\n'
+    path.join(appDir, 'docs/requirements/requirements.md'),
+    '---\ntitle: "供应商管理"\ntemplate: builtin-prd-lite\n---\n\n# 供应商管理\n\n## 1. 目标\n\n维护供应商台账。\n\n### EP-001 供应商管理\n'
   )
   write(
-    path.join(appDir, 'docs/design/MOD-001/design.json'),
+    path.join(appDir, 'docs/design/entities.json'),
     json({
-      module: 'MOD-001',
-      title: '供应商管理',
-      designSystem: { pack: packId, applicationType: packId, style: 'data-cyan' },
+      schemaVersion: 2,
       entities: [
         {
           id: 'supplier',
           name: '供应商',
           fields: [
-            { name: 'code', label: '供应商编码', type: 'string' },
-            { name: 'name', label: '供应商名称', type: 'string' },
-            { name: 'status', label: '状态', type: 'enum', options: ['启用', '停用', '草稿'] }
+            { code: 'code', name: '供应商编码', type: 'string' },
+            { code: 'name', name: '供应商名称', type: 'string' },
+            {
+              code: 'status',
+              name: '状态',
+              type: 'enum',
+              options: [
+                { value: 'ENABLED', label: '启用' },
+                { value: 'DISABLED', label: '停用' },
+                { value: 'DRAFT', label: '草稿' }
+              ]
+            }
           ]
         }
       ],
-      relations: [],
-      pages: [
+      relations: []
+    })
+  )
+  write(
+    path.join(appDir, 'docs/design/pages.json'),
+    json({
+      schemaVersion: 2,
+      pageSets: [
         {
-          id: 'supplier-list',
-          name: '供应商列表',
-          type: 'list',
-          recipe: 'list',
-          catalogRef: `${packId}/supplier-list`,
-          entity: 'supplier',
-          columns: ['code', 'name', 'status'],
-          filters: ['name'],
-          rowActions: ['edit', 'delete'],
-          toolbarActions: ['create'],
-          pagination: { layout: 'three-part', pageSize: 20 }
-        },
-        {
-          id: 'supplier-form',
-          name: '供应商表单',
-          type: 'form',
-          recipe: 'dialog-form',
-          catalogRef: `${packId}/supplier-form`,
-          entity: 'supplier',
-          form: {
-            presentation: 'dialog',
-            columns: 2,
-            width: 900,
-            groups: [{ title: '基本信息', fields: ['code', 'name', 'status'] }]
-          }
+          id: 'supplier',
+          epic: 'EP-001',
+          title: '供应商管理',
+          primaryEntity: 'supplier',
+          pages: [
+            {
+              id: 'supplier-list',
+              name: '供应商列表',
+              type: 'list',
+              recipe: 'list',
+              catalogRef: `${packId}/supplier-list`,
+              entity: 'supplier',
+              columns: ['code', 'name', 'status'],
+              filters: ['name'],
+              rowActions: ['edit', 'delete'],
+              toolbarActions: ['create'],
+              pagination: { layout: 'three-part', pageSize: 20 }
+            },
+            {
+              id: 'supplier-form',
+              name: '供应商表单',
+              type: 'form',
+              recipe: 'dialog-form',
+              catalogRef: `${packId}/supplier-form`,
+              entity: 'supplier',
+              form: {
+                presentation: 'dialog',
+                columns: 2,
+                width: 900,
+                groups: [{ title: '基本信息', fields: ['code', 'name', 'status'] }]
+              }
+            }
+          ]
         }
       ]
     })
@@ -485,7 +506,7 @@ async function main(): Promise<void> {
   )
   checkEqual(assetJson.status, 400, '资产接口拒绝 .json')
   const assetTraversal = await fetch(
-    `${base}/api/apps/${customAppId}/design-system/asset?path=${encodeURIComponent('../requirements/MOD-001-x.md')}`
+    `${base}/api/apps/${customAppId}/design-system/asset?path=${encodeURIComponent('../requirements/requirements-x.md')}`
   )
   checkEqual(assetTraversal.status, 400, '资产接口拒绝 .. 路径')
   const assetMissing = await fetch(
@@ -556,8 +577,8 @@ async function main(): Promise<void> {
   // ---------- 6. 设计视图：自定义 structure + base 类 + contract 页 + PNG ----------
   await page.goto(`${base}/#/apps/${customAppId}/design`, { waitUntil: 'domcontentloaded' })
   await page.locator('[data-testid=design-view]').waitFor({ state: 'visible', timeout: 20000 })
-  await page.getByTestId('design-module-MOD-001').waitFor({ state: 'visible', timeout: 15000 })
   await page.getByTestId('design-tab-prototype').click()
+  await page.getByTestId('design-pageset-supplier').waitFor({ state: 'visible', timeout: 15000 })
   const frameLocator = page.locator('[data-testid=prototype-preview-frame]')
   await frameLocator.waitFor({ state: 'visible', timeout: 30000 })
   const src = (await frameLocator.getAttribute('src')) || ''
@@ -598,7 +619,7 @@ async function main(): Promise<void> {
   await page.screenshot({ path: path.join(shotsDir, 'p7-7c-design-form.png') })
 
   // PNG：自动导出或手动触发；等待 manifest 与 png
-  const prototypesDir = path.join(appDir, 'docs/design/MOD-001/prototypes')
+  const prototypesDir = path.join(appDir, 'docs/design/prototypes')
   if (!fs.existsSync(path.join(prototypesDir, '_manifest.json'))) {
     await page.getByTestId('design-reexport-btn').click().catch(() => undefined)
   }
@@ -613,15 +634,12 @@ async function main(): Promise<void> {
   check(sample.height > 400, `PNG 高 > 400（实际 ${sample.height}）`)
   check(sample.primaryMatches > 0, `PNG 存在 data-cyan 主色像素（${sample.primaryMatches}）`)
 
-  // ---------- 7. 开发视图：digest / ui-check / fidelity 13 项 ----------
+  // ---------- 7. 开发视图：digest / ui-check / fidelity 14 项 ----------
   await page.goto(`${base}/#/apps/${customAppId}/development`, { waitUntil: 'domcontentloaded' })
   await page.locator('[data-testid=dev-view]').waitFor({ state: 'visible', timeout: 20000 })
-  const moduleSelect = page.locator('[data-testid=dev-module-select]')
-  await moduleSelect.waitFor({ state: 'visible', timeout: 12000 })
-  await moduleSelect.selectOption('MOD-001')
-  await waitFor(async () => (await moduleSelect.inputValue()) === 'MOD-001', 10000, '开发视图选中 MOD-001')
+  check((await page.locator('[data-testid=dev-module-select]').count()) === 0, '开发视图无模块下拉')
 
-  // 触发开发会话（首条提示自动带模块；后端注入设计摘要并生成 ui-check 骨架）
+  // 触发开发会话（首条提示；后端注入应用级设计摘要并生成 ui-check 骨架）
   await page.locator('[data-testid=dev-start-card]').waitFor({ state: 'visible', timeout: 12000 })
   const startPromptInput = page.locator('[data-testid=dev-start-prompt]')
   await waitFor(
@@ -652,7 +670,7 @@ async function main(): Promise<void> {
   )
   check(digestPrompt.includes('契约：') && digestPrompt.includes('表单=dialog 2 列 900px'), 'digest 汇总契约表单')
 
-  const uiCheckFile = path.join(appDir, 'docs/design/MOD-001/ui-check.md')
+  const uiCheckFile = path.join(appDir, 'docs/design/ui-check.md')
   check(fs.existsSync(uiCheckFile), 'ui-check 骨架已生成')
   const uiCheckText = fs.readFileSync(uiCheckFile, 'utf8')
   check(uiCheckText.includes('| 设计页 | 类型/来源 | 蓝图 | 契约 |'), 'ui-check 页面表含类型/来源/契约')
@@ -665,7 +683,10 @@ async function main(): Promise<void> {
   await page.getByTestId('dev-fidelity-check').click()
   const report = page.getByTestId('dev-fidelity-report')
   await report.waitFor({ state: 'visible', timeout: 20000 })
-  checkEqual(await report.locator('.fidelity-item').count(), 13, 'fidelity 报告 13 项')
+  checkEqual(await report.locator('.fidelity-item').count(), 14, 'fidelity 报告 14 项')
+  const apiDesignItem = page.getByTestId('dev-fidelity-check-api-design')
+  await apiDesignItem.waitFor({ state: 'visible', timeout: 8000 })
+  check((await apiDesignItem.innerText()).includes('警告'), 'fidelity api-design 缺失时为警告')
   const contractItem = page.getByTestId('dev-fidelity-check-template-contract')
   await contractItem.waitFor({ state: 'visible', timeout: 8000 })
   check((await contractItem.innerText()).includes('模板契约页'), 'fidelity 含模板契约页检查项')
@@ -682,8 +703,8 @@ async function main(): Promise<void> {
   const mobileAudit = auditPage(mobilePage)
   await mobilePage.goto(`${base}/#/apps/${customAppId}/design`, { waitUntil: 'domcontentloaded' })
   await mobilePage.locator('[data-testid=design-view]').waitFor({ state: 'visible', timeout: 20000 })
-  await mobilePage.getByTestId('design-module-MOD-001').waitFor({ state: 'visible', timeout: 15000 })
   await mobilePage.getByTestId('design-tab-prototype').click()
+  await mobilePage.getByTestId('design-pageset-supplier').waitFor({ state: 'visible', timeout: 15000 })
   await mobilePage.locator('[data-testid=prototype-preview-frame]').waitFor({ state: 'visible', timeout: 30000 })
   checkEqual(
     await mobilePage.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1),

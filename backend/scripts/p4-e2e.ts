@@ -55,56 +55,77 @@ async function readState(): Promise<HarnessState> {
   throw new Error(`无法读取 harness 状态：${stateFile}`)
 }
 
-/** P7-5b：写入一个需求模块 + 设计契约，用于模块选择/ui-check/设计摘要断言 */
+/** D1：写入单需求文档 + 实体/页面集，用于设计参考/ui-check/摘要断言 */
 function seedP4Design(appDir: string): void {
   const requirements = path.join(appDir, 'docs', 'requirements')
   fs.mkdirSync(requirements, { recursive: true })
   fs.writeFileSync(
-    path.join(requirements, 'MOD-001-商品管理.md'),
-    '---\nmodule: MOD-001\ntitle: "商品管理"\norder: 1\ntemplate: builtin-prd-lite\n---\n\n# 商品管理\n\n## 1. 目标\n\n维护商品。\n',
+    path.join(requirements, 'requirements.md'),
+    '---\ntitle: "商品管理"\ntemplate: builtin-prd-lite\n---\n\n# 商品管理\n\n## 1. 目标\n\n维护商品。\n\n### EP-001 商品管理\n\n#### US-001 商品列表\n\n- 验收：能查询。\n',
     'utf8'
   )
-  const designDir = path.join(appDir, 'docs', 'design', 'MOD-001')
+  const designDir = path.join(appDir, 'docs', 'design')
   fs.mkdirSync(designDir, { recursive: true })
   fs.writeFileSync(
-    path.join(designDir, 'design.json'),
+    path.join(designDir, 'entities.json'),
     `${JSON.stringify(
       {
-        module: 'MOD-001',
-        title: '商品管理',
-        designSystem: {
-          pack: 'afcenter-app-templates-v1',
-          applicationType: 'enterprise-application-platform',
-          style: 'platform-blue'
-        },
+        schemaVersion: 2,
         entities: [
           {
             id: 'product',
             name: '商品',
             fields: [
-              { name: '商品编码', type: 'string' },
-              { name: '商品名称', type: 'string' },
-              { name: '状态', type: 'enum', options: ['上架', '下架'] }
+              { code: 'productCode', name: '商品编码', type: 'string' },
+              { code: 'productName', name: '商品名称', type: 'string' },
+              {
+                code: 'status',
+                name: '状态',
+                type: 'enum',
+                options: [
+                  { value: 'ON', label: '上架' },
+                  { value: 'OFF', label: '下架' }
+                ]
+              }
             ]
           }
         ],
-        relations: [],
-        pages: [
+        relations: []
+      },
+      null,
+      2
+    )}\n`,
+    'utf8'
+  )
+  fs.writeFileSync(
+    path.join(designDir, 'pages.json'),
+    `${JSON.stringify(
+      {
+        schemaVersion: 2,
+        pageSets: [
           {
-            id: 'product-list',
-            name: '商品列表',
-            type: 'list',
-            recipe: 'tree-list',
-            catalogRef: 'enterprise-application-platform/organization',
-            blueprint: 'application-types/enterprise-application-platform/pages/OrganizationUsers.vue',
-            entity: 'product',
-            filters: ['商品名称', '状态'],
-            columns: ['商品编码', '商品名称', '状态'],
-            rowActions: ['detail', 'edit', 'delete'],
-            toolbarActions: ['create'],
-            selection: true,
-            pagination: { layout: 'three-part', pageSize: 20 },
-            tree: { titleField: '商品名称', parentField: '所属分类' }
+            id: 'product',
+            epic: 'EP-001',
+            title: '商品管理',
+            primaryEntity: 'product',
+            pages: [
+              {
+                id: 'product-list',
+                name: '商品列表',
+                type: 'list',
+                recipe: 'tree-list',
+                catalogRef: 'enterprise-application-platform/organization',
+                blueprint: 'application-types/enterprise-application-platform/pages/OrganizationUsers.vue',
+                entity: 'product',
+                filters: ['productName', 'status'],
+                columns: ['productCode', 'productName', 'status'],
+                rowActions: ['detail', 'edit', 'delete'],
+                toolbarActions: ['create'],
+                selection: true,
+                pagination: { layout: 'three-part', pageSize: 20 },
+                tree: { titleField: 'productName', parentField: 'categoryName' }
+              }
+            ]
           }
         ]
       },
@@ -255,18 +276,20 @@ async function main(): Promise<void> {
     check(firstPrompt.includes('PageTemplates'), '1.11 首条提示含 PageTemplates')
     check(firstPrompt.includes('EOS 后端不吃风格'), '1.12 首条提示含 EOS 边界')
 
-    // ---------- 1b. 模块选择 + 设计参考（P7-5b） ----------
-    const moduleSelect = page.locator('[data-testid=dev-module-select]')
-    await moduleSelect.waitFor({ state: 'visible', timeout: 8000 })
-    check((await moduleSelect.inputValue()) === 'MOD-001', '1b.1 单模块自动选中 MOD-001')
+    // ---------- 1b. 设计参考（应用级；无模块下拉） ----------
+    check((await page.locator('[data-testid=dev-module-select]').count()) === 0, '1b.1 无模块下拉')
     const designRefText = await page.locator('[data-testid=dev-design-ref]').innerText()
     check(designRefText.includes('企业级应用管理平台'), '1b.2 设计参考含应用类型')
     check(designRefText.includes('平台蓝白'), '1b.3 设计参考含视觉风格')
     check(designRefText.includes('5 页'), '1b.4 设计参考含页面库数量')
     check(designRefText.includes('docs/design/template'), '1b.5 设计参考含蓝图根')
-    check((await page.locator('[data-testid=dev-ui-check-status]').innerText()) === '未生成', '1b.6 ui-check 初始未生成')
+    check((await page.locator('[data-testid=dev-epic-count]').innerText()).includes('1'), '1b.6 设计参考含 Epic 数')
+    check((await page.locator('[data-testid=dev-pageset-count]').innerText()).includes('1'), '1b.7 设计参考含页面集')
+    check((await page.locator('[data-testid=dev-entity-count]').innerText()).includes('1'), '1b.8 设计参考含实体数')
+    check((await page.locator('[data-testid=dev-api-count]').innerText()).includes('0'), '1b.8b 设计参考含接口数（无文档为 0）')
+    check((await page.locator('[data-testid=dev-ui-check-status]').innerText()) === '未生成', '1b.9 ui-check 初始未生成')
     const uiCheckPendingInitial = await page.locator('[data-testid=dev-ui-check-pending]').innerText()
-    check(uiCheckPendingInitial.includes('自动生成'), `1b.6b 未生成时提示发送首条消息自动生成（${uiCheckPendingInitial}）`)
+    check(uiCheckPendingInitial.includes('自动生成'), `1b.9b 未生成时提示发送首条消息自动生成（${uiCheckPendingInitial}）`)
 
     await page.locator('[data-testid=dev-open-templates]').click()
     await page.locator('[data-testid=design-template-center]').waitFor({ state: 'visible', timeout: 10000 })
@@ -307,11 +330,12 @@ async function main(): Promise<void> {
     // ---------- 2b. 开发 prompt 包含设计系统/契约/蓝图/团队 skill/ui-check/digest ----------
     const startedState = await readState()
     const devPrompt = startedState.prompts[0]?.text ?? ''
-    check(devPrompt.includes('docs/design/<MOD>/design.json'), '2b.1 prompt 含 design.json')
+    check(devPrompt.includes('docs/design/entities.json'), '2b.1 prompt 含 entities.json')
+    check(devPrompt.includes('docs/design/pages.json'), '2b.1b prompt 含 pages.json')
     check(devPrompt.includes('design-brief.md'), '2b.2 prompt 含 design-brief.md')
     check(devPrompt.includes('tokens.json'), '2b.3 prompt 含 tokens.json')
     check(devPrompt.includes('prototypes/*.png'), '2b.4 prompt 含 prototypes/*.png')
-    check(devPrompt.includes('需求 > design-system/design.json 契约 > 蓝图'), '2b.5 prompt 含优先级')
+    check(devPrompt.includes('需求 > design-system/pages.json 契约 > entities.json > 蓝图'), '2b.5 prompt 含优先级')
     check(devPrompt.includes('EOS 后端不吃风格'), '2b.6 prompt 含 EOS 边界')
     check(devPrompt.includes('docs/design/design-system.json'), '2b.7 prompt 含 design-system.json')
     check(devPrompt.includes('docs/design/template/'), '2b.8 prompt 含蓝图根')
@@ -324,16 +348,16 @@ async function main(): Promise<void> {
     check(devPrompt.includes('GlobalPreference'), '2b.15 prompt 含 GlobalPreference')
     check(devPrompt.includes('冲突先报告'), '2b.16 prompt 含冲突上报')
     check(devPrompt.includes('【设计摘要】'), '2b.17 prompt 注入设计摘要')
-    check(devPrompt.includes('MOD-001'), '2b.18 digest 含模块')
+    check(devPrompt.includes('EP-001 商品管理'), '2b.18 digest 含 Epic')
     check(devPrompt.includes('product-list 商品列表'), '2b.19 digest 含页面')
-    check(devPrompt.includes('列=商品编码/商品名称/状态'), '2b.20 digest 含列')
+    check(devPrompt.includes('列=productCode/productName/status'), '2b.20 digest 含列')
     check(devPrompt.includes('ui-check：已生成未填'), '2b.21 digest 含 ui-check 状态')
 
-    const uiCheckFile = path.join(harnessState.appDir, 'docs', 'design', 'MOD-001', 'ui-check.md')
+    const uiCheckFile = path.join(harnessState.appDir, 'docs', 'design', 'ui-check.md')
     check(fs.existsSync(uiCheckFile), '2b.22 开发 prompt 生成 ui-check.md')
     const uiCheckContent = fs.readFileSync(uiCheckFile, 'utf8')
     check(uiCheckContent.includes('product-list'), '2b.23 ui-check 含设计页面')
-    check(uiCheckContent.includes('商品编码、商品名称、状态'), '2b.24 ui-check 含字段/列')
+    check(uiCheckContent.includes('productCode、productName、status'), '2b.24 ui-check 含字段/列')
     check(uiCheckContent.includes('## 实现前') && uiCheckContent.includes('## 实现后'), '2b.25 ui-check 含前后对照表')
     await waitFor(
       async () => (await page.locator('[data-testid=dev-ui-check-status]').innerText()) === '已生成未填',

@@ -11,7 +11,7 @@ import { db, nowIso } from '../db'
 import { appDirOf } from '../apps/scaffold'
 import { opencode } from '../opencode/runtime'
 import { registerSecret } from '../opencode/redact'
-import { resolveChatModel, buildViewPrompt, type ModelRef } from '../chat/service'
+import { resolveChatModel, buildViewPrompt, type ModelRef, type RequirementSectionFocus } from '../chat/service'
 import { CHINESE_INSTRUCTION } from '../chat/prompts'
 import { developmentDigestForPrompt } from './digest'
 import type { DevProgress } from './timeline'
@@ -45,22 +45,21 @@ import {
   type AppView
 } from '../sessions/store'
 
-/** 开发视图首条提示：先读工作区产物与现有代码，不指向交接包 */
+/** 开发视图首条提示：先读工作区产物与现有代码，不指向交接包（应用级，无模块） */
 const DEFAULT_DEV_PROMPT =
-  '请先阅读 AGENTS.md、docs/requirements/ 与 docs/design/ 下的设计参考：' +
-  'docs/design/design-system.json（应用设计系统/页面库）、docs/design/<MOD>/design.json（数据模型/页面契约）、' +
+  '请先阅读 AGENTS.md、docs/requirements/requirements.md 与 docs/design/ 下的设计参考：' +
+  'docs/design/design-system.json（应用设计系统/页面库）、docs/design/entities.json（实体/关系）、docs/design/pages.json（页面集 = Epic/页面契约）、' +
   'design-brief.md、tokens.json、prototypes/*.png（模板风格截图；无显式契约的旧设计为线框）以及 docs/design/template/ 下的蓝图与样式。' +
-  '优先级：需求 > design-system/design.json 契约 > 蓝图（布局/组件） > design-brief/tokens（视觉变量） > PNG（模板风格截图）；' +
+  '优先级：需求 > design-system/pages.json 契约 > entities.json > 蓝图（布局/组件） > design-brief/tokens（视觉变量） > PNG（模板风格截图）；' +
   '冲突先报告，偏离必须说明，PNG 过期时不要盲从旧图。' +
-  '实现前先填写 docs/design/<MOD>/ui-check.md 的对照表（软门禁，不阻断），再从蓝图复制页面到 frontend/src/views/，' +
+  '实现前先填写 docs/design/ui-check.md 的对照表（软门禁，不阻断），再从蓝图复制页面到 frontend/src/views/，' +
   '保留结构/样式/组件并替换 mock/接口；使用 PageTemplates、宿主 pm-* 与 src/preferences/GlobalPreference.js，禁止自造 UI 替代模板。' +
   'pm-* 由 AFCenter 宿主全局提供，不重复注册；tokens/PNG 只约束 Vue3 前端，EOS 后端不吃风格。' +
   '完成后请总结：实现摘要、关键文件、页面与蓝图/契约对照结果、偏离与原因、如何运行、自测结果、未解决事项。' +
   CHINESE_INSTRUCTION
 
-function defaultDevPrompt(module?: string): string {
-  const key = String(module ?? '').trim()
-  return key ? `${DEFAULT_DEV_PROMPT}\n本轮目标模块：${key}。` : DEFAULT_DEV_PROMPT
+function defaultDevPrompt(): string {
+  return DEFAULT_DEV_PROMPT
 }
 
 const MAX_PROMPT_CHARS = 200_000
@@ -311,15 +310,12 @@ export interface CreateDevSessionOptions {
   /** 归档当前 active 后新建 */
   new?: boolean
   view?: unknown
-  /** 开发视图当前模块（用于首条提示与 ui-check；可选） */
-  module?: unknown
 }
 
 export async function createDevSession(appId: string, options: CreateDevSessionOptions = {}): Promise<DevStateResponse> {
   const app = appOrThrow(appId)
   assertWorkspaceReady(app)
   const view = viewFromOptions(options)
-  const moduleKey = typeof options.module === 'string' ? options.module.trim() : ''
   if (!options.new) {
     const existing = activeSessionRow(appId, view)
     if (existing) {
@@ -329,7 +325,7 @@ export async function createDevSession(appId: string, options: CreateDevSessionO
           app: { id: app.id, name: app.name, status: app.status, createdAt: app.created_at },
           session: sessionInfoOf(existing),
           state,
-          defaultPrompt: defaultDevPrompt(view === 'development' ? moduleKey : ''),
+          defaultPrompt: defaultDevPrompt(),
           readOnly: false,
           view
         }
@@ -364,7 +360,7 @@ export async function createDevSession(appId: string, options: CreateDevSessionO
     app: { id: app.id, name: app.name, status: app.status, createdAt: app.created_at },
     session: sessionInfoOf(row),
     state: await stateFor(app, row),
-    defaultPrompt: defaultDevPrompt(view === 'development' ? moduleKey : ''),
+    defaultPrompt: defaultDevPrompt(),
     readOnly: false,
     view
   }
@@ -391,10 +387,10 @@ export interface DevPromptResult {
 
 export interface DevPromptOptions {
   view?: unknown
-  /** 需求/设计视图的当前模块 key（透传给 buildViewPrompt） */
-  module?: unknown
   /** 存在的 command 名走 opencode `/api/session/:id/command`，text 作为参数 */
   command?: unknown
+  /** 需求文档章节「问 AI」的隐藏上下文（仅 requirements 视图使用） */
+  focus?: RequirementSectionFocus
 }
 
 export async function promptDevSession(appId: string, text: string, options: DevPromptOptions = {}): Promise<DevPromptResult> {
@@ -403,7 +399,6 @@ export async function promptDevSession(appId: string, text: string, options: Dev
   const content = text.trim()
   const view = viewFromOptions(options)
   const command = typeof options.command === 'string' ? options.command.trim() : ''
-  const moduleKey = typeof options.module === 'string' ? options.module.trim() : ''
   if (!content && !command) throw httpError(400, 'text 不能为空')
   if (content.length > MAX_PROMPT_CHARS) throw httpError(413, `消息过长（${content.length} 字符）`)
   const row = activeOrThrow(appId, view)
@@ -413,13 +408,12 @@ export async function promptDevSession(appId: string, text: string, options: Dev
     // P0：command 由 opencode 展开 $ARGUMENTS，text 即参数
     await opencode.runCommand(sessionID, command, content)
   } else {
-    // 三个视图统一口径：给当前视图/模块 + 去读哪些产物；具体做法交给 skill
-    // 开发视图额外注入设计摘要（模块明确时先生成 ui-check 骨架）
-    const context =
-      view === 'development'
-        ? { digest: developmentDigestForPrompt(appId, moduleKey || undefined, appDirOf(appId)) }
-        : undefined
-    await opencode.prompt(sessionID, buildViewPrompt(view, content, moduleKey || undefined, context))
+    // 三个视图统一口径：给当前视图 + 去读哪些产物；具体做法交给 skill
+    // 开发视图额外注入应用级设计摘要；需求视图可带章节定位上下文
+    const context: { digest?: string; focus?: RequirementSectionFocus } = {}
+    if (view === 'development') context.digest = developmentDigestForPrompt(appId, appDirOf(appId))
+    if (view === 'requirements' && options.focus) context.focus = options.focus
+    await opencode.prompt(sessionID, buildViewPrompt(view, content, context))
   }
   touchSession(row.id)
   return { ok: true, ...(command ? { command } : {}) }

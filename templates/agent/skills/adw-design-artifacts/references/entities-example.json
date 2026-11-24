@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "entities": [
+    {
+      "id": "goods",
+      "name": "商品",
+      "table": "biz_goods",
+      "description": "商品主数据",
+      "fields": [
+        { "code": "goodsCode", "name": "商品编码", "type": "string", "required": true, "unique": true },
+        { "code": "name", "name": "商品名称", "type": "string", "required": true },
+        {
+          "code": "status",
+          "name": "状态",
+          "type": "enum",
+          "options": [
+            { "value": "ON_SALE", "label": "上架" },
+            { "value": "OFF_SALE", "label": "下架" }
+          ]
+        },
+        { "code": "price", "name": "售价", "type": "decimal" },
+        { "code": "stock", "name": "库存", "type": "number" },
+        { "code": "categoryId", "name": "分类", "type": "ref", "ref": "category" },
+        { "code": "createdAt", "name": "创建时间", "type": "datetime" }
+      ]
+    },
+    {
+      "id": "category",
+      "name": "商品分类",
+      "table": "biz_goods_category",
+      "fields": [
+        { "code": "id", "name": "分类 ID", "type": "string", "required": true },
+        { "code": "name", "name": "分类名称", "type": "string", "required": true },
+        { "code": "parentId", "name": "上级分类", "type": "ref", "ref": "category" }
+      ]
+    }
+  ],
+  "relations": [
+    { "from": "goods", "to": "category", "type": "N:1", "label": "所属分类" }
+  ]
+}

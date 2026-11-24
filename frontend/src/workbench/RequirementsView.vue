@@ -16,7 +16,6 @@
         <span :class="['sync', connectionState]" data-testid="sync-state">{{ syncLabel }}</span>
       </div>
       <div class="right">
-        <RgButton size="sm" class="drawer-only" data-testid="outline-toggle" @click="toggleOutline">模块</RgButton>
         <RgButton size="sm" class="drawer-only" data-testid="chat-toggle" @click="toggleChat">对话</RgButton>
         <RgButton size="sm" data-testid="template-library-btn" @click="libraryOpen = true">模板库</RgButton>
         <RgButton size="sm" :disabled="loading" data-testid="refresh-btn" @click="loadAll(false)">刷新</RgButton>
@@ -33,23 +32,28 @@
       <RgButton variant="danger" size="sm" data-testid="fix-with-ai-btn" @click="fixWithAi">让 AI 修</RgButton>
     </div>
 
-    <div :class="['req-body', { narrow }]">
-      <div v-if="narrow && (outlineOpen || chatOpen)" class="mask" data-testid="drawer-mask" @click="closeDrawers" />
+    <div
+      ref="bodyRef"
+      :class="['req-body', { narrow }]"
+      :style="narrow ? undefined : { '--chat-width': `${chatWidth}px` }"
+    >
+      <div v-if="narrow && chatOpen" class="mask" data-testid="drawer-mask" @click="closeDrawers" />
 
-      <div :class="['col', 'col-outline', { drawer: narrow, open: outlineOpen }]">
-        <RequirementsOutline
-          :modules="modules"
-          :selected-key="selectedKey"
-          :templates="requirementTemplates"
-          :busy="busy"
-          :loading="loading"
-          @select="selectModule"
-          @create="openCreate"
-          @rename="openRename"
-          @move="moveModule"
-          @template="changeTemplate"
-        />
+      <div :class="['col', 'col-chat', { drawer: narrow, open: chatOpen }]">
+        <AgentChatPanel ref="chatRef" :app-id="appId" view="requirements" />
       </div>
+
+      <SplitHandle
+        v-if="!narrow"
+        test-id="requirements-chat-split"
+        :value-now="chatWidth"
+        :value-min="chatMin"
+        :value-max="chatMaxAllowed"
+        label="调整对话栏宽度"
+        @pointerdown="onChatPointerDown"
+        @keydown="onChatKeydown"
+        @dblclick="onChatDoubleClick"
+      />
 
       <div class="col col-doc">
         <StatePanel
@@ -58,7 +62,7 @@
           skeleton="doc"
           test-id="requirements-loading"
           title="正在读取需求文档"
-          description="docs/requirements/"
+          description="docs/requirements/requirements.md"
           class="doc-state"
         />
         <StatePanel
@@ -77,23 +81,25 @@
           </template>
         </StatePanel>
         <RequirementsDocument
-          v-else-if="selectedModule"
-          :module="selectedModule"
-          :design="selectedDesign"
-          :template-name="templateNameOf(selectedModule.template)"
+          v-else-if="requirement?.exists"
+          :requirement="requirement"
+          :entities="entities"
+          :pages="pages"
+          :template-name="templateNameOf(requirement.template)"
           @go-design="goDesign"
+          @ask-ai="onAskAi"
         />
         <StatePanel
           v-else
           variant="empty"
           test-id="requirements-empty"
-          title="从需求模块开始"
+          title="从需求文档开始"
           :icon="Document"
           class="doc-state"
         >
           <template #default>
-            模块 = <code>docs/requirements/MOD-xxx-&lt;标题&gt;.md</code>。新建后按应用默认模板生成章节骨架；
-            也可以直接在对话里描述目标，让 agent 生成或修改文档。
+            需求是单文档 <code>docs/requirements/requirements.md</code>。生成骨架后按模板章节补全；
+            Epic 用 <code>EP-001</code>、Story 用 <code>US-001</code>，也可以直接在对话里描述目标，让 agent 生成或修改文档。
           </template>
           <template #examples>
             <ul class="examples">
@@ -105,50 +111,13 @@
             </ul>
           </template>
           <template #actions>
-            <RgButton variant="primary" data-testid="empty-create-btn" @click="openCreate">新建模块</RgButton>
+            <RgButton variant="primary" :disabled="busy" data-testid="empty-create-btn" @click="generateSkeleton">
+              生成文档骨架
+            </RgButton>
           </template>
         </StatePanel>
       </div>
-
-      <div :class="['col', 'col-chat', { drawer: narrow, open: chatOpen }]">
-        <AgentChatPanel ref="chatRef" :app-id="appId" view="requirements" :module-key="selectedKey" />
-      </div>
     </div>
-
-    <el-dialog v-model="createOpen" title="新建模块" width="min(460px, calc(100vw - 32px))" append-to-body>
-      <div class="dialog-form">
-        <label>
-          <span>模块标题</span>
-          <input v-model.trim="createTitle" data-testid="new-module-title" placeholder="如：商品管理" @keyup.enter="submitCreate" />
-        </label>
-        <label>
-          <span>模板</span>
-          <select v-model="createTemplate" data-testid="new-module-template">
-            <option value="">（使用应用默认模板）</option>
-            <option v-for="item in requirementTemplates" :key="item.id" :value="item.id">{{ item.name }}</option>
-          </select>
-        </label>
-        <p class="dialog-hint">新模块会生成 frontmatter + 章节骨架；不会写入数据库。</p>
-      </div>
-      <template #footer>
-        <el-button size="small" @click="createOpen = false">取消</el-button>
-        <el-button size="small" type="primary" :loading="busy" data-testid="new-module-confirm" @click="submitCreate">创建</el-button>
-      </template>
-    </el-dialog>
-
-    <el-dialog v-model="renameOpen" title="重命名模块" width="min(420px, calc(100vw - 32px))" append-to-body>
-      <div class="dialog-form">
-        <label>
-          <span>模块标题</span>
-          <input v-model.trim="renameTitle" data-testid="rename-input" @keyup.enter="submitRename" />
-        </label>
-        <p class="dialog-hint">会同步 frontmatter 的 title、H1 与文件名；模块 key 不变。</p>
-      </div>
-      <template #footer>
-        <el-button size="small" @click="renameOpen = false">取消</el-button>
-        <el-button size="small" type="primary" :loading="busy" data-testid="rename-confirm" @click="submitRename">保存</el-button>
-      </template>
-    </el-dialog>
 
     <TemplateLibraryDialog v-model="libraryOpen" @changed="loadAll(true)" />
   </section>
@@ -160,37 +129,29 @@ import { ElMessage } from 'element-plus'
 import { Document } from '@element-plus/icons-vue'
 import AgentChatPanel from './AgentChatPanel.vue'
 import RequirementsDocument from './RequirementsDocument.vue'
-import RequirementsOutline from './RequirementsOutline.vue'
 import TemplateLibraryDialog from './TemplateLibraryDialog.vue'
 import StatePanel from '../shared/StatePanel.vue'
 import RgButton from '../shared/RgButton.vue'
 import RgChip from '../shared/RgChip.vue'
+import SplitHandle from '../shared/SplitHandle.vue'
+import { useChatResize } from '../shared/useChatResize'
 import {
   connectArtifactEvents,
-  createModule,
+  ensureRequirementDocument,
   getApp,
   getArtifacts,
-  updateModule,
   type AppInfo,
-  type ArtifactsResponse,
-  type DesignArtifact,
-  type RequirementModuleArtifact
+  type ArtifactsResponse
 } from './api'
 import { listRequirementTemplates, type RequirementTemplate } from '../shared/template-api'
-import {
-  composerFixText,
-  mergeArtifactLines,
-  moveModuleOrder,
-  sortModules
-} from './requirements-helpers.js'
-import { artifactSummary } from './view-helpers.js'
+import { composerFixText, mergeArtifactLines, requirementSummary, sectionAskFocus, sectionAskPrompt } from './requirements-helpers.js'
 
 const props = defineProps<{ appId: string }>()
 
 const EXAMPLE_PROMPTS = [
-  '按模板补全当前模块的需求文档，重点写目标与验收标准。',
-  '新增一个「订单管理」模块，包含下单、支付、发货三个场景。',
-  '检查需求与设计是否一致，列出具体差异。'
+  '按模板补全需求文档，重点写目标与验收标准。',
+  '新增一个「订单管理」Epic，包含下单、支付、发货三个用户故事。',
+  '检查需求文档与设计（实体/页面集）是否一致，列出具体差异。'
 ]
 
 const loading = ref(true)
@@ -199,37 +160,57 @@ const error = ref('')
 const artifacts = ref<ArtifactsResponse | null>(null)
 const app = ref<AppInfo | null>(null)
 const requirementTemplates = ref<RequirementTemplate[]>([])
-const selectedKey = ref<string | null>(null)
 const libraryOpen = ref(false)
-const createOpen = ref(false)
-const createTitle = ref('')
-const createTemplate = ref('')
-const renameOpen = ref(false)
-const renameTitle = ref('')
 const connectionState = ref<'connecting' | 'open' | 'error' | 'closed'>('closed')
 const narrow = ref(false)
-const outlineOpen = ref(false)
 const chatOpen = ref(false)
 const chatRef = ref<InstanceType<typeof AgentChatPanel> | null>(null)
+const bodyRef = ref<HTMLElement | null>(null)
+
+const {
+  chatWidth,
+  minWidth: chatMin,
+  maxAllowed: chatMaxAllowed,
+  onPointerDown: onChatPointerDown,
+  onKeydown: onChatKeydown,
+  onDoubleClick: onChatDoubleClick
+} = useChatResize({
+  containerRef: bodyRef,
+  storageKey: 'rg.chat-width.requirements',
+  otherMinWidth: 520 + 6,
+  defaultWidth: 380
+})
 
 let connection: ReturnType<typeof connectArtifactEvents> | null = null
 let reloadTimer: ReturnType<typeof setTimeout> | null = null
 
-const modules = computed(() => sortModules(artifacts.value?.modules ?? []))
-const selectedModule = computed<RequirementModuleArtifact | null>(
-  () => modules.value.find(module => module.key === selectedKey.value) ?? null
-)
-const selectedDesign = computed<DesignArtifact | null>(
-  () => artifacts.value?.designs.find(design => design.module === selectedModule.value?.key) ?? null
-)
-const summary = computed(() => artifactSummary(artifacts.value))
+const requirement = computed(() => artifacts.value?.requirement ?? null)
+const entities = computed(() => artifacts.value?.entities ?? null)
+const pages = computed(() => artifacts.value?.pages ?? null)
+const summary = computed(() => {
+  const info = requirementSummary(requirement.value)
+  if (!info.exists) return '未生成需求文档'
+  return `需求文档 · ${info.epicCount} 个 Epic · ${info.storyCount} 个 Story`
+})
 const syncLabel = computed(
   () =>
     ({ connecting: '同步中…', open: '实时同步', error: '事件断开', closed: '未连接' })[connectionState.value]
 )
-const warningLines = computed(() =>
-  mergeArtifactLines(artifacts.value?.errors ?? [], selectedModule.value?.warnings ?? [], selectedModule.value?.file ?? '')
-)
+const warningLines = computed(() => {
+  const artifactsValue = artifacts.value
+  if (!artifactsValue) return []
+  return [
+    ...mergeArtifactLines(
+      artifactsValue.errors ?? [],
+      [
+        ...(artifactsValue.requirement?.warnings ?? []),
+        ...(artifactsValue.entities?.warnings ?? []),
+        ...(artifactsValue.pages?.warnings ?? [])
+      ],
+      '工作区'
+    )
+  ]
+})
 /** 工具栏只显示数量（人话），明细在下方提示条 */
 const issueCount = computed(() => warningLines.value.length)
 
@@ -250,12 +231,6 @@ async function loadAll(silent: boolean): Promise<void> {
     app.value = nextApp
     artifacts.value = nextArtifacts
     requirementTemplates.value = templates.filter(item => item.stage === 'requirements')
-    const list = sortModules(nextArtifacts.modules)
-    if (selectedKey.value && !list.some(module => module.key === selectedKey.value)) {
-      selectedKey.value = list[0]?.key ?? null
-      if (list.length) ElMessage.info(`当前模块已不存在，已切换到「${list[0].title || list[0].key}」`)
-    }
-    if (!selectedKey.value) selectedKey.value = list[0]?.key ?? null
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err)
   } finally {
@@ -284,90 +259,14 @@ function subscribe(): void {
   )
 }
 
-function selectModule(key: string): void {
-  selectedKey.value = key
-  if (narrow.value) outlineOpen.value = false
-}
-
-function openCreate(): void {
-  createTitle.value = ''
-  createTemplate.value = app.value?.requirementTemplateId ?? ''
-  createOpen.value = true
-}
-
-async function submitCreate(): Promise<void> {
+async function generateSkeleton(): Promise<void> {
   if (busy.value) return
-  if (!createTitle.value.trim()) {
-    ElMessage.warning('请填写模块标题')
-    return
-  }
   busy.value = true
   try {
-    const result = await createModule(props.appId, {
-      title: createTitle.value.trim(),
-      ...(createTemplate.value ? { templateId: createTemplate.value } : {})
-    })
-    selectedKey.value = result.module.key
-    createOpen.value = false
+    const result = await ensureRequirementDocument(props.appId)
     await loadAll(true)
-    ElMessage.success(`已创建 ${result.module.file}`)
-  } catch (err) {
-    ElMessage.error(err instanceof Error ? err.message : String(err))
-  } finally {
-    busy.value = false
-  }
-}
-
-function openRename(): void {
-  if (!selectedModule.value) return
-  renameTitle.value = selectedModule.value.title
-  renameOpen.value = true
-}
-
-async function submitRename(): Promise<void> {
-  if (busy.value || !selectedModule.value) return
-  const title = renameTitle.value.trim()
-  if (!title) {
-    ElMessage.warning('请填写模块标题')
-    return
-  }
-  busy.value = true
-  try {
-    await updateModule(props.appId, selectedModule.value.key, { title })
-    renameOpen.value = false
-    await loadAll(true)
-    ElMessage.success('已重命名（frontmatter / H1 / 文件名已同步）')
-  } catch (err) {
-    ElMessage.error(err instanceof Error ? err.message : String(err))
-  } finally {
-    busy.value = false
-  }
-}
-
-async function moveModule(direction: -1 | 1): Promise<void> {
-  if (busy.value || !selectedKey.value) return
-  const plan = moveModuleOrder(modules.value, selectedKey.value, direction)
-  if (!plan) return
-  busy.value = true
-  try {
-    for (const update of plan.updates) {
-      await updateModule(props.appId, update.key, { order: update.order })
-    }
-    await loadAll(true)
-  } catch (err) {
-    ElMessage.error(err instanceof Error ? err.message : String(err))
-  } finally {
-    busy.value = false
-  }
-}
-
-async function changeTemplate(templateId: string): Promise<void> {
-  if (busy.value || !selectedModule.value) return
-  busy.value = true
-  try {
-    await updateModule(props.appId, selectedModule.value.key, { template: templateId })
-    await loadAll(true)
-    ElMessage.info('模板已切换；如需按新模板重排章节，请发送 /update-requirements')
+    if (result.created) ElMessage.success(`已生成 ${result.file}`)
+    else if (result.skipped) ElMessage.info('需求文档已存在，未覆盖')
   } catch (err) {
     ElMessage.error(err instanceof Error ? err.message : String(err))
   } finally {
@@ -380,6 +279,13 @@ function fillComposer(text: string): void {
   chatRef.value?.setComposer(text)
 }
 
+/** 章节「问 AI」：显示定位 chip + 预填默认提问（只填不发），发送时带隐藏章节上下文 */
+function onAskAi(item: { id: string; title: string; level: number; key?: string; kind?: string }): void {
+  if (narrow.value) chatOpen.value = true
+  chatRef.value?.setSectionFocus(sectionAskFocus(item))
+  fillComposer(sectionAskPrompt(item))
+}
+
 function fixWithAi(): void {
   fillComposer(composerFixText(warningLines.value))
 }
@@ -388,18 +294,11 @@ function goDesign(): void {
   window.location.hash = `#/apps/${encodeURIComponent(props.appId)}/design`
 }
 
-function toggleOutline(): void {
-  outlineOpen.value = !outlineOpen.value
-  if (outlineOpen.value) chatOpen.value = false
-}
-
 function toggleChat(): void {
   chatOpen.value = !chatOpen.value
-  if (chatOpen.value) outlineOpen.value = false
 }
 
 function closeDrawers(): void {
-  outlineOpen.value = false
   chatOpen.value = false
 }
 
@@ -507,12 +406,16 @@ onUnmounted(() => {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr) 380px;
+  grid-template-columns: var(--chat-width, 380px) 6px minmax(0, 1fr);
   position: relative;
 }
 .col {
   min-width: 0;
   min-height: 0;
+}
+.col-chat {
+  overflow: hidden;
+  background: var(--rg-surface);
 }
 .col-doc {
   overflow: hidden;
@@ -551,44 +454,11 @@ onUnmounted(() => {
   border-color: var(--rg-ai);
   color: var(--rg-ai);
 }
-.dialog-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.dialog-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--rg-text-2);
-}
-.dialog-form input,
-.dialog-form select {
-  height: 32px;
-  border: 1px solid var(--rg-border-strong);
-  border-radius: 8px;
-  padding: 0 9px;
-  font-size: 13px;
-  background: var(--rg-surface);
-  color: var(--rg-text);
-}
-.dialog-hint {
-  margin: 0;
-  font-size: 11.5px;
-  color: var(--rg-text-3);
-  line-height: 1.6;
-}
 .drawer-only {
   display: none;
 }
 .mask {
   display: none;
-}
-@media (max-width: 1280px) {
-  .req-body {
-    grid-template-columns: 240px minmax(0, 1fr) 340px;
-  }
 }
 @media (max-width: 1024px) {
   .drawer-only {
@@ -597,27 +467,17 @@ onUnmounted(() => {
   .req-body {
     grid-template-columns: minmax(0, 1fr);
   }
-  .col-outline,
   .col-chat {
     position: absolute;
     top: 0;
     bottom: 0;
-    width: min(340px, 86vw);
+    left: 0;
+    width: min(400px, 90vw);
     z-index: 20;
     box-shadow: var(--rg-shadow-2);
     transition: transform 0.18s ease;
-    background: var(--rg-surface);
-  }
-  .col-outline {
-    left: 0;
     transform: translateX(-105%);
   }
-  .col-chat {
-    right: 0;
-    width: min(400px, 90vw);
-    transform: translateX(105%);
-  }
-  .col-outline.open,
   .col-chat.open {
     transform: translateX(0);
   }

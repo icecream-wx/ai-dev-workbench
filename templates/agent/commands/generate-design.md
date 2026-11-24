@@ -1,34 +1,29 @@
 ---
-description: 按需求文档、设计系统与设计模板生成/更新设计（实体、页面契约、原型数据）
+description: 按需求与设计模板一次生成/更新 entities.json + pages.json + api-design.md（页面集 = Epic；接口同轮生成）
 ---
 
-请生成或更新本应用的设计产物。
+# 生成/更新设计
 
-- 范围：$ARGUMENTS（为空表示按模块大纲判断；可写模块 key）
-- 先加载 skill `adw-design-artifacts`，按其中的文件契约与自查要求执行。
-- 先读 `docs/requirements/` 下对应模块（frontmatter 与章节）、应用 `AGENTS.md`、
-  `docs/design/design-system.json`（pack / 应用类型 / 视觉风格 / 页面库）与
-  `.opencode/skills/adw-design-artifacts/references/design.schema.json`。
-- 产物路径：`docs/design/<MOD>/design.json`（一个模块一个文件）。
-- 顶层写 `designSystem: { pack, applicationType, style }`（从应用设计系统读取；旧应用没有时省略）。
-- 页面契约：
-  - 能对应模板页面库时写 `recipe` / `catalogRef` / `blueprint`，并说明来源页面；
-  - 写 `filters` / `columns` / `rowActions` / `toolbarActions` / `selection` / `pagination`；
-  - 表单页写 `form.presentation/columns/width/fields/groups`；
-  - 树页写 `tree.titleField/parentField/actionStyle/selectionStyle`；
-  - 主从页写 `subTables[]`；字段需要特定组件时写 `components`；
-  - 无对应模板页面时不要编造 `catalogRef`/`blueprint`，按通用 PageTemplates 并在 brief 说明。
-- 原型模板：加载 `adw-template-proto-<应用默认原型模板 id>` skill（含 `assets/tokens.json` 与
-  `assets/template.json`）；蓝图/模板文件只读，不要修改。
-- 跨模块实体用 `MOD-xxx/entity` 引用，不重复定义。
-- 写完运行 `scripts/validate.mjs` 自查：`errors[]` 必须清零，`warnings[]`（新契约字段）说明原因；
-  最终以后端 artifacts 校验为准。
-- 写完/改完 `design.json` 后维护 `docs/design/<MOD>/design-brief.md`：
-  概览/导航/页面/组件/风格 + **页面契约表**（页 → recipe/catalogRef/蓝图 → 字段/列/操作 → 表单/树/分页 → 差异）
-  + **冲突与决策**（需求/模板页/蓝图冲突及取舍）。
-  `tokens.json` 与 `prototypes/*.png` 由工作台生成，不要手改。
-- 需求与设计必须一致；不一致时按用户最新意图调整并说明改了哪一边。
-- 需要改需求时，按 skill `adw-requirements-document` 的文件契约（frontmatter + 章节）同步修改
-  `docs/requirements/MOD-xxx-*.md`，两边保持一致。
-- 所有面向用户的文字——回复、思考/进度说明、工具说明、汇报——一律使用中文；代码、命令、标识符、文件路径除外。
-- 完成后用中文汇报：设计判断、设计模板/风格/蓝图来源、改了哪些文件、校验结果、冲突与待确认项。
+- 范围：`$ARGUMENTS` 为空表示按用户目标判断；如需指定 Epic/页面集，可直接写 `EP-001` 或页面集 id。
+- 先读 `docs/requirements/requirements.md`、`AGENTS.md`、
+  `.opencode/skills/adw-design-artifacts/references/entities.schema.json` 与 `pages.schema.json`，
+  以及 `.opencode/skills/adw-api-design/references/api-conventions.md`、`api-design-template.md`、`api-design-example.md`。
+- 产物路径（**同一轮全部生成/更新**）：
+  - `docs/design/entities.json`：实体/关系（全局一张 ER 图；字段必须有 `code`/`name`/`type`）；
+  - `docs/design/pages.json`：页面集（`epic` = 需求 Epic）+ 页面契约；
+  - `docs/design/api-design.md`：接口设计（固定模板：索引/覆盖矩阵/详情/错误码/权限）。
+- 页面集 = Epic；不要再建模块目录、不要写 `MOD-xxx/entity`。
+- 字段引用一律用字段 `code`；页面不再写 `actions`（从 `rowActions/toolbarActions` 派生）。
+- 列表/树表页面声明了 `create`/`edit` 时，补同页面集同实体表单页，并写 `actionTargets`
+  （显式优先；目标必须同页面集；create/edit 用 `dialog-form/page-form/main-sub/wizard`，`main-sub` 是合法表单目标；
+  `detail` 只做详情目标，不当作 create/edit）。
+- 先确定页面来源（模板页面库 catalogRef/blueprint 或通用配方），再补契约；
+  蓝图/模板文件是受管资源，不要修改。
+- 写完页面契约后**同轮写接口文档**：索引/详情含 `操作`，覆盖矩阵覆盖页面动作（`rowActions/toolbarActions`，form 补 `submit`）与实体 CRUD。
+- 写完维护 `docs/design/design-brief.md`（概览/页面集/冲突与决策/未实现）。
+- 完成后同时运行两个 validator：
+  - `node .opencode/skills/adw-design-artifacts/scripts/validate.mjs docs/design/entities.json docs/design/pages.json`
+  - `node .opencode/skills/adw-api-design/scripts/validate-api-design.mjs --app .`
+  按 errors/warnings 修正；errors 必须清零。
+- 用中文汇报：设计判断、模板/风格/蓝图来源、改了哪些文件、接口数/覆盖、两个校验结果、待确认项。
+- 不要修改 `.opencode/skills/**`、`.opencode/commands/**`；不要执行任何 git 操作。

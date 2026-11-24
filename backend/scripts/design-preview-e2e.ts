@@ -4,7 +4,7 @@
  * 前置：`npm run build --prefix frontend`。
  * 运行：`npm run e2e:p9 --prefix backend`
  *
- * 覆盖：设计视图默认「模板风格」iframe（design-preview.html 渲染 design.json 该页）、
+ * 覆盖：设计视图默认「模板风格」iframe（design-preview.html 渲染 pages.json 该页）、
  * 模板结构类（optimized-suite / template-stage / business-page / org-ledger-shell）、
  * pm 组件（pm-search/pm-toolbar/pm-table/pm-pagination/pm-tree/pm-form-dialog）、
  * tree-list/list/dialog-form 三种配方、风格主色（data-cyan）、无契约自动结构草图 + 提示（无模式切换按钮）、
@@ -25,7 +25,6 @@ const shotsDir = process.env.P9_SHOTS_DIR || path.join(os.tmpdir(), 'workbench-p
 const port = 3446
 const base = `http://127.0.0.1:${port}`
 const appId = 'p9-e2e'
-const moduleKey = 'MOD-001'
 /** data-cyan 主色（templates/design-system pack tokens.primary） */
 const CYAN_PRIMARY = 'rgb(20, 95, 186)'
 
@@ -84,131 +83,177 @@ async function request(method: string, apiPath: string, body?: unknown): Promise
   return { status: res.status, data }
 }
 
-/** app1 同构 fixture：operations-management × data-cyan（4 页 + 1 页无契约） */
-function designFixture(): Record<string, unknown> {
-  const productFields = [
-    { name: '商品编码', label: '商品编码', type: 'string', required: true, unique: true },
-    { name: '商品名称', label: '商品名称', type: 'string', required: true },
-    { name: '商品分类', label: '商品分类', type: 'string' },
-    { name: '计量单位', label: '计量单位', type: 'string', required: true },
-    { name: '销售单价', label: '销售单价', type: 'decimal', required: true },
-    { name: '库存数量', label: '库存数量', type: 'number', required: true },
-    { name: '商品状态', label: '商品状态', type: 'enum', required: true, options: ['上架', '下架'] },
-    { name: '商品描述', label: '商品描述', type: 'text' },
-    { name: '创建时间', label: '创建时间', type: 'datetime' }
-  ]
+/** app1 同构 fixture：operations-management × data-cyan（4 页 + 1 页无契约；字段 code/name） */
+function designFixture(): { entities: Record<string, unknown>; pages: Record<string, unknown> } {
   const detailFields = [
-    { name: '明细编号', label: '明细编号', type: 'string', required: true, unique: true },
-    { name: '所属商品', label: '所属商品', type: 'ref', ref: 'product', required: true },
-    { name: '规格型号', label: '规格型号', type: 'string', required: true },
-    { name: '品牌', label: '品牌', type: 'string' },
-    { name: '产地', label: '产地', type: 'string' },
-    { name: '净含量', label: '净含量', type: 'string' },
-    { name: '包装方式', label: '包装方式', type: 'enum', options: ['袋', '盒', '罐', '箱'] },
-    { name: '保质期（天）', label: '保质期（天）', type: 'number' },
-    { name: '明细说明', label: '明细说明', type: 'text' }
-  ]
-  return {
-    module: moduleKey,
-    title: '商品管理',
-    designSystem: {
-      pack: 'afcenter-app-templates-v1',
-      applicationType: 'operations-management',
-      style: 'data-cyan'
+    { code: 'detailCode', name: '明细编号', type: 'string', required: true, unique: true },
+    { code: 'productId', name: '所属商品', type: 'ref', ref: 'product', required: true },
+    { code: 'specModel', name: '规格型号', type: 'string', required: true },
+    { code: 'brand', name: '品牌', type: 'string' },
+    { code: 'origin', name: '产地', type: 'string' },
+    { code: 'netWeight', name: '净含量', type: 'string' },
+    {
+      code: 'packageType',
+      name: '包装方式',
+      type: 'enum',
+      options: [
+        { value: 'BAG', label: '袋' },
+        { value: 'BOX', label: '盒' },
+        { value: 'CAN', label: '罐' },
+        { value: 'CARTON', label: '箱' }
+      ]
     },
+    { code: 'shelfLifeDays', name: '保质期（天）', type: 'number' },
+    { code: 'detailDesc', name: '明细说明', type: 'text' }
+  ]
+  const productFields = [
+    { code: 'productCode', name: '商品编码', type: 'string', required: true, unique: true },
+    { code: 'productName', name: '商品名称', type: 'string', required: true },
+    { code: 'categoryName', name: '商品分类', type: 'string' },
+    { code: 'unitName', name: '计量单位', type: 'string', required: true },
+    { code: 'salePrice', name: '销售单价', type: 'decimal', required: true },
+    { code: 'stockQty', name: '库存数量', type: 'number', required: true },
+    {
+      code: 'productStatus',
+      name: '商品状态',
+      type: 'enum',
+      required: true,
+      options: [
+        { value: 'ON_SALE', label: '上架' },
+        { value: 'OFF_SALE', label: '下架' }
+      ]
+    },
+    { code: 'productDesc', name: '商品描述', type: 'text' },
+    { code: 'createdAt', name: '创建时间', type: 'datetime' }
+  ]
+  const entities = {
+    schemaVersion: 2,
     entities: [
       { id: 'product', name: '商品', table: 'biz_product', fields: productFields },
       { id: 'productDetail', name: '商品明细', table: 'biz_product_detail', fields: detailFields }
     ],
-    relations: [{ from: 'product', to: 'productDetail', type: '1:1', label: '商品对应明细' }],
-    pages: [
+    relations: [{ from: 'product', to: 'productDetail', type: '1:1', label: '商品对应明细' }]
+  }
+  const pages = {
+    schemaVersion: 2,
+    pageSets: [
       {
-        id: 'product-list',
-        name: '商品列表',
-        type: 'list',
-        recipe: 'tree-list',
-        catalogRef: 'operations-management/treeTable',
-        blueprint: 'application-types/operations-management/pages/OperationsTreeTable.vue',
-        entity: 'product',
-        filters: ['商品名称', '商品编码', '商品状态'],
-        columns: ['商品编码', '商品名称', '商品分类', '销售单价', '库存数量', '商品状态'],
-        rowActions: ['detail', 'edit', 'delete'],
-        toolbarActions: ['create', 'batchDelete'],
-        selection: true,
-        pagination: { layout: 'three-part', pageSize: 5 },
-        tree: { titleField: '商品分类', actionStyle: 'none', selectionStyle: 'platform' },
-        components: { 销售单价: 'pm-number', 库存数量: 'pm-number', 商品状态: 'pm-select' },
-        actions: ['新增', '编辑', '删除', '批量删除']
-      },
-      {
-        id: 'product-detail-list',
-        name: '商品明细列表',
-        type: 'list',
-        recipe: 'list',
-        catalogRef: 'operations-management/list',
-        blueprint: 'application-types/operations-management/pages/OperationsList.vue',
-        entity: 'productDetail',
-        filters: ['明细编号', '所属商品', '包装方式'],
-        columns: ['明细编号', '所属商品', '规格型号', '品牌', '产地', '包装方式'],
-        rowActions: ['edit', 'delete'],
-        toolbarActions: ['create', 'export'],
-        selection: false,
-        pagination: { layout: 'three-part', pageSize: 5 },
-        components: { 所属商品: 'pm-select', 包装方式: 'pm-select', '保质期（天）': 'pm-number' },
-        actions: ['新增', '编辑', '删除']
-      },
-      {
-        id: 'product-form',
-        name: '商品新增/编辑',
-        type: 'form',
-        recipe: 'dialog-form',
-        entity: 'product',
-        form: {
-          presentation: 'dialog',
-          columns: 2,
-          width: 760,
-          fields: ['商品编码', '商品名称', '商品分类', '计量单位', '销售单价', '库存数量', '商品状态', '商品描述'],
-          groups: [
-            { title: '基本信息', fields: ['商品编码', '商品名称', '商品分类', '计量单位'] },
-            { title: '价格与库存', fields: ['销售单价', '库存数量', '商品状态', '商品描述'] }
-          ]
-        },
-        components: {
-          销售单价: 'pm-number',
-          库存数量: 'pm-number',
-          商品状态: 'pm-select',
-          商品描述: 'pm-textarea'
-        },
-        actions: ['保存', '取消']
-      },
-      {
-        id: 'product-detail-form',
-        name: '商品明细新增/编辑',
-        type: 'form',
-        recipe: 'dialog-form',
-        entity: 'productDetail',
-        form: {
-          presentation: 'dialog',
-          columns: 2,
-          width: 760,
-          fields: ['明细编号', '所属商品', '规格型号', '品牌', '产地', '净含量', '包装方式', '保质期（天）', '明细说明'],
-          groups: [
-            { title: '基本信息', fields: ['明细编号', '所属商品', '规格型号', '品牌'] },
-            { title: '包装与保质', fields: ['产地', '净含量', '包装方式', '保质期（天）', '明细说明'] }
-          ]
-        },
-        components: { 包装方式: 'pm-select', '保质期（天）': 'pm-number', 明细说明: 'pm-textarea' },
-        actions: ['保存', '取消']
-      },
-      {
-        id: 'legacy-local',
-        name: '本地列表（无契约）',
-        type: 'list',
-        entity: 'product',
-        columns: ['商品编码', '商品名称', '商品状态']
+        id: 'product',
+        epic: 'EP-001',
+        title: '商品管理',
+        primaryEntity: 'product',
+        pages: [
+          {
+            id: 'product-list',
+            name: '商品列表',
+            type: 'list',
+            recipe: 'tree-list',
+            catalogRef: 'operations-management/treeTable',
+            blueprint: 'application-types/operations-management/pages/OperationsTreeTable.vue',
+            entity: 'product',
+            filters: ['productName', 'productCode', 'productStatus'],
+            columns: ['productCode', 'productName', 'categoryName', 'salePrice', 'stockQty', 'productStatus'],
+            rowActions: ['detail', 'edit', 'delete'],
+            toolbarActions: ['create', 'batchDelete'],
+            selection: true,
+            pagination: { layout: 'three-part', pageSize: 5 },
+            tree: { titleField: 'categoryName', actionStyle: 'none', selectionStyle: 'platform' },
+            components: { salePrice: 'pm-number', stockQty: 'pm-number', productStatus: 'pm-select' }
+          },
+          {
+            id: 'product-detail-list',
+            name: '商品明细列表',
+            type: 'list',
+            recipe: 'list',
+            catalogRef: 'operations-management/list',
+            blueprint: 'application-types/operations-management/pages/OperationsList.vue',
+            entity: 'productDetail',
+            filters: ['detailCode', 'productId', 'packageType'],
+            columns: ['detailCode', 'productId', 'specModel', 'brand', 'origin', 'packageType'],
+            rowActions: ['edit', 'delete'],
+            toolbarActions: ['create', 'export'],
+            selection: false,
+            pagination: { layout: 'three-part', pageSize: 5 },
+            components: { productId: 'pm-select', packageType: 'pm-select', shelfLifeDays: 'pm-number' }
+          },
+          {
+            id: 'product-form',
+            name: '商品新增/编辑',
+            type: 'form',
+            recipe: 'dialog-form',
+            entity: 'product',
+            form: {
+              presentation: 'dialog',
+              columns: 2,
+              width: 760,
+              fields: [
+                'productCode',
+                'productName',
+                'categoryName',
+                'unitName',
+                'salePrice',
+                'stockQty',
+                'productStatus',
+                'productDesc'
+              ],
+              groups: [
+                { title: '基本信息', fields: ['productCode', 'productName', 'categoryName', 'unitName'] },
+                { title: '价格与库存', fields: ['salePrice', 'stockQty', 'productStatus', 'productDesc'] }
+              ]
+            },
+            components: {
+              salePrice: 'pm-number',
+              stockQty: 'pm-number',
+              productStatus: 'pm-select',
+              productDesc: 'pm-textarea'
+            },
+            toolbarActions: ['submit', 'cancel']
+          },
+          {
+            id: 'product-detail-form',
+            name: '商品明细新增/编辑',
+            type: 'form',
+            recipe: 'dialog-form',
+            entity: 'productDetail',
+            form: {
+              presentation: 'dialog',
+              columns: 2,
+              width: 760,
+              fields: [
+                'detailCode',
+                'productId',
+                'specModel',
+                'brand',
+                'origin',
+                'netWeight',
+                'packageType',
+                'shelfLifeDays',
+                'detailDesc'
+              ],
+              groups: [
+                { title: '基本信息', fields: ['detailCode', 'productId', 'specModel', 'brand'] },
+                { title: '包装与保质', fields: ['origin', 'netWeight', 'packageType', 'shelfLifeDays', 'detailDesc'] }
+              ]
+            },
+            components: {
+              packageType: 'pm-select',
+              shelfLifeDays: 'pm-number',
+              detailDesc: 'pm-textarea'
+            },
+            toolbarActions: ['submit', 'cancel']
+          },
+          {
+            id: 'legacy-local',
+            name: '本地列表（无契约）',
+            type: 'list',
+            entity: 'product',
+            columns: ['productCode', 'productName', 'productStatus']
+          }
+        ]
       }
     ]
   }
+  return { entities, pages }
 }
 
 async function startHarness(): Promise<void> {
@@ -351,9 +396,9 @@ async function waitFrameReady(page: Page, expectedText?: string): Promise<FrameL
 async function openDesignPrototype(page: Page): Promise<void> {
   await page.goto(`${base}/#/apps/${appId}/design`, { waitUntil: 'domcontentloaded' })
   await page.locator('[data-testid=design-view]').waitFor({ state: 'visible', timeout: 20000 })
-  await page.locator('[data-testid=design-module-MOD-001]').waitFor({ state: 'visible', timeout: 20000 })
-  await page.locator('[data-testid=design-module-MOD-001]').click()
   await page.locator('[data-testid=design-tab-prototype]').click()
+  await page.locator('[data-testid=design-pageset-product]').waitFor({ state: 'visible', timeout: 20000 })
+  await page.locator('[data-testid=design-pageset-product]').click()
 }
 
 async function main(): Promise<void> {
@@ -365,15 +410,15 @@ async function main(): Promise<void> {
   try {
     await startHarness()
     const harnessState = await readState()
-    const designDir = path.join(harnessState.appDir, 'docs', 'design', moduleKey)
+    const designDir = path.join(harnessState.appDir, 'docs', 'design')
 
-    const created = await request('POST', `/apps/${appId}/requirements-modules`, { title: '商品管理' })
-    check(created.status === 201, '准备需求模块 MOD-001')
+    const fixture = designFixture()
     fs.mkdirSync(designDir, { recursive: true })
-    fs.writeFileSync(path.join(designDir, 'design.json'), `${JSON.stringify(designFixture(), null, 2)}\n`, 'utf8')
+    fs.writeFileSync(path.join(designDir, 'entities.json'), `${JSON.stringify(fixture.entities, null, 2)}\n`, 'utf8')
+    fs.writeFileSync(path.join(designDir, 'pages.json'), `${JSON.stringify(fixture.pages, null, 2)}\n`, 'utf8')
 
     const artifacts = await request('GET', `/apps/${appId}/artifacts`)
-    const designHash = artifacts.data?.hashes?.[`docs/design/${moduleKey}/design.json`] || ''
+    const designHash = artifacts.data?.designHash || ''
     check(Boolean(designHash), `artifacts 返回 designHash（${designHash}）`)
 
     browser = await chromium.launch()
@@ -407,7 +452,7 @@ async function main(): Promise<void> {
     const firstSrc = await waitFrameSrc(page, 'product-list')
     check(firstSrc.startsWith('/design-preview.html?'), `1.7 iframe 指向 /design-preview.html（${firstSrc}）`)
     check(firstSrc.includes(`app=${appId}`), '1.8 iframe 含 app 参数')
-    check(firstSrc.includes(`module=${moduleKey}`), '1.9 iframe 含 module 参数')
+    check(!firstSrc.includes('module='), '1.9 iframe 不含 module 参数')
     check(firstSrc.includes('type=operations-management'), '1.10 iframe 含 type=operations-management')
     check(firstSrc.includes('style=data-cyan'), '1.11 iframe 含 style=data-cyan')
     check(firstSrc.includes('embed=1'), '1.12 iframe 含 embed=1')
@@ -415,7 +460,7 @@ async function main(): Promise<void> {
 
     // ---------- 2. iframe 内模板结构 / 组件 / 内容 ----------
     const treeFrame = await waitFrameReady(page, '商品列表')
-    check(true, '2.1 iframe 渲染 design.json 页面标题「商品列表」')
+    check(true, '2.1 iframe 渲染 pages.json 页面标题「商品列表」')
     check((await treeFrame.locator('.design-preview-root.visual-style-data-cyan').count()) === 1, '2.2 根节点带 visual-style-data-cyan')
     check(
       (await treeFrame.locator('.optimized-suite.application-type-operations').count()) === 1,
@@ -480,7 +525,11 @@ async function main(): Promise<void> {
     check((await dialog.locator('.pm-textarea-root').count()) >= 1, '4.7 字段使用 pm-textarea')
     check(dialogText.includes('商品编码') && dialogText.includes('销售单价'), '4.8 字段来自实体')
     const dialogWidth = await dialog.evaluate(element => parseFloat(getComputedStyle(element).width))
-    check(Math.abs(dialogWidth - 760) <= 40, `4.9 弹窗宽度≈契约 760（实际 ${dialogWidth}）`)
+    const dialogWidthVar = (await dialog.getAttribute('style')) || ''
+    check(
+      dialogWidthVar.includes('--el-dialog-width: 760px') && dialogWidth >= 600 && dialogWidth <= 760,
+      `4.9 弹窗宽度按契约 760px（可用宽度内 clamp，实际 ${dialogWidth}）`
+    )
     await delay(600)
     await page.screenshot({ path: path.join(shotsDir, 'p9-dialog-form.png') })
 

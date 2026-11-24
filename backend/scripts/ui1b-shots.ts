@@ -14,6 +14,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { chromium, type Browser } from 'playwright'
+import { writeDesignArtifacts, writeRequirementsDoc } from './ui-shots-fixtures'
 
 const backendDir = path.resolve(__dirname, '..')
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'workbench-ui1b-shots-'))
@@ -118,102 +119,94 @@ function stopHarness(): void {
   harness = null
 }
 
-/** 设计产物：2 实体 / 2 页面 + 设计系统（让设计视图徽标与 ER 有内容） */
+/** 设计产物：2 实体 / 2 页面（让设计视图徽标与 ER 有内容） */
 function seedDesign(appDir: string): void {
-  const designDir = path.join(appDir, 'docs', 'design', 'MOD-001')
-  fs.mkdirSync(designDir, { recursive: true })
-  const design = {
-    module: 'MOD-001',
-    title: '商品管理',
-    designSystem: {
-      pack: 'afcenter-app-templates-v1',
-      applicationType: 'enterprise-application-platform',
-      style: 'platform-blue'
-    },
-    entities: [
-      {
-        id: 'product',
-        name: '商品',
-        table: 'biz_product',
-        fields: [
-          { name: '商品编码', type: 'string', required: true, unique: true },
-          { name: '商品名称', type: 'string', required: true },
-          { name: '商品分类', type: 'ref', ref: 'category' },
-          { name: '销售单价', type: 'number' },
-          { name: '库存数量', type: 'number' },
-          { name: '商品状态', type: 'enum', options: ['上架', '下架'] }
-        ]
-      },
-      {
-        id: 'category',
-        name: '商品分类',
-        table: 'biz_category',
-        fields: [
-          { name: '分类名称', type: 'string', required: true },
-          { name: '父分类', type: 'ref', ref: 'category' }
-        ]
-      }
-    ],
-    relations: [{ from: 'product', to: 'category', type: 'N:1', label: '所属分类' }],
-    pages: [
-      {
-        id: 'product-list',
-        name: '商品列表',
-        type: 'list',
-        entity: 'product',
-        recipe: 'list',
-        catalogRef: 'enterprise-application-platform/organization',
-        blueprint: 'application-types/enterprise-application-platform/pages/OrganizationUsers.vue',
-        filters: ['商品名称', '商品状态'],
-        columns: ['商品编码', '商品名称', '商品分类', '销售单价', '库存数量', '商品状态'],
-        rowActions: ['detail', 'edit', 'delete'],
-        toolbarActions: ['create'],
-        selection: true,
-        pagination: { layout: 'three-part', pageSize: 20 },
-        components: { 销售单价: 'pm-number', 库存数量: 'pm-number', 商品状态: 'pm-select' }
-      },
-      {
-        id: 'product-form',
-        name: '商品编辑',
-        type: 'form',
-        entity: 'product',
-        recipe: 'page-form',
-        catalogRef: 'enterprise-application-platform/user-form',
-        form: {
-          fields: ['商品编码', '商品名称', '商品分类', '销售单价', '库存数量', '商品状态'],
-          groups: [{ title: '基本信息', fields: ['商品编码', '商品名称', '商品分类'] }]
+  const entities = [
+    {
+      id: 'product',
+      name: '商品',
+      table: 'biz_product',
+      fields: [
+        { code: 'productCode', name: '商品编码', type: 'string', required: true, unique: true },
+        { code: 'productName', name: '商品名称', type: 'string', required: true },
+        { code: 'categoryId', name: '商品分类', type: 'ref', ref: 'category' },
+        { code: 'price', name: '销售单价', type: 'number' },
+        { code: 'stock', name: '库存数量', type: 'number' },
+        {
+          code: 'status',
+          name: '商品状态',
+          type: 'enum',
+          options: [
+            { value: 'ON_SALE', label: '上架' },
+            { value: 'OFF_SALE', label: '下架' }
+          ]
         }
-      }
-    ]
-  }
-  fs.writeFileSync(path.join(designDir, 'design.json'), `${JSON.stringify(design, null, 2)}\n`, 'utf8')
-  fs.writeFileSync(
-    path.join(designDir, 'design-brief.md'),
-    '# 商品管理 · 设计说明\n\n- 列表：商品编码 / 商品名称 / 商品分类 / 销售单价 / 库存数量 / 商品状态\n- 表单：新增/编辑复用页面表单，状态为下拉\n',
-    'utf8'
-  )
-  fs.writeFileSync(
-    path.join(designDir, 'tokens.json'),
-    `${JSON.stringify({ styleId: 'platform-blue', color: { primary: '#2f6fed', surface: '#ffffff' } }, null, 2)}\n`,
-    'utf8'
-  )
+      ]
+    },
+    {
+      id: 'category',
+      name: '商品分类',
+      table: 'biz_category',
+      fields: [
+        { code: 'categoryName', name: '分类名称', type: 'string', required: true },
+        { code: 'parentId', name: '父分类', type: 'ref', ref: 'category' }
+      ]
+    }
+  ]
+  const pageSets = [
+    {
+      id: 'product',
+      epic: 'EP-001',
+      title: '商品管理',
+      primaryEntity: 'product',
+      pages: [
+        {
+          id: 'product-list',
+          name: '商品列表',
+          type: 'list',
+          entity: 'product',
+          columns: ['productCode', 'productName', 'categoryId', 'price', 'stock', 'status'],
+          filters: ['productName', 'status'],
+          rowActions: ['detail', 'edit', 'delete'],
+          toolbarActions: ['create'],
+          selection: true,
+          pagination: { layout: 'three-part', pageSize: 20 },
+          components: { price: 'pm-number', stock: 'pm-number', status: 'pm-select' }
+        },
+        {
+          id: 'product-form',
+          name: '商品编辑',
+          type: 'form',
+          entity: 'product',
+          form: {
+            columns: 2,
+            width: 800,
+            fields: ['productCode', 'productName', 'categoryId', 'price', 'stock', 'status'],
+            groups: [{ title: '基本信息', fields: ['productCode', 'productName', 'categoryId'] }]
+          }
+        }
+      ]
+    }
+  ]
+  writeDesignArtifacts(appDir, entities, pageSets, [{ from: 'product', to: 'category', type: 'N:1', label: '所属分类' }])
 }
 
 async function prepareArtifacts(): Promise<string> {
-  const created = await request('POST', `/apps/${appId}/requirements-modules`, { title: '商品管理' })
-  if (created.status !== 201) throw new Error(`准备模块 MOD-001 失败（HTTP ${created.status}）`)
-  const created2 = await request('POST', `/apps/${appId}/requirements-modules`, { title: '订单管理' })
-  if (created2.status !== 201) throw new Error(`准备模块 MOD-002 失败（HTTP ${created2.status}）`)
   const state = await readState()
+  writeRequirementsDoc(state.appDir, {
+    epics: [
+      { id: 'EP-001', title: '商品管理', stories: [{ id: 'US-001', title: '商品台账' }] },
+      { id: 'EP-002', title: '订单管理', stories: [{ id: 'US-002', title: '订单查询' }] }
+    ]
+  })
   seedDesign(state.appDir)
 
   // 开发视图：建会话 + 走 stub 的一轮（不调用真实模型）
-  const session = await request('POST', `/apps/${appId}/development/session`, { view: 'development', module: 'MOD-001' })
+  const session = await request('POST', `/apps/${appId}/development/session`, { view: 'development' })
   if (session.status !== 200) throw new Error(`准备开发会话失败（HTTP ${session.status}）`)
   const prompt = await request('POST', `/apps/${appId}/development/prompt`, {
     text: '开始开发：先读 AGENTS.md 与 docs/，再按设计实现商品列表页。',
-    view: 'development',
-    module: 'MOD-001'
+    view: 'development'
   })
   if (prompt.status !== 200) throw new Error(`准备开发时间线失败（HTTP ${prompt.status}）`)
   await delay(2200)

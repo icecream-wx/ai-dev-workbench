@@ -2,14 +2,14 @@
   "name": "ai-dev-workbench-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "智能开发工作台后端：Express + SQLite（应用/模板/会话/产物解析/文件监听）",
+  "description": "AI Dev Workbench backend: Express + SQLite (apps/templates/sessions/artifacts/watcher)",
   "type": "commonjs",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "test": "tsx --test src/db-guards.test.ts src/db-migrate.test.ts src/opencode/events.test.ts src/opencode/redact.test.ts src/opencode/password.test.ts src/opencode/runtime.test.ts src/sessions/store.test.ts src/apps/scaffold.test.ts src/apps/templates.test.ts src/apps/design-system.test.ts src/chat/service.test.ts src/chat/target.test.ts src/dev/timeline.test.ts src/dev/service.test.ts src/dev/linkage.test.ts src/dev/digest.test.ts src/dev/fidelity.test.ts src/requirements/module-files.test.ts src/templates/distribution.test.ts src/design/reference.test.ts src/design/pack.test.ts src/design/contract.test.ts src/design/system-file.test.ts src/design-template/spec.test.ts src/design-template/css.test.ts src/design-template/generator.test.ts src/design-template/catalog.test.ts src/design-template/publish.test.ts src/design-template/routes.test.ts src/design-template/workshop.test.ts src/design-template/studio.test.ts src/design-template/studio-routes.test.ts src/workspace/artifacts.test.ts src/workspace/watcher.test.ts",
+    "test": "tsx --test src/db-guards.test.ts src/db-migrate.test.ts src/opencode/events.test.ts src/opencode/redact.test.ts src/opencode/password.test.ts src/opencode/runtime.test.ts src/sessions/store.test.ts src/apps/scaffold.test.ts src/apps/templates.test.ts src/apps/design-system.test.ts src/chat/service.test.ts src/chat/target.test.ts src/dev/timeline.test.ts src/dev/service.test.ts src/dev/linkage.test.ts src/dev/digest.test.ts src/dev/api-design.test.ts src/dev/fidelity.test.ts src/requirements/doc-file.test.ts src/templates/distribution.test.ts src/design/reference.test.ts src/design/pack.test.ts src/design/contract.test.ts src/design/system-file.test.ts src/design-template/spec.test.ts src/design-template/css.test.ts src/design-template/generator.test.ts src/design-template/catalog.test.ts src/design-template/publish.test.ts src/design-template/routes.test.ts src/design-template/workshop.test.ts src/design-template/studio.test.ts src/design-template/studio-routes.test.ts src/workspace/artifacts.test.ts src/workspace/watcher.test.ts",
     "smoke:opencode": "tsx scripts/opencode-smoke.ts",
     "smoke:workspace": "tsx scripts/workspace-smoke.ts",
     "smoke:assets": "tsx scripts/verify-agent-assets.ts",
@@ -25,7 +25,9 @@
     "e2e:p10": "tsx scripts/template-png-e2e.ts",
     "e2e:p7-6a": "tsx scripts/fidelity-e2e.ts",
     "e2e:p7-7b": "tsx scripts/design-template-studio-e2e.ts",
-    "e2e:p7-7c": "tsx scripts/custom-template-app-e2e.ts"
+    "e2e:p7-7c": "tsx scripts/custom-template-app-e2e.ts",
+    "e2e:api-design": "tsx scripts/api-design-e2e.ts",
+    "e2e:design-interaction": "tsx scripts/design-interaction-e2e.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",

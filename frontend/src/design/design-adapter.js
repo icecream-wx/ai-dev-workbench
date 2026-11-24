@@ -1,16 +1,18 @@
 /**
- * design.json → 渲染契约（P3/P4）
+ * 设计产物（entities.json + pages.json）→ 渲染契约（D1）
  *
- * 输入 `artifacts.designs[]` 的一项（已通过后端 schema 校验的错误会同时给出），
- * 输出 ErGraph / PrototypeCanvas 需要的实体、关系、页面集与页面渲染结构。
+ * 输入可以是：
+ * - `artifacts`（GET /api/apps/:id/artifacts）：用 `adaptArtifacts(artifacts)` 得到 design-like 后适配；
+ * - 或直接一个 design-like 对象 `{ entities, relations, pages, pageSets?, designSystem? }`
+ *   （模板工作室的 synthetic design 仍走这里）。
  *
- * 规则（brief §3）：
- * - `page.entity` 为本模块实体 → entityId；`MOD-xxx/entity` 或未知 → entityId=null + warning；
+ * 规则：
+ * - `pages.json` 的 `pageSets[]` 是页面集（= Epic）；缺省时把 `pages[]` 当作一个匿名页面集（兼容 synthetic design）；
+ * - 页面 `entity` 引用实体 id；未知实体 → entityId=null + warning；
+ * - 字段 `code` 是渲染键、`name` 是中文显示名；旧数据（只有 name）按 name 当 code 兼容；
  * - 未知页面类型降级 `list` + warning；重复实体/页面 id 保留第一个 + warning；
- * - ER 只画本模块实体；跨模块关系只警告，不做聚合布局；
  * - 纯函数，不依赖 Vue/DOM，便于 node --test。
  */
-import { sortModules } from '../workbench/requirements-helpers.js'
 
 export const PAGE_TYPES = ['list', 'form', 'detail', 'dashboard', 'kanban', 'gantt', 'calendar']
 /** P7 页面配方（来自设计模板包 pageRecipes） */
@@ -19,7 +21,6 @@ export const PAGINATION_LAYOUTS = ['bar', 'split', 'three-part']
 export const FORM_PRESENTATIONS = ['dialog', 'page']
 export const SUB_TABLE_MODES = ['tab', 'flow']
 const RELATION_TYPES = ['1:1', '1:N', 'N:1', 'N:M']
-
 
 /** er-layout 仍按旧类型名取基数字；这里做一次映射 */
 const LEGACY_RELATION = {
@@ -138,7 +139,7 @@ function normalizeTree(raw, pageId, warnings) {
   return Object.keys(tree).length ? tree : null
 }
 
-/** design.json subTables（entity）→ 线框 PageLayout.subTables（target） */
+/** pages.json subTables（entity）→ 线框 PageLayout.subTables（target） */
 function normalizeSubTables(raw, pageId, warnings) {
   if (raw === undefined || raw === null) return []
   if (!Array.isArray(raw)) {
@@ -172,6 +173,26 @@ function normalizeSubTables(raw, pageId, warnings) {
   return subTables
 }
 
+/** 页面级 actionTargets：动作码 → 同页面集目标页面 id（对象、键/值非空字符串；保留未知动作键） */
+function normalizeActionTargets(raw, pageId, warnings) {
+  if (raw === undefined || raw === null) return null
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    warnings.push(`页面 ${pageId} 的 actionTargets 不是对象，已忽略`)
+    return null
+  }
+  const targets = {}
+  for (const [key, value] of Object.entries(raw)) {
+    const action = text(key)
+    const target = text(value)
+    if (!action || !target) {
+      warnings.push(`页面 ${pageId} 的 actionTargets.${key || '(空)'} 不是非空字符串，已跳过`)
+      continue
+    }
+    targets[action] = target
+  }
+  return Object.keys(targets).length ? targets : null
+}
+
 function normalizeComponents(raw, pageId, warnings) {
   if (raw === undefined || raw === null) return null
   if (typeof raw !== 'object' || Array.isArray(raw)) {
@@ -199,33 +220,59 @@ function mergeActions(toolbarActions, rowActions) {
   return merged
 }
 
-function moduleTitleOf(moduleKey, modules) {
-  const found = asArray(modules).find(item => text(item?.key) === moduleKey)
-  return found ? text(found.title) : ''
+/** 枚举选项：显示 labels（渲染用）与接口 values（mock 行键值仍用 label） */
+function normalizeOptions(raw, warnings, entityId, fieldCode) {
+  const options = []
+  const optionValues = []
+  for (const item of asArray(raw)) {
+    if (item && typeof item === 'object') {
+      const value = text(item.value)
+      const label = text(item.label) || value
+      if (!label) continue
+      options.push(label)
+      optionValues.push(value || label)
+    } else if (typeof item === 'string' && item.trim()) {
+      options.push(item.trim())
+      optionValues.push(item.trim())
+    }
+  }
+  if (!options.length && raw !== undefined) warnings.push(`实体 ${entityId} 的枚举字段 ${fieldCode} 的 options 为空，已忽略`)
+  return { options, optionValues }
 }
 
 function normalizeFields(rawFields, entityId, warnings) {
   const fields = []
+  const seen = new Set()
   for (const raw of asArray(rawFields)) {
     if (!raw || typeof raw !== 'object') {
       warnings.push(`实体 ${entityId} 的字段项不是对象，已跳过`)
       continue
     }
-    const name = text(raw.name)
-    if (!name) {
-      warnings.push(`实体 ${entityId} 有字段缺少 name，已跳过`)
+    const code = text(raw.code) || text(raw.name)
+    const display = text(raw.label) || text(raw.name) || code
+    if (!code) {
+      warnings.push(`实体 ${entityId} 有字段缺少 code/name，已跳过`)
       continue
     }
+    if (seen.has(code)) {
+      warnings.push(`实体 ${entityId} 的字段 code 重复：${code}（保留第一个）`)
+      continue
+    }
+    seen.add(code)
     const type = text(raw.type) || 'string'
-    if (!text(raw.type)) warnings.push(`字段 ${entityId}.${name} 缺少 type，按 string 渲染`)
+    if (!text(raw.type)) warnings.push(`字段 ${entityId}.${code} 缺少 type，按 string 渲染`)
+    const enumOptions = type === 'enum' ? normalizeOptions(raw.options, warnings, entityId, code) : { options: [], optionValues: [] }
     fields.push({
-      name,
-      label: text(raw.label) || name,
+      code,
+      /** 渲染键（各渲染器用 field.name；等于字段 code） */
+      name: code,
+      /** 中文显示名 */
+      label: display,
       type,
-      ...(text(raw.label) ? { label: text(raw.label) } : {}),
       ...(raw.required === true ? { required: true } : {}),
       ...(raw.unique === true ? { unique: true } : {}),
-      ...(asArray(raw.options).length ? { options: asArray(raw.options).map(item => String(item)) } : {}),
+      ...(enumOptions.options.length ? { options: enumOptions.options } : {}),
+      ...(enumOptions.optionValues.length ? { optionValues: enumOptions.optionValues } : {}),
       ...(text(raw.ref) ? { ref: text(raw.ref) } : {}),
       ...(text(raw.note) ? { note: text(raw.note) } : {}),
       ...(raw.default !== undefined && raw.default !== null ? { default: raw.default } : {})
@@ -234,31 +281,16 @@ function normalizeFields(rawFields, entityId, warnings) {
   return fields
 }
 
-/** 模块列表徽标用：设计状态摘要 */
-export function designSummaryOf(design) {
-  if (!design) return { hasDesign: false, entityCount: 0, pageCount: 0, errorCount: 0 }
-  return {
-    hasDesign: true,
-    entityCount: asArray(design.entities).length,
-    pageCount: asArray(design.pages).length,
-    errorCount: asArray(design.errors).length
-  }
-}
-
-export function adaptDesign(design, options = {}) {
-  const warnings = []
-  const moduleKey = text(design?.module)
-  const title = text(design?.title) || moduleTitleOf(moduleKey, options.modules) || moduleKey || '未命名设计'
-  const file = text(design?.file)
+/** 实体/关系（全局一张 ER） */
+function normalizeEntities(rawEntities, warnings) {
   const entities = []
   const entityIds = new Set()
-
-  for (const raw of asArray(design?.entities)) {
+  for (const raw of asArray(rawEntities)) {
     if (!raw || typeof raw !== 'object') {
       warnings.push('实体项不是对象，已跳过')
       continue
     }
-    const id = text(raw.id)
+    const id = text(raw.id) || text(raw.name)
     if (!id) {
       warnings.push('实体缺少 id，已跳过')
       continue
@@ -278,10 +310,13 @@ export function adaptDesign(design, options = {}) {
       relations: []
     })
   }
+  return { entities, entityIds }
+}
 
+function normalizeRelations(rawRelations, entityIds, warnings) {
   const relations = []
   const attached = new Map()
-  for (const raw of asArray(design?.relations)) {
+  for (const raw of asArray(rawRelations)) {
     if (!raw || typeof raw !== 'object') continue
     const from = text(raw.from)
     const to = text(raw.to)
@@ -290,7 +325,7 @@ export function adaptDesign(design, options = {}) {
       continue
     }
     if (!entityIds.has(from) || !entityIds.has(to)) {
-      warnings.push(`关系 ${from} → ${to} 引用外部/未知实体，当前不绘制`)
+      warnings.push(`关系 ${from} → ${to} 引用不存在的实体，当前不绘制`)
       continue
     }
     let type = text(raw.type)
@@ -304,153 +339,195 @@ export function adaptDesign(design, options = {}) {
     list.push({ target: to, type: LEGACY_RELATION[type], name: label })
     attached.set(from, list)
   }
+  return { relations, attached }
+}
+
+/** pages.json 页面 → DesignPageRender（含页面集） */
+function adaptPage(raw, pageSetId, epic, entityIds, warnings, pageIds) {
+  let id = text(raw.id)
+  if (!id) {
+    id = `page-${pageIds.size + 1}`
+    warnings.push(`页面缺少 id，已按 ${id} 渲染`)
+  }
+  if (pageIds.has(id)) {
+    warnings.push(`页面 id 重复：${id}（保留第一个）`)
+    return null
+  }
+  pageIds.add(id)
+  const name = text(raw.name) || id
+  const rawType = text(raw.type)
+  let type = rawType
+  if (!PAGE_TYPES.includes(type)) {
+    warnings.push(`页面 ${id} 的类型 ${rawType || '(空)'} 不受支持，降级为 list`)
+    type = 'list'
+  }
+  const entityRef = text(raw.entity)
+  let entityId = null
+  if (entityRef) {
+    if (entityIds.has(entityRef)) entityId = entityRef
+    else warnings.push(`页面 ${id} 引用的实体不存在：${entityRef}`)
+  }
+  const columns = asArray(raw.columns).map(item => String(item))
+  if (raw.actions !== undefined) warnings.push(`页面 ${id} 不再使用 actions；已按 toolbarActions + rowActions 派生`)
+  const filters = stringList(raw.filters)
+  const rowActions = stringList(raw.rowActions)
+  const toolbarActions = stringList(raw.toolbarActions)
+  const selection = raw.selection === true ? true : raw.selection === false ? false : undefined
+  const pagination = normalizePagination(raw.pagination, id, warnings)
+  const form = normalizeForm(raw.form, id, warnings)
+  const tree = normalizeTree(raw.tree, id, warnings)
+  const subTables = normalizeSubTables(raw.subTables, id, warnings)
+  const components = normalizeComponents(raw.components, id, warnings)
+  const actionTargets = normalizeActionTargets(raw.actionTargets, id, warnings)
+  const recipe = text(raw.recipe)
+  if (recipe && !PAGE_RECIPES.includes(recipe)) {
+    warnings.push(`页面 ${id} 的页面配方 ${recipe} 不受支持，已忽略`)
+  }
+  const catalogRef = text(raw.catalogRef)
+  const blueprint = text(raw.blueprint)
+  const actions = mergeActions(toolbarActions, rowActions)
+  const table = {
+    ...(columns.length ? { columns } : {}),
+    ...(filters.length ? { searchFields: filters } : {}),
+    ...(pagination?.pageSize ? { pageSize: pagination.pageSize } : {})
+  }
+  const page = {
+    id,
+    type,
+    title: name,
+    pageSetId,
+    ...(epic ? { epic } : {}),
+    entityId,
+    ...(recipe && PAGE_RECIPES.includes(recipe) ? { recipe } : {}),
+    ...(actionTargets ? { actionTargets } : {}),
+    ...(catalogRef ? { catalogRef } : {}),
+    ...(blueprint ? { blueprint } : {}),
+    spec: {
+      columns,
+      actions,
+      ...(filters.length ? { filters } : {}),
+      ...(selection !== undefined ? { selection } : {}),
+      ...(form?.fields?.length ? { fields: form.fields } : {}),
+      ...(components ? { components } : {})
+    },
+    layout: {
+      ...(Object.keys(table).length ? { table } : {}),
+      ...(actions.length ? { toolbar: { actions } } : {}),
+      ...(pagination ? { pagination } : {}),
+      ...(selection !== undefined ? { selection } : {}),
+      ...(rowActions.length ? { rowActions } : {}),
+      ...(toolbarActions.length ? { toolbarActions } : {}),
+      ...(form ? { form } : {}),
+      ...(form?.groups?.length
+        ? { groups: form.groups.map(group => ({ title: group.title ?? '', fields: [...(group.fields ?? [])] })) }
+        : {}),
+      ...(tree ? { tree } : {}),
+      ...(subTables.length ? { subTables } : {}),
+      ...(components ? { components } : {})
+    }
+  }
+  const original = {
+    id,
+    name,
+    type,
+    ...(entityRef ? { entity: entityRef } : {}),
+    ...(columns.length ? { columns } : {}),
+    ...(actions.length ? { actions } : {}),
+    ...(recipe && PAGE_RECIPES.includes(recipe) ? { recipe } : {}),
+    ...(actionTargets ? { actionTargets } : {}),
+    ...(catalogRef ? { catalogRef } : {}),
+    ...(blueprint ? { blueprint } : {})
+  }
+  return { page, original }
+}
+
+/**
+ * design-like 对象 → 渲染契约。
+ * @param {{entities?: unknown[], relations?: unknown[], pages?: unknown[], pageSets?: unknown[], designSystem?: unknown}} design
+ */
+export function adaptDesign(design, options = {}) {
+  const warnings = []
+  const { entities, entityIds } = normalizeEntities(design?.entities, warnings)
+  if (options.modules) warnings.push('模块模型已移除：entities/pages 为应用级，忽略 modules 选项')
+  const { relations, attached } = normalizeRelations(design?.relations, entityIds, warnings)
   for (const entity of entities) entity.relations = attached.get(entity.id) ?? []
 
-  const pageSetId = `${moduleKey || 'MOD'}-main`
+  const rawPageSets = asArray(design?.pageSets)
+  const fallbackPages = asArray(design?.pages)
+  const pageSets = []
   const pages = []
-  const originals = []
   const pageIds = new Set()
-  for (const raw of asArray(design?.pages)) {
-    if (!raw || typeof raw !== 'object') {
-      warnings.push('页面项不是对象，已跳过')
-      continue
-    }
-    let id = text(raw.id)
-    if (!id) {
-      id = `page-${pages.length + 1}`
-      warnings.push(`页面缺少 id，已按 ${id} 渲染`)
-    }
-    if (pageIds.has(id)) {
-      warnings.push(`页面 id 重复：${id}（保留第一个）`)
-      continue
-    }
-    pageIds.add(id)
-    const name = text(raw.name) || id
-    const rawType = text(raw.type)
-    let type = rawType
-    if (!PAGE_TYPES.includes(type)) {
-      warnings.push(`页面 ${id} 的类型 ${rawType || '(空)'} 不受支持，降级为 list`)
-      type = 'list'
-    }
-    const entityRef = text(raw.entity)
-    let entityId = null
-    if (entityRef) {
-      if (entityIds.has(entityRef)) entityId = entityRef
-      else if (/^MOD-[^/]+\//.test(entityRef)) warnings.push(`页面 ${id} 引用其它模块实体 ${entityRef}，当前仅占位`)
-      else warnings.push(`页面 ${id} 引用的实体不存在：${entityRef}`)
-    }
-    const columns = asArray(raw.columns).map(item => String(item))
-    const rawActions = asArray(raw.actions).map(item => String(item))
-    const filters = stringList(raw.filters)
-    const rowActions = stringList(raw.rowActions)
-    const toolbarActions = stringList(raw.toolbarActions)
-    const selection = raw.selection === true ? true : raw.selection === false ? false : undefined
-    const pagination = normalizePagination(raw.pagination, id, warnings)
-    const form = normalizeForm(raw.form, id, warnings)
-    const tree = normalizeTree(raw.tree, id, warnings)
-    const subTables = normalizeSubTables(raw.subTables, id, warnings)
-    const components = normalizeComponents(raw.components, id, warnings)
-    const recipe = text(raw.recipe)
-    if (recipe && !PAGE_RECIPES.includes(recipe)) {
-      warnings.push(`页面 ${id} 的页面配方 ${recipe} 不受支持，已忽略`)
-    }
-    const catalogRef = text(raw.catalogRef)
-    const blueprint = text(raw.blueprint)
-    const actions = rawActions.length ? rawActions : mergeActions(toolbarActions, rowActions)
-    const table = {
-      ...(columns.length ? { columns } : {}),
-      ...(filters.length ? { searchFields: filters } : {}),
-      ...(pagination?.pageSize ? { pageSize: pagination.pageSize } : {})
-    }
-    const page = {
-      id,
-      type,
-      title: name,
-      pageSetId,
-      entityId,
-      ...(recipe && PAGE_RECIPES.includes(recipe) ? { recipe } : {}),
-      ...(catalogRef ? { catalogRef } : {}),
-      ...(blueprint ? { blueprint } : {}),
-      spec: {
-        columns,
-        actions,
-        ...(filters.length ? { filters } : {}),
-        ...(selection !== undefined ? { selection } : {}),
-        ...(form?.fields?.length ? { fields: form.fields } : {}),
-        ...(components ? { components } : {})
-      },
-      layout: {
-        ...(Object.keys(table).length ? { table } : {}),
-        ...(actions.length ? { toolbar: { actions } } : {}),
-        ...(pagination ? { pagination } : {}),
-        ...(selection !== undefined ? { selection } : {}),
-        ...(rowActions.length ? { rowActions } : {}),
-        ...(toolbarActions.length ? { toolbarActions } : {}),
-        ...(form ? { form } : {}),
-        ...(form?.groups?.length
-          ? { groups: form.groups.map(group => ({ title: group.title ?? '', fields: [...(group.fields ?? [])] })) }
-          : {}),
-        ...(tree ? { tree } : {}),
-        ...(subTables.length ? { subTables } : {}),
-        ...(components ? { components } : {})
+
+  const addSet = (rawSet, index) => {
+    const id = text(rawSet?.id) || `page-set-${index + 1}`
+    const epic = text(rawSet?.epic)
+    const title = text(rawSet?.title) || id
+    const originals = []
+    for (const raw of asArray(rawSet?.pages)) {
+      if (!raw || typeof raw !== 'object') {
+        warnings.push('页面项不是对象，已跳过')
+        continue
       }
+      const adapted = adaptPage(raw, id, epic, entityIds, warnings, pageIds)
+      if (!adapted) continue
+      pages.push(adapted.page)
+      originals.push(adapted.original)
     }
-    pages.push(page)
-    originals.push({
-      id,
-      name,
-      type,
-      ...(entityRef ? { entity: entityRef } : {}),
-      ...(columns.length ? { columns } : {}),
-      ...(actions.length ? { actions } : {}),
-      ...(recipe && PAGE_RECIPES.includes(recipe) ? { recipe } : {}),
-      ...(catalogRef ? { catalogRef } : {}),
-      ...(blueprint ? { blueprint } : {})
+    pageSets.push({ id, ...(epic ? { epic } : {}), title, pages: originals })
+  }
+
+  if (rawPageSets.length) {
+    rawPageSets.forEach((rawSet, index) => {
+      if (!rawSet || typeof rawSet !== 'object') {
+        warnings.push('页面集项不是对象，已跳过')
+        return
+      }
+      addSet(rawSet, index)
     })
+  } else {
+    addSet({ id: 'app', title: text(design?.title) || '页面', pages: fallbackPages }, 0)
   }
 
   return {
-    module: moduleKey,
-    title,
-    file,
+    title: text(design?.title) || '应用设计',
     designSystem: normalizeDesignSystem(design?.designSystem),
     entities,
     relations,
-    pageSet: { id: pageSetId, title, pages: originals },
+    pageSets,
     pages,
     warnings
   }
 }
 
-/**
- * 模块列表条目 = 需求模块 + 孤儿设计（有 design 但没有对应需求模块文件，P3 遗留）。
- * 孤儿设计只读展示，不能生成设计。
- */
-export function mergeModuleEntries(modules, designs) {
-  const entries = sortModules(modules).map(module => ({
-    key: text(module?.key),
-    title: text(module?.title) || text(module?.key),
-    order: Number(module?.order) || 0,
-    orphan: false
-  }))
-  const known = new Set(entries.map(entry => entry.key))
-  const orphans = asArray(designs)
-    .map(design => ({ key: text(design?.module), title: text(design?.title) || text(design?.module) }))
-    .filter(item => item.key && !known.has(item.key))
-    .sort((left, right) => left.key.localeCompare(right.key))
-    .map(item => ({ ...item, order: Number.MAX_SAFE_INTEGER, orphan: true }))
-  return [...entries, ...orphans]
+/** GET /api/apps/:id/artifacts → adaptDesign 的 design-like 输入 */
+export function designLikeOf(artifacts) {
+  return {
+    entities: asArray(artifacts?.entities?.entities),
+    relations: asArray(artifacts?.entities?.relations),
+    pageSets: asArray(artifacts?.pages?.pageSets),
+    ...(artifacts?.designSystem ? { designSystem: artifacts.designSystem } : {})
+  }
 }
 
-/** 设计文件级 warnings（如“设计模块没有对应需求模块文件”）→ 错误条行 */
-export function designWarningsOf(designs) {
+/** 设计产物计数摘要 */
+export function designSummaryOf(artifacts) {
+  if (!artifacts) return { hasDesign: false, entityCount: 0, pageCount: 0, errorCount: 0, pageSetCount: 0 }
+  const entityCount = asArray(artifacts.entities?.entities).length
+  const pageCount = asArray(artifacts.pages?.pages).length
+  const pageSetCount = asArray(artifacts.pages?.pageSets).length
+  const errorCount = asArray(artifacts.errors).length
+  return { hasDesign: entityCount > 0 || pageCount > 0 || pageSetCount > 0, entityCount, pageCount, pageSetCount, errorCount }
+}
+
+/** 设计产物错误/警告 → 错误条行 */
+export function designWarningsOf(artifacts) {
   const lines = []
-  for (const design of asArray(designs)) {
-    const file = text(design?.file) || text(design?.module)
-    for (const warning of asArray(design?.warnings)) {
-      const message = String(warning ?? '').trim()
-      if (message) lines.push(`${file || '设计'} · 警告 · ${message}`)
-    }
+  const push = message => {
+    const value = String(message ?? '').trim()
+    if (value) lines.push(value)
   }
-  return lines
+  for (const warning of asArray(artifacts?.entities?.warnings)) push(`entities.json · 警告 · ${warning}`)
+  for (const warning of asArray(artifacts?.pages?.warnings)) push(`pages.json · 警告 · ${warning}`)
+  for (const warning of asArray(artifacts?.requirement?.warnings)) push(`requirements.md · 警告 · ${warning}`)
+  return [...new Set(lines)]
 }

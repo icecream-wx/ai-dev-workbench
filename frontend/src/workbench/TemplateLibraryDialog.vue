@@ -396,7 +396,7 @@ async function removeSelected(): Promise<void> {
   if (!selected.value) return
   try {
     await ElMessageBox.confirm(
-      `删除模板「${selected.value.name}」？仍被模块 frontmatter 引用时会被拒绝（会列出引用位置）。`,
+      `删除模板「${selected.value.name}」？仍被需求文档 frontmatter 引用时会被拒绝（会列出引用位置）。`,
       '删除模板',
       { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
     )

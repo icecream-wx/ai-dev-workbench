@@ -1,8 +1,8 @@
 /**
- * 设计产物渲染契约（与 docs/design/<MOD>/design.json 对齐）
+ * 设计产物渲染契约（与 docs/design/entities.json + pages.json 对齐）
  *
  * 这里只保留渲染/编辑器需要的类型；格式唯一来源是
- * `.opencode/skills/adw-design-artifacts/references/design.schema.json`。
+ * `.opencode/skills/adw-design-artifacts/references/entities.schema.json` 与 `pages.schema.json`。
  */
 
 export type PrototypePageType = 'list' | 'form' | 'detail' | 'dashboard' | 'kanban' | 'gantt' | 'calendar'
@@ -82,13 +82,18 @@ export type DesignFieldType =
   | 'ref'
 
 export interface DesignField {
+  /** 英文字段名（新模型）；旧数据没有 code 时用 name 当键 */
+  code?: string
+  /** 渲染键（adapter 输出为字段 code；旧数据可能直接用 name 当键） */
   name: string
+  /** 中文显示名 */
   label?: string
   type: DesignFieldType
   required?: boolean
   unique?: boolean
   default?: string | number | boolean | null
   options?: string[]
+  optionValues?: string[]
   ref?: string
   note?: string
 }
@@ -165,6 +170,8 @@ export interface DesignPage {
   tree?: DesignTreeContract
   subTables?: DesignSubTable[]
   components?: Record<string, string>
+  /** 动作码 → 同页面集目标页面 id（B6：显式优先；create/edit/detail 等） */
+  actionTargets?: Record<string, string>
 }
 
 /** 渲染器契约（P3 adapter 从 design.json 的 pages 映射；本轮不接线） */
@@ -176,9 +183,11 @@ export interface DesignPageRender extends Omit<DesignPage, 'name' | 'entity'> {
   layout: DesignPageLayout
 }
 
-/** 页面集（渲染器按页面集分组展示；design.json 里由 pages 派生） */
+/** 页面集（页面集 = Epic；pages.json 的 pageSets[]） */
 export interface DesignPageSet {
   id: string
+  /** 对应需求文档 Epic ID（EP-001） */
+  epic?: string
   title: string
   pages: DesignPage[]
 }

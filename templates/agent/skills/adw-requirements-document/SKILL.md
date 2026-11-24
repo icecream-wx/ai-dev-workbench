@@ -1,87 +1,73 @@
 ---
 name: 需求文档编写与维护
-description: 在应用工作区中按用户选定模板编写/维护需求文档，结合现有材料并保持与设计一致
+description: 维护应用唯一需求文档 docs/requirements/requirements.md（单文档、Epic/Story 稳定 ID），与设计产物保持一致
 ---
 
 # 需求文档编写与维护
 
-你负责本应用的需求文档。需求文档是**工作区里的文件**，不是聊天里的结构化协议：
-`docs/requirements/MOD-xxx-<标题>.md`，每个模块一个文件。
+需求产物是**一份文件**：`docs/requirements/requirements.md`。没有模块文件、没有模块目录。
 
-## 1. 先调查，再动手
+## 1. 先读，再写
 
-- 先读：`docs/requirements/`（已有模块）、`docs/design/`（已有设计）、`AGENTS.md`、`backend/`（代码现状）。
-- 用户提到已有功能/界面/截图时，按需再读对应文件或截图；不要一次把所有文件塞进上下文。
-- 已有产物优先：在现有模块文件上增量修改，不要重写整篇、不要新建重复模块。
+- 先读 `AGENTS.md` 与 `docs/requirements/requirements.md`。
+- 设计文件（`docs/design/entities.json`、`pages.json`、`api-design.md`）**如存在才读；不存在跳过，不要报错、不要创建空设计文件**。
+- 只有用户明确要求“同步设计”时才读设计文件并判断是否需要同步；不存在是正常的。
+- 章节结构以 frontmatter 的 `template` 对应 `adw-template-req-<id>` skill 为准（骨架在 `assets/template.md`）；
+  找不到时用应用默认模板 skill。
+- 只做**增量修改**：不要整篇重写，不要新建 `MOD-xxx-*.md`。
 
-## 2. 模块文件契约
+## 2. 文件契约
 
-文件 `docs/requirements/MOD-xxx-<标题>.md` 的开头必须是 frontmatter：
+frontmatter 只允许：
 
 ```markdown
 ---
-module: MOD-001
-title: 商品管理
-order: 1
+title: 商品管理应用
 template: builtin-prd
 ---
-
-# 商品管理
-
-## 1. 背景与目标
-...
 ```
 
-- `module`：稳定 key（`MOD-001` 形式），全应用唯一；**不要改已有模块的 key**。
-- `title` / `order`：标题与排序；改名/排序时同步 H1 标题与 frontmatter。
-- `template`：本模块使用的全局需求模板 id。
-- 正文用 `##` 章节；章节结构与模板保持一致（模板文件见下方“模板路径”）。
-- 新模块的文件名必须与 frontmatter 的 key/标题一致：`MOD-002-订单管理.md`。
+- `title`：应用/文档标题；
+- `template`：应用级需求模板 id（模板中心/DB 不变）；
+- **不要写 `module` / `order`**（已移除）。
+- 正文用 `##` 章节；Epic/Story 用稳定 ID：
 
-## 3. 写什么、不写什么
+```markdown
+## 3. Epics & Stories
 
-- 写**目标、业务规则、用户故事与验收标准**；业务字段/枚举/约束可以写。
-- 不写 Controller 类名、内部表结构、接口路径（这些属于设计/代码）。
-- 信息不足时写 `- 待确认：...`，不要编造业务规则。
+### EP-001 商品管理
 
-## 4. 使用模板 skill
+**目标**：...
 
-模板不是本 skill 的附属文件，而是**一个模板一个 skill**：
+#### US-001 商品列表
 
-- 模块 frontmatter 的 `template` 指向哪个 id，就加载 skill `adw-template-req-<id>`。
-- 找不到对应模板 skill 时，使用应用默认模板对应的 `adw-template-req-<id>` skill。
-- 仍找不到时，按本 skill 的通用要求写，并在回复里说明“缺少模板”。
+- 作为...
+- 验收标准：...
+```
 
-模板 skill 里包含：
+- Epic ID：`EP-<3位以上数字>`；Story ID：`US-<3位以上数字>`；
+- 设计页面集的 `epic` 必须引用这里的 Epic ID。
 
-- `SKILL.md`：章节清单（标题/层级/必需性/撰写提示）与使用方式；
-- `assets/template.md`：模块骨架（`MOD-XXX` 占位标题 + 示例注释）。
+## 3. 写作范围
 
-使用规则：
+- 写业务目标、范围、角色、规则、Epic/Story、验收标准、非功能需求、待确认问题；
+- 不写 Controller/Service 类名、内部表结构、接口 path（属于设计与代码）；
+- 需求与设计冲突：先报告并说明取舍，不要静默偏离。
 
-- 用模板的章节标题作为骨架；新建模块时替换 `module` / `title` / `order`，保留 `template`。
-- 不要修改模板 skill 里的任何文件（受管资源，会被工作台覆盖）。
-- 不要在模块目录里新建模板副本；模板只在 skill 里维护。
+## 4. 与设计一致
 
-## 5. 与设计保持一致
+- 设计文件**存在时**才检查 `docs/design/entities.json`、`pages.json`、`api-design.md` 是否需要同步；不存在时跳过，不要报错、不要创建空设计文件。
+- 用户明确要求同步设计时，页面集（Epic）/页面/字段/枚举/操作必须能在需求中找到依据；
+- 不确定结构时先读 `adw-design-artifacts` skill 的 schema/示例，仍无法判断时在回复里说明。
 
-- 改需求时判断 `docs/design/<MOD>/design.json` 是否需要同步（实体/字段/枚举/页面/动作）。
-- 需求与设计必须一致；**同步由你自己完成**，不要只把“需要同步”留给用户：
-  - 需要同步设计时，加载 skill `adw-design-artifacts`，按其 `references/design.schema.json`
-    修改 `docs/design/<MOD>/design.json`（没有该文件时按 schema 新建）。
-  - 不确定结构时先读 schema 与 `references/design-example.json`；仍无法判断时，
-    说明具体差异并提问，不要猜造字段。
-- 改完两边后，在回复里说明改了哪些需求章节、同步了哪些设计实体/页面。
+## 5. 自查
 
-## 6. 交付与汇报
+- frontmatter 只有 `title`/`template`；Epic/Story 不被重命名（ID 稳定）；
+- 每个 Epic 至少一个 Story；验收标准可验证；
+- 完成后用中文汇报：改了哪些章节、与设计的同步点、待确认项。
 
-- 只改必要的文件；不要动 `.opencode/skills/**`、`.opencode/commands/**`（受管资源）。
-- 不要在仓库里执行任何 git 操作（不 init/commit/revert）。
-- 修改后回读目标文件，核对用户要求的具体取值/规则/字段是否已出现；没有就继续改，不要只回复“已完成”。
-- 完成后用中文汇报：关键判断、改了哪些文件/章节、需求与设计是否一致、待确认项。
+## 6. 边界
 
-## 7. 模块增删
-
-- 用户要求**新增模块**时，直接新建模块文件（frontmatter + 模板章节骨架），并说明新模块 key。
-- 用户要求**删除模块**时，可以删除对应模块文件（工作台 UI 不提供删除）；删除前确认没有其它文件引用该模块。
-- 不要创建 `README.md` 索引：大纲由文件列表生成。
+- 不要动 `.opencode/skills/**`、`.opencode/commands/**`（受管资源会被覆盖）；
+- 不要执行任何 git 操作；
+- 修改后回读目标文件，核对用户要求的具体取值/规则/字段是否已出现。

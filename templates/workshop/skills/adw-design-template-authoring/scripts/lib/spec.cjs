@@ -34,7 +34,7 @@ const RECIPES = Object.freeze([
 /** design.json 允许的页面类型（contract 页的 type 必须在此范围内） */
 const PAGE_TYPES = Object.freeze(['list', 'form', 'detail', 'dashboard', 'kanban', 'gantt', 'calendar'])
 
-/** 实体字段类型（design.schema.json） */
+/** 实体字段类型（entities.schema.json） */
 const FIELD_TYPES = Object.freeze(['string', 'text', 'number', 'decimal', 'date', 'datetime', 'time', 'boolean', 'enum', 'ref'])
 
 const SPEC_KEYS = Object.freeze([

@@ -1,11 +1,9 @@
 /**
  * 极简 YAML frontmatter 解析（只支持本版契约需要的 `key: value`）
  *
- * 需求模块文件开头：
+ * 需求单文档开头：
  * ---
- * module: MOD-001
- * title: 商品管理
- * order: 1
+ * title: 商品管理应用
  * template: builtin-prd
  * ---
  *

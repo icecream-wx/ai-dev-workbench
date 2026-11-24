@@ -12,8 +12,8 @@
  * .opencode/skills/adw-template-req-<id>/      需求模板 skill（SKILL.md + assets/template.md + _manifest.json）
  * .opencode/skills/adw-template-proto-<applicationType>/ 设计模板 skill（SKILL.md + assets/design-system.json + _manifest.json）
  * .opencode/commands/*.md
- * docs/requirements/                           空目录（首个模块由按钮/agent 生成）
- * docs/design/                                 空目录
+ * docs/requirements/requirements.md         需求单文档骨架（按所选需求模板纯渲染，不调模型）
+ * docs/design/                                 空目录（entities.json / pages.json 由设计 agent 首次生成）
  * backend/                                     EOS 骨架
  * ```
  *
@@ -26,6 +26,7 @@ import path from 'node:path'
 import { config } from '../config'
 import { buildDesignSystemSummary, writeDesignSystemWorkspace, type DesignSelectionInput } from '../design/system-file'
 import { installAgentAssets, syncTemplatesInto } from '../templates/distribution'
+import { renderRequirementsMarkdown } from '../templates/render'
 import { CHINESE_INSTRUCTION } from '../chat/prompts'
 
 export interface AppSecretsInput {
@@ -74,20 +75,20 @@ function appAgentsMd(withDesignSystem: boolean): string {
 - 应用设计系统：pack / 应用类型 / 视觉风格见 \`docs/design/design-system.json\`；
   页面库、蓝图与样式见 \`docs/design/template/\`。**蓝图/摘要/样式是受管副本，不要修改**。
 - 风格样式：\`docs/design/template/styles/<styleId>/style.css\`（共享变量 \`styles/shared.css\`；
-  以 design-system.json 的 \`styles\` 为准；若存在旧路径 \`styles/style.css\` 也兼容）。
+  以 design-system.json 的 \`styles\` 为准）。
 - 团队 skill：\`afcenter-page-generation\`（PageTemplates/页面配方/偏好）、
   \`pm-components-usage\`（pm-* 用法）；开发方法 skill：\`adw-frontend-implementation\`。
-- 读取顺序：AGENTS.md → design-system.json → \`docs/design/<MOD>/design.json\` /
-  design-brief.md / tokens.json / prototypes → 蓝图 → \`frontend/\` 现有代码。
-- 优先级：**需求 > design-system/design.json 契约 > 蓝图（布局/组件） > brief/tokens（视觉变量）
+- 读取顺序：AGENTS.md → design-system.json → \`docs/design/entities.json\` /
+  \`docs/design/pages.json\` / design-brief.md / tokens.json / prototypes → 蓝图 → \`frontend/\` 现有代码。
+- 优先级：**需求 > design-system/pages.json 契约 > entities.json > 蓝图（布局/组件） > brief/tokens（视觉变量）
   > prototypes/*.png（模板风格截图；无显式契约的旧设计为线框）**。任何冲突先报告（附文件/字段证据），不要静默取舍。
-- **先填后写（软门禁，不阻断）**：开发前先填写 \`docs/design/<MOD>/ui-check.md\` 的
-  「实现前」对照表（页面 → 路由 → 蓝图 → 字段/列 → 操作 → 布局/交互 → 差异/决策），
+- **先填后写（软门禁，不阻断）**：开发前先填写 \`docs/design/ui-check.md\` 的
+  「实现前」对照表（按 Epic/页面集分节；页面 → 路由 → 蓝图 → 字段/列 → 操作 → 布局/交互 → 差异/决策），
   实现后补「实现后」表；未填写不阻断，但完成汇报要标记“流程未完成”。
 - **蓝图复制/适配**：从 \`docs/design/template/<applicationType>/pages/*.vue\` 复制到
   \`frontend/src/views/\`，保留结构/样式/组件，替换 mock/接口；不要手写一套 UI 替代模板。
 - **契约页实现（无蓝图）**：\`docs/design/template/<applicationType>/contracts/<page>.json\` 是默认骨架；
-  结合 \`docs/design/<MOD>/design.json\` 的页面契约 + PageTemplates/pm-* 实现，**不要为契约页复制/编造蓝图**；
+  结合 \`docs/design/pages.json\` 的页面契约 + PageTemplates/pm-* 实现，**不要为契约页复制/编造蓝图**；
   页面根类用 \`baseApplicationType\`（见 \`design-system.json\` 的 \`preview\`），实现后 ui-check 记录“无蓝图，按契约实现”。
 - **模板组件**：优先使用 \`frontend/src/components/PageTemplates/\`
   （BusinessListPage/TreeListPage/StandardFormPage/FormSection/QueryPanel/RowActions/ThreePartPagination）；
@@ -109,33 +110,40 @@ function appAgentsMd(withDesignSystem: boolean): string {
 
 ## 布局
 
-- \`docs/requirements/MOD-xxx-<标题>.md\`：需求模块（一个模块一个文件）
-- \`docs/design/<MOD>/design.json\`：设计产物（实体/关系/页面，供 ER/原型渲染）
+- \`docs/requirements/requirements.md\`：唯一需求文档（单文档；frontmatter 只 title/template）
+- \`docs/design/entities.json\`：实体集（实体 + 关系，全局一张 ER 图）
+- \`docs/design/pages.json\`：页面集（页面集 = Epic；页面契约）
+- \`docs/design/api-design.md\`：接口设计（固定模板：索引/覆盖矩阵/详情/错误码/权限）
 ${designLines}- \`backend/\`：Java + EOS 9.0.0 后端骨架
 - \`.opencode/skills/\`、\`.opencode/commands/\`：**受管资源**（工作台写入，勿手改）
 
-## 需求模块文件契约
+## 需求文档契约
 
-- 开头必须是 frontmatter：\`module\`（MOD-001 形式）、\`title\`、\`order\`、\`template\`。
-- 正文用 \`##\` 章节；章节结构以模块 frontmatter 的 \`template\` 对应的
+- 开头必须是 frontmatter：\`title\`、\`template\`（不再有 module/order）。
+- 正文用 \`##\` 章节；章节结构以 frontmatter 的 \`template\` 对应的
   \`adw-template-req-<id>\` skill 为准（骨架在 \`assets/template.md\`）；找不到时用应用默认模板 skill。
-- 新增模块：新建 \`docs/requirements/MOD-xxx-<标题>.md\`；改名/排序同步 frontmatter 与 H1。
-- 不生成模块 README 索引（大纲即索引）。
+- Epic 用 \`### EP-001 标题\`、Story 用 \`#### US-001 标题\` 稳定 ID；设计页面集按 Epic 引用。
+- 单文档：不要新建 \`MOD-xxx-*.md\`。
 
 ## 设计文件契约
 
-- \`docs/design/<MOD>/design.json\`：\`{module,title,entities,relations,pages}\`。
-- 格式以 \`.opencode/skills/adw-design-artifacts/references/design.schema.json\` 为准；
-  写完可运行 \`.opencode/skills/adw-design-artifacts/scripts/validate.mjs\` 自查。
-${designSkillLine}- 跨模块实体用 \`MOD-xxx/entity\` 引用，不重复定义。
+- \`docs/design/entities.json\`：\`{schemaVersion, entities, relations}\`；实体 \`id/name/table/fields\`，
+  字段必须有英文 \`code\`（lowerCamel）+ 中文 \`name\` + \`type\`；enum 用 \`options:[{value,label}]\`；ref 写 \`ref\`。
+- \`docs/design/pages.json\`：\`{schemaVersion, pageSets}\`；页面集 \`id/epic/title/pages\`，
+  页面契约引用字段 \`code\`；页面 id 应用内唯一。
+- 格式以 \`.opencode/skills/adw-design-artifacts/references/entities.schema.json\` 与
+  \`pages.schema.json\` 为准；写完可运行 \`.opencode/skills/adw-design-artifacts/scripts/validate.mjs\` 自查。
+- 接口设计：\`docs/design/api-design.md\`，固定模板/规范见 \`adw-api-design\` skill；
+  写完运行 \`.opencode/skills/adw-api-design/scripts/validate-api-design.mjs --app .\`（errors 必须清零）。
+${designSkillLine}- 实体/关系全局唯一；页面用 \`pageSets\` 分组，不做目录/权限/会话。
 
 ${designSystemSection}## 设计参考（开发）
 
-- 结构唯一来源：\`docs/design/<MOD>/design.json\`（页面契约/字段/操作）。
-- 开发参考：\`docs/design/<MOD>/design-brief.md\`（概览/导航/页面/组件/风格）、
+- 结构唯一来源：\`docs/design/entities.json\` + \`docs/design/pages.json\`（页面契约/字段/操作）。
+- 开发参考：\`docs/design/design-brief.md\`（概览/导航/页面/组件/风格）、
   \`tokens.json\`（色板/字体/圆角/间距）、\`prototypes/*.png\`（模板风格截图；无显式契约的旧设计为线框）。
-- 优先级：需求 > design.json 的结构/字段/交互 > design-brief/tokens/PNG 的风格。
-- PNG 过期（\`prototypes/_manifest.json\` 的 \`designHash\` 与当前 design.json 不一致）时先说明，不要盲从旧图。
+- 优先级：需求 > pages.json 的结构/字段/交互 > entities.json / api-design.md > design-brief/tokens/PNG 的风格。
+- PNG 过期（\`prototypes/_manifest.json\` 的 \`designHash\` 与当前设计产物不一致）时先说明，不要盲从旧图。
 - tokens/PNG 只约束 Vue3 前端；EOS 后端不吃风格，不要为样式改后端结构。
 - \`tokens.json\` 与 \`prototypes/**\` 由工作台生成，**不要手改**。
 
@@ -161,8 +169,8 @@ function readmeOf(input: ScaffoldInput): string {
   return `# ${input.appName}
 
 - 应用 ID：\`${input.appId}\`
-- 需求：\`docs/requirements/\`（每个模块一个 \`MOD-xxx-*.md\`）
-- 设计：\`docs/design/<MOD>/design.json\`
+- 需求：\`docs/requirements/requirements.md\`（单文档）
+- 设计：\`docs/design/entities.json\` + \`docs/design/pages.json\` + \`docs/design/api-design.md\`
 - 后端：\`backend/\`（EOS 9.0.0 模板，端口 ${input.backendPort}）
 ${frontend}
 ${designLine}
@@ -334,6 +342,23 @@ export function scaffoldApp(input: ScaffoldInput, projectsRoot: string = config.
 
     fs.mkdirSync(path.join(target, 'docs', 'requirements'), { recursive: true })
     fs.mkdirSync(path.join(target, 'docs', 'design'), { recursive: true })
+    // 单需求文档骨架（按所选需求模板；不调模型、不生成内容；已存在不覆盖由调用方保证）
+    {
+      const templates = require('../requirements/templates') as typeof import('../requirements/templates')
+      let template
+      try {
+        template = input.requirementTemplateId
+          ? templates.getRequirementTemplateOrThrow(input.requirementTemplateId)
+          : templates.defaultRequirementTemplate()
+      } catch {
+        template = templates.defaultRequirementTemplate()
+      }
+      fs.writeFileSync(
+        path.join(target, 'docs', 'requirements', 'requirements.md'),
+        renderRequirementsMarkdown(template, { title: input.appName, templateId: template.id }),
+        'utf8'
+      )
+    }
 
     if (designSystem) {
       // MF remote 骨架（setting.json/package.json 的应用名在复制时替换）

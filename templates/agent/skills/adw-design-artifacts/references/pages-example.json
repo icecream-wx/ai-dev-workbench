@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 2,
+  "pageSets": [
+    {
+      "id": "goods",
+      "epic": "EP-001",
+      "title": "商品管理",
+      "description": "商品建档、上下架与库存查看",
+      "primaryEntity": "goods",
+      "pages": [
+        {
+          "id": "goods-list",
+          "name": "商品列表",
+          "type": "list",
+          "recipe": "list",
+          "entity": "goods",
+          "columns": ["goodsCode", "name", "status", "price", "stock"],
+          "filters": ["goodsCode", "name", "status"],
+          "rowActions": ["detail", "edit", "delete"],
+          "toolbarActions": ["create", "batchDelete", "export"],
+          "selection": true,
+          "pagination": { "layout": "three-part", "pageSize": 20 },
+          "components": { "status": "pm-select" },
+          "actionTargets": { "create": "goods-form", "edit": "goods-form", "detail": "goods-detail" },
+          "catalogRef": "enterprise-application-platform/applications",
+          "blueprint": "application-types/enterprise-application-platform/pages/ApplicationCenter.vue"
+        },
+        {
+          "id": "goods-detail",
+          "name": "商品详情",
+          "type": "detail",
+          "recipe": "detail",
+          "entity": "goods"
+        },
+        {
+          "id": "goods-form",
+          "name": "商品编辑",
+          "type": "form",
+          "recipe": "dialog-form",
+          "entity": "goods",
+          "form": {
+            "presentation": "dialog",
+            "columns": 2,
+            "width": 800,
+            "fields": ["goodsCode", "name", "status", "price", "stock"],
+            "groups": [
+              { "title": "基本信息", "fields": ["goodsCode", "name"] },
+              { "title": "销售信息", "fields": ["status", "price", "stock"] }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "category",
+      "epic": "EP-002",
+      "title": "分类维护",
+      "primaryEntity": "category",
+      "pages": [
+        {
+          "id": "category-tree",
+          "name": "分类树",
+          "type": "list",
+          "recipe": "tree-list",
+          "entity": "category",
+          "columns": ["name", "parentId"],
+          "filters": ["name"],
+          "rowActions": ["edit", "delete"],
+          "toolbarActions": ["create"],
+          "actionTargets": { "create": "category-form", "edit": "category-form" },
+          "tree": { "titleField": "name", "parentField": "parentId", "actionStyle": "header", "selectionStyle": "dot" }
+        },
+        {
+          "id": "category-form",
+          "name": "分类编辑",
+          "type": "form",
+          "recipe": "dialog-form",
+          "entity": "category",
+          "form": {
+            "presentation": "dialog",
+            "columns": 1,
+            "width": 560,
+            "fields": ["name", "parentId"],
+            "groups": [{ "title": "分类信息", "fields": ["name", "parentId"] }]
+          }
+        }
+      ]
+    }
+  ]
+}

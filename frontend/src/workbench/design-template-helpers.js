@@ -475,24 +475,22 @@ export function buildPreviewUrl({ applicationType = '', style = '', page = '', e
 }
 
 /**
- * 设计产物模板风格预览 URL（P9）：`/design-preview.html?app=&module=&page=&type=&style=&v=&embed=1`
+ * 设计产物模板风格预览 URL（D1）：`/design-preview.html?app=&page=&type=&style=&v=&embed=1`
  *
- * 以 `design.json` 该页为渲染输入（不是模板自带页面），`v` 传 designHash 用于缓存失效。
- * 缺少 app/module/page/type 时返回空串（父面板回退线框）。
+ * 以 `pages.json` 该页为渲染输入（不是模板自带页面），`v` 传 designHash 用于缓存失效。
+ * 缺少 app/page/type 时返回空串（父面板回退结构草图）。
  */
 export function buildDesignPreviewUrl({
   appId = '',
-  moduleKey = '',
   pageId = '',
   applicationType = '',
   style = '',
   designHash = '',
   embed = true
 } = {}) {
-  if (!appId || !moduleKey || !pageId || !applicationType) return ''
+  if (!appId || !pageId || !applicationType) return ''
   const query = new URLSearchParams()
   query.set('app', appId)
-  query.set('module', moduleKey)
   query.set('page', pageId)
   query.set('type', applicationType)
   if (style) query.set('style', style)

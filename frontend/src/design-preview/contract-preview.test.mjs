@@ -47,7 +47,7 @@ function pageOf(overrides = {}) {
     id: 'product-list',
     type: 'list',
     title: '商品列表',
-    pageSetId: 'MOD-001-main',
+    pageSetId: 'product-main',
     entityId: 'product',
     spec: { columns: [], actions: [] },
     layout: {},

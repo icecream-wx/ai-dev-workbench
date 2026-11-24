@@ -58,9 +58,9 @@ hr { border: none; border-top: 1px solid #e2e8f0; margin: 28px 0; }
 ul, ol { padding-left: 22px; }
 li { margin: 3px 0; }
 .doc-meta { margin: 0 0 24px; font-size: 12px; color: #64748b; }
-@page { size: A4; margin: 14mm 14mm 16mm; }
+@page { size: A4; margin: 12mm 12mm 14mm; }
 @media print {
-  body { padding: 0; max-width: none; font-size: 10.5pt; line-height: 1.65; }
+  body { padding: 0; max-width: none; font-size: 10.2pt; line-height: 1.6; }
   h1 { font-size: 20pt; }
   h2 { font-size: 14pt; margin-top: 18pt; }
   h3 { font-size: 11.5pt; }

@@ -46,20 +46,20 @@ test('docs 变化 → 防抖后触发一次事件（含 paths）', async () => {
   const batches: string[][] = []
   const watcher = watchAppDocs(appDir, paths => batches.push(paths))
   try {
-    const file = path.join(appDir, 'docs', 'requirements', 'MOD-001-测试.md')
+    const file = path.join(appDir, 'docs', 'requirements', 'EP-001-测试.md')
     fs.writeFileSync(file, '# 测试\n', 'utf8')
     fs.appendFileSync(file, '\n补充。\n', 'utf8')
     await waitFor(() => batches.length > 0)
     // 防抖：短时间多次写入合并为少量批次
     assert.ok(batches.length <= 2, `事件批次过多：${batches.length}`)
-    assert.ok(batches[0].some(item => item.includes('MOD-001') || item === '.'), `paths 不含文件名：${JSON.stringify(batches[0])}`)
+    assert.ok(batches[0].some(item => item.includes('EP-001') || item === '.'), `paths 不含文件名：${JSON.stringify(batches[0])}`)
     assert.ok(DEBOUNCE_MS >= 200 && DEBOUNCE_MS <= 1000)
   } finally {
     watcher.close()
   }
 
   const before = batches.length
-  fs.writeFileSync(path.join(appDir, 'docs', 'requirements', 'MOD-002-关闭后.md'), '# 关闭后\n', 'utf8')
+  fs.writeFileSync(path.join(appDir, 'docs', 'requirements', 'EP-002-关闭后.md'), '# 关闭后\n', 'utf8')
   await new Promise(resolve => setTimeout(resolve, 800))
   assert.equal(batches.length, before, 'close 后不应再触发事件')
   fs.rmSync(appDir, { recursive: true, force: true })

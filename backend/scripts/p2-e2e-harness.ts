@@ -19,6 +19,8 @@ const appId = process.env.P2_APP_ID || 'p2-app'
 const appName = process.env.P2_APP_NAME || 'P2 需求视图'
 /** 测试可选：创建带设计系统的应用（P7-6a 一致性检查 e2e） */
 const designSystemEnv = process.env.P2_DESIGN_SYSTEM || ''
+/** 测试可选：B7 接口修复 stub——收到含 api-design.md 的 prompt 时把该文件写回合法内容 */
+const apiFixFile = process.env.P2_API_DESIGN_FIX_FILE || ''
 
 process.env.PORT = String(port)
 process.env.RG_DATA_DIR = path.join(root, 'data')
@@ -201,57 +203,199 @@ function userTextOf(incoming: string): string {
   return (index >= 0 ? incoming.slice(index + marker.length) : incoming).trim()
 }
 
-/** P3：generate-design 命令落地一个可渲染的 design.json（stub，仅测试用） */
-function writeDesignFile(moduleKey: string): string {
-  const key = moduleKey.trim() || 'MOD-001'
-  const titles: Record<string, string> = { 'MOD-001': '商品管理', 'MOD-002': '订单管理' }
-  const title = titles[key] ?? `模块 ${key}`
-  const design = {
-    module: key,
-    title,
+/** P3：generate-design 命令同轮写 entities.json + pages.json + api-design.md（stub，仅测试用；应用级） */
+function writeDesignFile(): string {
+  const entities = {
+    schemaVersion: 2,
     entities: [
       {
         id: 'product',
         name: '商品',
         table: 'biz_product',
         fields: [
-          { name: '商品编码', type: 'string', required: true, unique: true },
-          { name: '商品名称', type: 'string', required: true },
-          { name: '状态', type: 'enum', options: ['上架', '下架'] },
-          { name: '分类', type: 'ref', ref: 'category' }
+          { code: 'productCode', name: '商品编码', type: 'string', required: true, unique: true },
+          { code: 'productName', name: '商品名称', type: 'string', required: true },
+          {
+            code: 'status',
+            name: '状态',
+            type: 'enum',
+            options: [
+              { value: 'ON_SALE', label: '上架' },
+              { value: 'OFF_SALE', label: '下架' }
+            ]
+          },
+          { code: 'categoryId', name: '分类', type: 'ref', ref: 'category' }
         ]
       },
       {
         id: 'category',
         name: '商品分类',
         table: 'biz_category',
-        fields: [{ name: '分类名称', type: 'string', required: true }]
+        fields: [{ code: 'categoryName', name: '分类名称', type: 'string', required: true }]
       }
     ],
-    relations: [{ from: 'product', to: 'category', type: 'N:1', label: '所属分类' }],
-    pages: [
+    relations: [{ from: 'product', to: 'category', type: 'N:1', label: '所属分类' }]
+  }
+  const pages = {
+    schemaVersion: 2,
+    pageSets: [
       {
-        id: 'product-list',
-        name: '商品列表',
-        type: 'list',
-        entity: 'product',
-        columns: ['商品编码', '商品名称', '状态'],
-        actions: ['新增', '编辑', '删除']
-      },
-      {
-        id: 'product-form',
-        name: '商品编辑',
-        type: 'form',
-        entity: 'product',
-        actions: ['保存', '取消']
+        id: 'product',
+        epic: 'EP-001',
+        title: '商品管理',
+        primaryEntity: 'product',
+        pages: [
+          {
+            id: 'product-list',
+            name: '商品列表',
+            type: 'list',
+            entity: 'product',
+            columns: ['productCode', 'productName', 'status'],
+            filters: ['productName', 'status'],
+            rowActions: ['detail', 'edit', 'delete'],
+            toolbarActions: ['create'],
+            selection: true,
+            pagination: { layout: 'three-part', pageSize: 20 },
+            form: {
+              presentation: 'dialog',
+              columns: 2,
+              width: 800,
+              fields: ['productCode', 'productName', 'status']
+            }
+          },
+          {
+            id: 'product-form',
+            name: '商品编辑',
+            type: 'form',
+            entity: 'product',
+            form: {
+              presentation: 'dialog',
+              columns: 2,
+              width: 800,
+              fields: ['productCode', 'productName', 'status'],
+              groups: [{ title: '基本信息', fields: ['productCode', 'productName', 'status'] }]
+            },
+            toolbarActions: ['submit', 'cancel']
+          }
+        ]
       }
     ]
   }
-  const dir = path.join(state.appDir, 'docs', 'design', key)
+  const dir = path.join(state.appDir, 'docs', 'design')
   fs.mkdirSync(dir, { recursive: true })
-  const file = path.join(dir, 'design.json')
-  fs.writeFileSync(file, `${JSON.stringify(design, null, 2)}\n`, 'utf8')
-  return `docs/design/${key}/design.json`
+  fs.writeFileSync(path.join(dir, 'entities.json'), `${JSON.stringify(entities, null, 2)}\n`, 'utf8')
+  fs.writeFileSync(path.join(dir, 'pages.json'), `${JSON.stringify(pages, null, 2)}\n`, 'utf8')
+  fs.writeFileSync(path.join(dir, 'api-design.md'), apiDesignMarkdown(), 'utf8')
+  return 'docs/design/entities.json + pages.json + api-design.md'
+}
+
+/** 与上面 fixtures 对齐的最小合法接口文档（供 generate-design stub 同轮写入） */
+function apiDesignMarkdown(): string {
+  const interfaces = [
+    { id: 'product.list', method: 'GET', apiPath: '/api/products', name: '商品分页列表', operation: 'list', page: 'product-list' },
+    { id: 'product.detail', method: 'GET', apiPath: '/api/products/{id}', name: '商品详情', operation: 'detail', page: 'product-list' },
+    { id: 'product.create', method: 'POST', apiPath: '/api/products', name: '新建商品', operation: 'create', page: 'product-list' },
+    { id: 'product.update', method: 'PUT', apiPath: '/api/products/{id}', name: '更新商品', operation: 'update', page: 'product-form' },
+    { id: 'product.delete', method: 'DELETE', apiPath: '/api/products/{id}', name: '删除商品', operation: 'delete', page: 'product-list' }
+  ]
+  const indexRows = interfaces
+    .map(
+      item =>
+        `| ${item.id} | ${item.method} | ${item.apiPath} | ${item.name} | ${item.operation} | EP-001 商品管理 | ${item.page} | product | product:read |`
+    )
+    .join('\n')
+  const actionRows = [
+    ['product-list', 'create', 'product.create'],
+    ['product-list', 'detail', 'product.detail'],
+    ['product-list', 'edit', 'product.update'],
+    ['product-list', 'delete', 'product.delete'],
+    ['product-form', 'submit', 'product.update'],
+    ['product-form', 'cancel', '无接口（纯前端）']
+  ]
+    .map(([page, action, api]) => `| EP-001 商品管理 | ${page} | ${action} | ${api} | |`)
+    .join('\n')
+  const details = interfaces
+    .map(item => {
+      const isList = item.operation === 'list'
+      const request = isList
+        ? '| page | query | integer | 否 | 1 | 页码 |\n| size | query | integer | 否 | 20 | 每页 |'
+        : item.method === 'DELETE'
+          ? '| id | path | string | 是 | - | 商品 ID |'
+          : '| productCode | body | string | 是 | - | 商品编码 |\n| productName | body | string | 是 | - | 商品名称 |\n| status | body | enum | 否 | - | 状态 |'
+      const response = isList
+        ? '| total | integer | 总数 |\n| items[].productCode | string | 实体 product.productCode |\n| items[].productName | string | 实体 product.productName |'
+        : item.method === 'DELETE'
+          ? '| data | object | 空对象 |'
+          : '| productCode | string | 实体 product.productCode |\n| productName | string | 实体 product.productName |'
+      return [
+        `#### ${item.id} ${item.name}`,
+        '',
+        '| 项 | 值 |',
+        '| --- | --- |',
+        `| 方法/路径 | \`${item.method} ${item.apiPath}\` |`,
+        `| 操作 | \`${item.operation}\` |`,
+        '| 页面集 | EP-001 商品管理 |',
+        `| 页面 | ${item.page} |`,
+        '| 实体 | product |',
+        '| 权限 | product:read |',
+        '| 说明 | stub 接口 |',
+        '',
+        '**请求参数**',
+        '',
+        '| 参数 | 位置 | 类型 | 必填 | 默认 | 说明 |',
+        '| --- | --- | --- | --- | --- | --- |',
+        request,
+        '',
+        '**响应 data**',
+        '',
+        '| 字段 | 类型 | 来源/说明 |',
+        '| --- | --- | --- |',
+        response,
+        '',
+        '**错误码**',
+        '',
+        '| code | http | 说明 |',
+        '| --- | --- | --- |',
+        '| AUTH_FORBIDDEN | 403 | 无权限 |',
+        '',
+        '**示例**',
+        '',
+        '```http',
+        `${item.method} ${item.apiPath}`,
+        '```',
+        ''
+      ].join('\n')
+    })
+    .join('\n')
+  return [
+    '# 商品管理应用 · 接口设计',
+    '',
+    '## 0. 文档信息',
+    '| 项 | 值 |',
+    '| --- | --- |',
+    '| 版本 | 1.0 |',
+    '| Base path | `/api` |',
+    '',
+    '## 1. 接口规范',
+    '',
+    '## 2. 接口索引',
+    '| ID | 方法 | 路径 | 名称 | 操作 | Epic/页面集 | 页面 | 实体 | 权限 |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    indexRows,
+    '',
+    '## 3. 覆盖矩阵',
+    '### 3.1 页面动作覆盖',
+    '| 页面集 | 页面 | 动作 | 接口 | 说明 |',
+    '| --- | --- | --- | --- | --- |',
+    actionRows,
+    '### 3.2 实体 CRUD 覆盖',
+    '| 实体 | list | detail | create | update | delete | 说明 |',
+    '| --- | --- | --- | --- | --- | --- | --- |',
+    '| product | product.list | product.detail | product.create | product.update | product.delete | |',
+    '',
+    '## 5. 接口详情',
+    details
+  ].join('\n')
 }
 
 /** 按用户文本触发确定的事件序列（requirements 视图的 prompt 会带固定前缀） */
@@ -268,9 +412,25 @@ async function runScenario(session: StubSession, incoming: string): Promise<void
   session.interrupted = false
   persist()
 
+  // B7 接口修复：把 docs/design/api-design.md 写回合法内容并流式回复（仅当测试提供 fix file）
+  if (apiFixFile && userText.includes('api-design.md')) {
+    try {
+      const clean = fs.readFileSync(apiFixFile, 'utf8')
+      const target = path.join(state.appDir, 'docs', 'design', 'api-design.md')
+      fs.mkdirSync(path.dirname(target), { recursive: true })
+      fs.writeFileSync(target, clean, 'utf8')
+    } catch {
+      // 回写失败不阻断场景（e2e 会按状态断言失败）
+    }
+    await streamAssistant(session, '已修复接口设计：路径统一为 /api 开头，覆盖矩阵保持不变。', {
+      chunks: 4,
+      gap: 250
+    })
+    return
+  }
+
   // 90% 上下文
-  if (userText.includes('上下文90')) {
-    await streamAssistant(session, '已记录大量上下文，接着可能触发压缩提示。', {
+  if (userText.includes('上下文90')) {    await streamAssistant(session, '已记录大量上下文，接着可能触发压缩提示。', {
       tokens: { input: 9000, output: 40, reasoning: 0, cache: { read: 0, write: 0 } },
       chunks: 2,
       gap: 120
@@ -286,7 +446,7 @@ async function runScenario(session: StubSession, incoming: string): Promise<void
         id: 'perm-1',
         sessionID: session.id,
         action: 'edit',
-        resources: ['docs/requirements/MOD-001-商品管理.md'],
+        resources: ['docs/requirements/requirements.md'],
         message: '允许本次写入？'
       }
     ]
@@ -362,7 +522,7 @@ async function runScenario(session: StubSession, incoming: string): Promise<void
 
   // 默认：文本（慢速时用于验证流式）+ 工具卡
   const slow = userText.includes('慢速')
-  const tool = { path: 'docs/requirements/MOD-001-商品管理.md', content: '# 商品管理\n\n## 1. 文档信息\n' }
+  const tool = { path: 'docs/requirements/requirements.md', content: '# 商品管理\n\n## 1. 文档信息\n' }
   const answer = slow
     ? '这是慢速流式输出：第一段已经出现，后续段落会继续追加到同一条回复里。'
     : session.sequence % 2 === 1
@@ -455,8 +615,8 @@ async function installStub(): Promise<void> {
       await delay(120)
       let detail = `已执行命令 ${name}（参数：${text || '无'}）`
       if (name === 'generate-design') {
-        const file = writeDesignFile(text)
-        detail = `已生成 ${file}（2 实体 / 2 页面）`
+        const file = writeDesignFile()
+        detail = `已生成 ${file}（2 实体 / 2 页面 / 接口设计）`
       }
       session.messages.push(plainAssistant(detail))
       emit(session, { type: 'session.text.ended', data: { text: detail, sessionID } })

@@ -1,7 +1,7 @@
 /**
  * 应用/产物 API 客户端
  *
- * DB 只存应用与模板默认值；产物（需求模块 / design.json）以文件为准，
+ * DB 只存应用与模板默认值；产物（单需求文档 / entities.json / pages.json）以文件为准，
  * 通过 `/api/apps/:id/artifacts` 读取、`/api/apps/:id/events` 监听变化。
  */
 import { appRoute, isAppView, viewFromStatus, viewLabel } from './view-helpers.js'
@@ -53,13 +53,22 @@ export interface ArtifactError {
   expected?: string
 }
 
-export interface RequirementModuleArtifact {
-  key: string
+export interface RequirementEpicStory {
+  id: string
   title: string
-  order: number
-  template: string
+}
+
+export interface RequirementEpic extends RequirementEpicStory {
+  stories: RequirementEpicStory[]
+}
+
+export interface RequirementArtifact {
+  exists: boolean
   file: string
+  title: string
+  template: string
   sections: Array<{ key: string; title: string; level: number; markdown: string }>
+  epics: RequirementEpic[]
   errors: ArtifactError[]
   warnings: string[]
 }
@@ -68,6 +77,7 @@ export interface DesignPrototypePageArtifact {
   id: string
   file: string
   hash: string
+  pageSet?: string
 }
 
 export interface DesignPrototypeArtifact {
@@ -78,31 +88,93 @@ export interface DesignPrototypeArtifact {
   pages: DesignPrototypePageArtifact[]
 }
 
-export interface DesignArtifact {
+export interface EntitiesArtifact {
+  exists: boolean
   file: string
-  module: string
-  title: string
+  schemaVersion?: number
   entities: unknown[]
   relations: unknown[]
-  pages: unknown[]
   errors: ArtifactError[]
   warnings: string[]
-  /** P7-4a：design.json 顶层设计系统摘要（旧设计无此字段） */
-  designSystem?: { pack?: string; applicationType?: string; style?: string }
-  /** P6-3：设计参考包（只读；无 manifest 时省略） */
-  prototypes?: DesignPrototypeArtifact
-  brief?: { exists: boolean; file: string }
-  tokens?: { exists: boolean; styleId?: string }
-  /** P7-5b：开发对照表状态（只读） */
-  uiCheck?: { exists: boolean; file: string; status: 'missing' | 'skeleton' | 'filled' }
+  hash: string
+}
+
+export interface PagesArtifact {
+  exists: boolean
+  file: string
+  schemaVersion?: number
+  pageSets: unknown[]
+  pages: unknown[]
+  pageCount: number
+  errors: ArtifactError[]
+  warnings: string[]
+  hash: string
+}
+
+export interface ApiDesignInterface {
+  id: string
+  method: string
+  path: string
+  name?: string
+  operation?: string
+  epic?: string
+  page?: string
+  entity?: string
+  permission?: string
+}
+
+export interface ApiDesignPageActionCoverage {
+  pageSet: string
+  epic?: string
+  page: string
+  action: string
+  interface: string
+  covered: boolean
+}
+
+export interface ApiDesignEntityCoverage {
+  entity: string
+  list: string
+  detail: string
+  create: string
+  update: string
+  delete: string
+  missing: string[]
+}
+
+export interface ApiDesignArtifact {
+  exists: boolean
+  file: string
+  schemaVersion?: number
+  /** 原始 Markdown（设计视图渲染用） */
+  markdown: string
+  interfaces: ApiDesignInterface[]
+  byEpic: Array<{ epic: string; count: number }>
+  errors: ArtifactError[]
+  warnings: string[]
+  coverage: {
+    pageActions: ApiDesignPageActionCoverage[]
+    entities: ApiDesignEntityCoverage[]
+  }
 }
 
 export interface ArtifactsResponse {
   appId: string
-  modules: RequirementModuleArtifact[]
-  designs: DesignArtifact[]
+  requirement: RequirementArtifact
+  entities: EntitiesArtifact
+  pages: PagesArtifact
+  /** P6-3：设计参考包（只读；无 manifest 时省略） */
+  prototypes?: DesignPrototypeArtifact
+  brief: { exists: boolean; file: string }
+  tokens: { exists: boolean; styleId?: string }
+  /** 开发对照表状态（只读；应用级） */
+  uiCheck: { exists: boolean; file: string; status: 'missing' | 'skeleton' | 'filled' }
+  /** D2：接口设计文档（无文件时 exists:false） */
+  apiDesign: ApiDesignArtifact
   errors: ArtifactError[]
   hashes: Record<string, string>
+  /** sha256(entities.json + pages.json + design-system.json) */
+  designHash: string
 }
 
 /** GET /apps/:id/templates：应用默认需求模板解析（只读，模板删除时后端回退默认） */
@@ -193,7 +265,7 @@ export async function getArtifacts(appId: string): Promise<ArtifactsResponse> {
 export interface PrototypePackagePayload {
   designHash: string
   styleId: string
-  pages: Array<{ id: string; dataUrl: string }>
+  pages: Array<{ id: string; pageSet?: string; dataUrl: string }>
 }
 
 export interface PrototypePackageManifest {
@@ -203,15 +275,14 @@ export interface PrototypePackageManifest {
   pages: Record<string, { file: string; hash: string; exportedAt: string }>
 }
 
-/** P6-3：上传原型 PNG（工作台写 manifest/tokens；designHash 不匹配返回 409） */
+/** P6-3 / D1：上传原型 PNG（应用级；工作台写 manifest/tokens；designHash 不匹配返回 409） */
 export async function savePrototypePackage(
   appId: string,
-  module: string,
   payload: PrototypePackagePayload
 ): Promise<{ ok: true; manifest: PrototypePackageManifest }> {
   return request<{ ok: true; manifest: PrototypePackageManifest }>(
     'POST',
-    `/apps/${encodeURIComponent(appId)}/design/${encodeURIComponent(module)}/prototypes`,
+    `/apps/${encodeURIComponent(appId)}/design/prototypes`,
     payload
   )
 }
@@ -221,25 +292,18 @@ export async function getAppTemplates(appId: string): Promise<AppTemplatesRespon
   return request<AppTemplatesResponse>('GET', `/apps/${encodeURIComponent(appId)}/templates`)
 }
 
-export interface ModuleMutationResult {
-  module: { key: string; title: string; order: number; template: string; file: string }
+/** 单需求文档：文件缺失时生成骨架（已存在不覆盖） */
+export interface RequirementDocResult {
+  created: boolean
+  skipped: boolean
+  file: string
+  reason?: string
   warnings: string[]
+  requirement: RequirementArtifact
 }
 
-export async function createModule(appId: string, input: { title: string; templateId?: string }): Promise<ModuleMutationResult> {
-  return request<ModuleMutationResult>('POST', `/apps/${encodeURIComponent(appId)}/requirements-modules`, input)
-}
-
-export async function updateModule(
-  appId: string,
-  key: string,
-  patch: { title?: string; order?: number; template?: string }
-): Promise<ModuleMutationResult> {
-  return request<ModuleMutationResult>(
-    'PATCH',
-    `/apps/${encodeURIComponent(appId)}/requirements-modules/${encodeURIComponent(key)}`,
-    patch
-  )
+export async function ensureRequirementDocument(appId: string): Promise<RequirementDocResult> {
+  return request<RequirementDocResult>('POST', `/apps/${encodeURIComponent(appId)}/requirements-document`)
 }
 
 export interface ArtifactEventConnection {

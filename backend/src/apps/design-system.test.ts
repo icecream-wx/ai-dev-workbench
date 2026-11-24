@@ -387,7 +387,7 @@ test('自定义 pack：创建应用 + design-system origin/preview/pages + 应�
   )
   assert.equal(jsonAsset.status, 400, '扩展名白名单只允许 css/svg/png/jpg/jpeg')
   const traversal = await fetch(
-    `${base}/api/apps/design-custom/design-system/asset?path=${encodeURIComponent('../requirements/MOD-001-x.md')}`
+    `${base}/api/apps/design-custom/design-system/asset?path=${encodeURIComponent('../requirements/requirements-x.md')}`
   )
   assert.equal(traversal.status, 400, '路径安全：不允许 ..')
   const missing = await fetch(

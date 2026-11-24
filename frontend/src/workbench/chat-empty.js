@@ -22,14 +22,14 @@ const VIEW_SUBJECTS = {
  */
 const EMPTY_EXAMPLES = {
   requirements: [
-    '帮我梳理这个应用还缺哪些模块。',
-    '根据当前需求生成下一个模块的文档骨架。',
+    '帮我梳理这个应用还缺哪些 Epic 与用户故事。',
+    '按需求模板补全需求文档的章节骨架。',
     '检查需求文档里缺失的验收标准。'
   ],
   design: [
-    '生成或更新当前模块设计，并补齐页面契约。',
-    '检查页面契约与实体字段是否一致。',
-    '对照需求检查设计差异。'
+    '按需求一次生成实体/关系、页面集与接口设计，并补齐页面契约。',
+    '检查页面契约与实体字段（code/name）是否一致，并同步接口设计。',
+    '补/更新接口设计，补齐页面动作与实体 CRUD 覆盖。'
   ],
   template: [
     '先读 catalog，给出 3 个页面清单与字段建议。',
@@ -38,15 +38,15 @@ const EMPTY_EXAMPLES = {
   ],
   development: [
     '先读 AGENTS 与设计参考再实现。',
-    '检查当前模块完成度。',
+    '按 Epic/页面集检查完成度。',
     '列出下一步建议。'
   ]
 }
 
 /** 空态说明（未传 emptyHint 时的按视图默认文案） */
 const EMPTY_HINTS = {
-  requirements: '需求对话：说明目标、要补的章节或要改的模块；下面的示例可直接填入输入框（不会自动发送）。',
-  design: '设计对话：说明实体、页面或页面契约要改什么；下面的示例可直接填入输入框（不会自动发送）。',
+  requirements: '需求对话：说明目标、要补的章节或要改的 Epic；下面的示例可直接填入输入框（不会自动发送）。',
+  design: '设计对话：说明实体、页面集或页面契约要改什么；下面的示例可直接填入输入框（不会自动发送）。',
   template: '模板工作室：描述业务目标，agent 会先读 catalog，再写 spec.json；下面的示例可直接填入输入框。',
   development: '开发对话：先让 agent 读 AGENTS 与设计参考，再开始实现；下面的示例可直接填入输入框。'
 }
@@ -82,13 +82,11 @@ export function emptyCopyFor({ hasSession } = {}) {
 }
 
 /**
- * 上下文 pills：视图（需求/设计/工作室/开发）、模块 key（若有）、工作室 packId（view=template）。
- * 不返回模板风格 chip（顶部外壳已有，避免重复）。
+ * 上下文 pills：视图（需求/设计/工作室/开发）、工作室 packId（view=template）。
+ * 不返回模块/模板风格 chip（模块已移除；顶部外壳已有模板风格摘要）。
  */
-export function contextPillsFor({ view, moduleKey, packId } = {}) {
+export function contextPillsFor({ view, packId } = {}) {
   const pills = [{ key: 'view', label: viewLabelOf(view), title: `当前视图：${viewLabelOf(view)}` }]
-  const module = String(moduleKey ?? '').trim()
-  if (module) pills.push({ key: 'module', label: `模块 ${module}`, title: `当前模块：${module}` })
   const pack = String(packId ?? '').trim()
   if (String(view ?? '') === 'template' && pack) {
     pills.push({ key: 'pack', label: `pack ${pack}`, title: `当前模板 pack：${pack}` })

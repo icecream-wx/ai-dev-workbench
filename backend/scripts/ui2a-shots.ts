@@ -15,6 +15,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { chromium, type Browser, type Page } from 'playwright'
+import { writeRequirementsDoc } from './ui-shots-fixtures'
 
 const backendDir = path.resolve(__dirname, '..')
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'workbench-ui2a-shots-'))
@@ -59,22 +60,6 @@ async function waitFor(checkFn: () => boolean | Promise<boolean>, timeoutMs: num
     await delay(60)
   }
   throw new Error(`等待超时（${timeoutMs}ms）：${label}`)
-}
-
-async function request(method: string, apiPath: string, body?: unknown): Promise<{ status: number; data: any }> {
-  const res = await fetch(`${base}/api${apiPath}`, {
-    method,
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body)
-  })
-  const text = await res.text()
-  let data: any = null
-  try {
-    data = text ? JSON.parse(text) : null
-  } catch {
-    data = text
-  }
-  return { status: res.status, data }
 }
 
 async function startHarness(): Promise<void> {
@@ -219,6 +204,7 @@ async function gotoAndWait(page: Page, hash: string, testId: string): Promise<vo
 
 async function main(): Promise<void> {
   await startHarness()
+  const harnessState = await readState()
 
   const browser: Browser = await chromium.launch()
   try {
@@ -252,8 +238,14 @@ async function main(): Promise<void> {
     // ---- 需求视图：empty / loading / error ----
     const requirements = await createPage(browser)
     try {
+      // 空态：临时删除单文档（截图后按模板骨架恢复）
+      fs.rmSync(path.join(harnessState.appDir, 'docs', 'requirements', 'requirements.md'), { force: true })
       await gotoAndWait(requirements.page, `#/apps/${appId}/requirements`, 'requirements-empty')
-      await capture(requirements.page, 'ui2a-requirements-empty.png', '需求 · 无模块空态')
+      await capture(requirements.page, 'ui2a-requirements-empty.png', '需求 · 无文档空态')
+      writeRequirementsDoc(harnessState.appDir)
+      await requirements.page.reload({ waitUntil: 'domcontentloaded' })
+      await requirements.page.locator('[data-testid=requirements-view]').waitFor({ state: 'visible', timeout: 15000 })
+      await delay(600)
 
       const artifactsPattern = new RegExp(`/api/apps/${appId}/artifacts$`)
       await withDelayedRoute(requirements.page, artifactsPattern, async () => {
@@ -261,11 +253,8 @@ async function main(): Promise<void> {
         await requirements.page
           .locator('[data-testid=requirements-loading]')
           .waitFor({ state: 'visible', timeout: 10000 })
-        await requirements.page
-          .locator('[data-testid=module-outline-loading]')
-          .waitFor({ state: 'visible', timeout: 10000 })
         await delay(250)
-        await capture(requirements.page, 'ui2a-requirements-loading.png', '需求 · 文档/大纲加载骨架')
+        await capture(requirements.page, 'ui2a-requirements-loading.png', '需求 · 文档加载骨架')
       })
 
       await withErrorRoute(requirements.page, artifactsPattern, '模拟需求文档读取失败', async () => {
@@ -280,25 +269,20 @@ async function main(): Promise<void> {
       await requirements.close()
     }
 
-    // 设计/开发需要一个需求模块
-    const created = await request('POST', `/apps/${appId}/requirements-modules`, { title: '空态示例' })
-    if (created.status !== 201) throw new Error(`准备模块失败（HTTP ${created.status}）`)
+    // ---- 设计/开发：应用已有需求单文档骨架，无需额外准备 ----
 
     // ---- 设计视图：empty / loading ----
     const design = await createPage(browser)
     try {
       await gotoAndWait(design.page, `#/apps/${appId}/design`, 'design-empty')
-      await capture(design.page, 'ui2a-design-empty.png', '设计 · 模块未生成设计空态')
+      await capture(design.page, 'ui2a-design-empty.png', '设计 · 页面集未生成设计空态')
 
       const artifactsPattern = new RegExp(`/api/apps/${appId}/artifacts$`)
       await withDelayedRoute(design.page, artifactsPattern, async () => {
         await design.page.reload({ waitUntil: 'domcontentloaded' })
         await design.page.locator('[data-testid=design-loading]').waitFor({ state: 'visible', timeout: 10000 })
-        await design.page
-          .locator('[data-testid=design-module-loading]')
-          .waitFor({ state: 'visible', timeout: 10000 })
         await delay(250)
-        await capture(design.page, 'ui2a-design-loading.png', '设计 · 模块/画布/实体骨架')
+        await capture(design.page, 'ui2a-design-loading.png', '设计 · 画布/实体骨架')
       })
     } finally {
       await design.close()

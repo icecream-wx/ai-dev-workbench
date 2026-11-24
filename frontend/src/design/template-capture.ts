@@ -9,7 +9,6 @@ import { supportsTemplateRender } from '../design-preview/contract-preview.js'
 
 export interface TemplateCaptureOptions {
   appId: string
-  moduleKey: string
   pageId: string
   applicationType: string
   styleId: string
@@ -48,7 +47,6 @@ function decodedBytes(dataUrl: string): number {
 function buildCaptureUrl(options: TemplateCaptureOptions, requestId: string): string {
   const query = new URLSearchParams()
   query.set('app', options.appId)
-  query.set('module', options.moduleKey)
   query.set('page', options.pageId)
   query.set('type', options.applicationType)
   if (options.styleId) query.set('style', options.styleId)
@@ -154,9 +152,9 @@ function captureOnce(options: TemplateCaptureOptions, scale: number): Promise<Te
  * dataUrl 估算超过后端 5MB 上限时用 scale=1 重试一次；仍超限则报错（由调用方回退线框）。
  */
 export async function captureTemplatePage(options: TemplateCaptureOptions): Promise<TemplateCaptureResult> {
-  const { appId, moduleKey, pageId, applicationType } = options
-  if (!appId || !moduleKey || !pageId || !applicationType) {
-    throw new Error('模板截图缺少 app/module/page/type 参数')
+  const { appId, pageId, applicationType } = options
+  if (!appId || !pageId || !applicationType) {
+    throw new Error('模板截图缺少 app/page/type 参数')
   }
   const scale = clampScale(options.scale ?? 2)
   const first = await captureOnce(options, scale)

@@ -1,6 +1,6 @@
 /**
  * 应用/模板 API：创建带模板、payload 解析、非法模板 400、模板删除回退、
- * 模板同步/引用、模块文件 API、artifacts 空状态
+ * 模板同步/引用、单需求文档 API、artifacts 空状态
  *
  * 使用临时 SQLite + 临时 projects；不调用模型、不启动 opencode。
  */
@@ -182,37 +182,30 @@ test('旧客户端带 prototypeTemplateId：忽略并 warning，不写入任何�
   assert.equal((await request('DELETE', '/apps/ignored-proto-app?confirm=true')).status, 200)
 })
 
-test('模块文件 API：新建/改名；artifacts 聚合', async () => {
-  const created = await request('POST', '/apps/tpl-app/requirements-modules', { title: '商品管理' })
-  assert.equal(created.status, 201)
-  const module = (created.data ?? {}).module as { key: string; file: string }
-  assert.equal(module.key, 'MOD-001')
-  assert.ok(fs.existsSync(path.join(projects, 'tpl-app', module.file)))
+test('单需求文档 API：骨架已生成/不覆盖；artifacts 聚合', async () => {
+  const existing = await request('GET', '/apps/tpl-app/requirements-document')
+  assert.equal(existing.status, 200)
+  assert.equal(existing.data?.requirement?.exists, true)
+  assert.equal(existing.data?.requirement?.file, 'docs/requirements/requirements.md')
 
-  const list = await request('GET', '/apps/tpl-app/requirements-modules')
-  assert.equal(list.status, 200)
-  assert.equal((list.data?.modules as unknown[]).length, 1)
-
-  const renamed = await request('PATCH', '/apps/tpl-app/requirements-modules/MOD-001', { title: '商品中心', order: 1 })
-  assert.equal(renamed.status, 200)
+  const again = await request('POST', '/apps/tpl-app/requirements-document')
+  assert.equal(again.status, 200)
+  assert.equal(again.data?.skipped, true)
+  assert.equal(again.data?.created, false)
 
   const artifacts = await request('GET', '/apps/tpl-app/artifacts')
   assert.equal(artifacts.status, 200)
-  const modules = artifacts.data?.modules as Array<{ key: string; title: string; sections: unknown[] }>
-  assert.equal(modules.length, 1)
-  assert.equal(modules[0].title, '商品中心')
-  assert.equal(modules[0].sections.length, 6)
+  assert.equal(artifacts.data?.requirement?.exists, true)
+  assert.ok((artifacts.data?.requirement?.sections as unknown[]).length >= 1)
   assert.deepEqual(artifacts.data?.errors, [])
-  assert.deepEqual(artifacts.data?.designs, [])
-
-  const unknown = await request('PATCH', '/apps/tpl-app/requirements-modules/MOD-999', { title: 'x' })
-  assert.equal(unknown.status, 404)
+  assert.deepEqual(artifacts.data?.pages?.pageSets, [])
+  assert.equal(typeof artifacts.data?.designHash, 'string')
 
   const chatWithoutText = await request('POST', '/apps/tpl-app/chat', { view: 'requirements', text: '' })
   assert.equal(chatWithoutText.status, 400)
 })
 
-test('模板同步/引用接口：sync 幂等、usage 列出模块引用', async () => {
+test('模板同步/引用接口：sync 幂等、usage 列出单需求文档引用', async () => {
   const custom = await request('POST', '/requirement-templates', {
     name: '接口模板',
     stage: 'requirements',
@@ -223,7 +216,7 @@ test('模板同步/引用接口：sync 幂等、usage 列出模块引用', async
   const id = ((custom.data ?? {}).template as { id: string }).id
 
   assert.equal((await request('POST', '/apps', { id: 'sync-app', name: '同步应用', requirementTemplateId: id })).status, 201)
-  await request('POST', '/apps/sync-app/requirements-modules', { title: '模块', templateId: id })
+  // scaffold 已按所选模板生成 requirements.md 骨架（frontmatter template=id）
 
   const sync1 = await request('POST', `/templates/requirement/${id}/sync`)
   assert.equal(sync1.status, 200)
@@ -262,7 +255,9 @@ test('应用默认模板被删除：解析回退默认，不 500', async () => {
     201
   )
 
-  // 无模块引用 → 允许删除；应用默认值读取时回退
+  // 无文档引用 → 允许删除；先解除需求文档的 template 引用
+  const doc = path.join(projects, 'fallback-app', 'docs', 'requirements', 'requirements.md')
+  fs.writeFileSync(doc, '---\ntitle: "回退应用"\ntemplate: builtin-prd\n---\n\n# 回退应用\n', 'utf8')
   assert.equal((await request('DELETE', `/requirement-templates/${id}`)).status, 200)
   const detail = await request('GET', '/apps/fallback-app')
   assert.equal(detail.status, 200)

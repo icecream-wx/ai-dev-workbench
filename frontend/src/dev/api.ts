@@ -5,6 +5,7 @@ import type {
   DevSessionListItem,
   DevSessionListResponse,
   DevStateResponse,
+  RequirementSectionFocus,
   SessionView
 } from './types'
 
@@ -72,12 +73,11 @@ export function archiveDevSessionById(appId: string, sessionId: string): Promise
 
 export function createDevSession(
   appId: string,
-  options: { new?: boolean; view?: AppView; module?: string } = {}
+  options: { new?: boolean; view?: AppView } = {}
 ): Promise<DevStateResponse> {
   return request<DevStateResponse>('POST', `${base(appId)}/session`, {
     ...(options.new ? { new: true } : {}),
-    ...(options.view ? { view: options.view } : {}),
-    ...(options.module ? { module: options.module } : {})
+    ...(options.view ? { view: options.view } : {})
   })
 }
 
@@ -86,10 +86,10 @@ export function archiveDevSession(appId: string, view?: AppView): Promise<{ ok: 
 }
 
 export interface PromptOptions {
-  /** 需求/设计视图的当前模块 key（后端用它组 prompt） */
-  module?: string
   /** 存在的 command 名；存在时 text 作为命令参数 */
   command?: string
+  /** 需求文档章节「问 AI」的隐藏上下文（仅需求视图；工作室适配器忽略） */
+  focus?: RequirementSectionFocus
 }
 
 export function promptDevSession(
@@ -101,8 +101,8 @@ export function promptDevSession(
   return request<{ ok: true; warning?: string; command?: string }>('POST', `${base(appId)}/prompt`, {
     text,
     ...(view ? { view } : {}),
-    ...(options.module ? { module: options.module } : {}),
-    ...(options.command ? { command: options.command } : {})
+    ...(options.command ? { command: options.command } : {}),
+    ...(options.focus ? { focus: options.focus } : {})
   })
 }
 
@@ -136,11 +136,9 @@ export function replyDevForm(appId: string, formId: string, answer: Record<strin
   })
 }
 
-/** P7-6a：设计一致性静态检查（只读，不阻断） */
-export function checkDesignFidelity(appId: string, module?: string): Promise<DesignFidelityReport> {
-  return request<DesignFidelityReport>('POST', `/apps/${encodeURIComponent(appId)}/design-fidelity`, {
-    ...(module ? { module } : {})
-  })
+/** P7-6a / D1：设计一致性静态检查（应用级，只读，不阻断） */
+export function checkDesignFidelity(appId: string): Promise<DesignFidelityReport> {
+  return request<DesignFidelityReport>('POST', `/apps/${encodeURIComponent(appId)}/design-fidelity`, {})
 }
 
 export interface DevEventConnection {
@@ -159,7 +157,7 @@ export interface ChatPanelApi {
   getState(appId: string, sessionId?: string | null, view?: SessionView): Promise<DevStateResponse>
   listSessions(appId: string, view?: SessionView): Promise<DevSessionListResponse>
   activate(appId: string, sessionId: string, view?: SessionView): Promise<DevStateResponse>
-  create(appId: string, options?: { new?: boolean; view?: SessionView; module?: string }): Promise<DevStateResponse>
+  create(appId: string, options?: { new?: boolean; view?: SessionView }): Promise<DevStateResponse>
   prompt(appId: string, text: string, view?: SessionView, options?: PromptOptions): Promise<{ ok: true; warning?: string; command?: string }>
   interrupt(appId: string, view?: SessionView): Promise<{ ok: true }>
   compact(appId: string, view?: SessionView): Promise<{ ok: true; message: string }>

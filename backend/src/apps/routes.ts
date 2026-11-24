@@ -4,7 +4,7 @@
  * - 应用 CRUD：创建时渲染 EOS 模板 + 生成共享工作区（skills/commands/docs）
  * - 模板解析：GET /:id/templates
  * - 产物：GET /:id/artifacts、GET /:id/events（SSE 变化）
- * - 模块文件：GET/POST /:id/requirements-modules、PATCH /:id/requirements-modules/:key
+ * - 需求单文档：GET/POST /:id/requirements-document（缺失时生成骨架，不覆盖）
  * - 对话：POST /:id/chat（统一入口，view/module/command）
  * - 上下文：POST /:id/compact
  * - 会话：挂载 /:id/development（开发视图沿用；需求/设计用 ?view=）
@@ -40,7 +40,7 @@ import { runDesignFidelity } from '../dev/fidelity'
 import { resolveAssetFile } from '../design-template/paths'
 import { getRequirementTemplateOrThrow } from '../requirements/templates'
 import { writePrototypePackage } from '../design/prototypes'
-import { createModuleFile, updateModuleFile, ModuleFileError } from '../requirements/module-files'
+import { ensureRequirementDoc, RequirementDocError } from '../requirements/doc-file'
 import { ensureWorkspaceAssets } from '../templates/distribution'
 import { readArtifacts } from '../workspace/artifacts'
 import { subscribeAppEvents } from '../workspace/hub'
@@ -290,14 +290,13 @@ apps.get('/:id/artifacts', (req, res) => {
 })
 
 /**
- * P7-6a：设计一致性静态检查（只读、只报告）
- * body: { module?: string }；无设计返回 200 + { empty: true, reason }，不 500。
+ * P7-6a / D1：设计一致性静态检查（只读、只报告，应用级）
+ * 无设计返回 200 + { empty: true, reason }，不 500。
  */
 apps.post('/:id/design-fidelity', (req, res, next) => {
   try {
     const row = appOrThrow(req.params.id)
-    const body = (req.body ?? {}) as Record<string, unknown>
-    const report = runDesignFidelity(row.id, { module: body.module })
+    const report = runDesignFidelity(row.id)
     res.setHeader('Cache-Control', 'no-store')
     res.json(report)
   } catch (error) {
@@ -305,11 +304,11 @@ apps.post('/:id/design-fidelity', (req, res, next) => {
   }
 })
 
-/** P6-3：原型 PNG + manifest + tokens 写入（唯一新增接口；校验全部通过才落盘） */
-apps.post('/:id/design/:module/prototypes', (req, res, next) => {
+/** P6-3 / D1：原型 PNG + manifest + tokens 写入（应用级；校验全部通过才落盘） */
+apps.post('/:id/design/prototypes', (req, res, next) => {
   try {
     const row = appOrThrow(req.params.id)
-    res.json(writePrototypePackage(row.id, req.params.module, req.body))
+    res.json(writePrototypePackage(row.id, req.body))
   } catch (error) {
     next(error)
   }
@@ -337,41 +336,20 @@ apps.get('/:id/events', (req, res) => {
   })
 })
 
-// ---- 模块文件（不写 DB；UI 不提供删除） ----
+// ---- 单需求文档（不写 DB；文件缺失时按默认模板生成骨架，已存在不覆盖） ----
 
-apps.get('/:id/requirements-modules', (req, res) => {
+apps.get('/:id/requirements-document', (req, res) => {
   const row = appOrThrow(req.params.id)
   const artifacts = readArtifacts(row.id)
-  res.json({
-    modules: artifacts.modules.map(module => ({
-      key: module.key,
-      title: module.title,
-      order: module.order,
-      template: module.template,
-      file: module.file,
-      sectionCount: module.sections.length,
-      errors: module.errors,
-      warnings: module.warnings
-    })),
-    errors: artifacts.errors
-  })
+  res.json({ requirement: artifacts.requirement })
 })
 
-apps.post('/:id/requirements-modules', (req, res, next) => {
+apps.post('/:id/requirements-document', (req, res, next) => {
   try {
     const row = appOrThrow(req.params.id)
-    const body = (req.body ?? {}) as Record<string, unknown>
-    res.status(201).json(createModuleFile(row.id, { title: body.title, templateId: body.templateId }))
-  } catch (error) {
-    next(error)
-  }
-})
-
-apps.patch('/:id/requirements-modules/:key', (req, res, next) => {
-  try {
-    const row = appOrThrow(req.params.id)
-    const body = (req.body ?? {}) as Record<string, unknown>
-    res.json(updateModuleFile(row.id, req.params.key, { title: body.title, order: body.order, template: body.template }))
+    const result = ensureRequirementDoc(row.id)
+    const artifacts = readArtifacts(row.id)
+    res.status(result.created ? 201 : 200).json({ ...result, requirement: artifacts.requirement })
   } catch (error) {
     next(error)
   }
@@ -459,7 +437,11 @@ export function appsErrorHandler(error: unknown, _req: Request, res: Response, n
   }
   const typed = error as { status?: unknown; extra?: Record<string, unknown>; issues?: unknown; warnings?: unknown }
   const status =
-    typeof typed?.status === 'number' ? typed.status : error instanceof ModuleFileError ? error.status : 500
+    typeof typed?.status === 'number'
+      ? typed.status
+      : error instanceof RequirementDocError
+        ? error.status
+        : 500
   const message = error instanceof Error ? error.message : String(error)
   res.status(status).json({
     error: message,

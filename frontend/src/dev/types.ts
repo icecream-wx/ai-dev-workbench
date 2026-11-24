@@ -169,6 +169,17 @@ export type AppView = 'requirements' | 'design' | 'development'
  */
 export type SessionView = AppView | 'template'
 
+/** 需求文档章节「问 AI」的隐藏上下文（随 prompt 发送给后端，不展示给用户） */
+export interface RequirementSectionFocus {
+  kind?: string
+  /** 章节锚点（`sec-N`） */
+  anchor: string
+  title: string
+  level: number
+  /** Epic/Story 稳定 ID（如 EP-001） */
+  key?: string
+}
+
 export interface DevSessionInfo {
   id: string
   opencodeSessionId: string
@@ -236,7 +247,7 @@ export interface FidelityDesignSystem {
   blueprintRoot?: string
 }
 
-/** P7-6a：设计一致性静态检查报告（只读） */
+/** P7-6a / D1：设计一致性静态检查报告（应用级，只读） */
 export interface DesignFidelityReport {
   appId: string
   schemaVersion: number
@@ -244,8 +255,6 @@ export interface DesignFidelityReport {
   empty: boolean
   reason?: string
   generatedAt: string
-  module: string | null
-  modules: string[]
   designSystem: FidelityDesignSystem
   checks: FidelityCheck[]
   summary: FidelitySummary

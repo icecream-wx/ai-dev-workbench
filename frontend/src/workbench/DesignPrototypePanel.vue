@@ -2,21 +2,36 @@
   <section class="proto-panel rg-panel" data-testid="prototype-panel">
     <template v-if="pages.length">
       <header class="proto-head">
-        <div class="pages" data-testid="prototype-pages">
+        <div class="rg-tabs page-tabs" data-testid="prototype-pages" role="tablist" aria-label="页面集页面">
+          <button
+            type="button"
+            :class="['rg-tab', { 'rg-tab--active': overview }]"
+            role="tab"
+            :aria-selected="overview"
+            data-testid="prototype-overview-tab"
+            @click="showOverview"
+          >
+            总览
+          </button>
           <button
             v-for="page in pages"
             :key="page.id"
             type="button"
-            :class="['page-chip', { on: page.id === currentId }]"
+            :class="['rg-tab', 'page-chip', { 'rg-tab--active': !overview && page.id === currentId }]"
+            role="tab"
+            :aria-selected="!overview && page.id === currentId"
             :data-testid="`page-chip-${page.id}`"
-            @click="currentId = page.id"
+            @click="selectPage(page.id)"
           >
             {{ page.title }}
             <span class="type">{{ pageTypeLabel(page.type) }}</span>
           </button>
         </div>
-        <div class="tools">
+        <div v-if="!overview" class="tools">
           <span class="render-mode" data-testid="prototype-render-mode">{{ renderModeLabel }}</span>
+          <span v-if="mode === 'template'" class="interaction-hint" data-testid="prototype-interaction-hint">
+            交互预览 · 不保存
+          </span>
           <div v-if="mode === 'wireframe'" class="zoom-group" role="group" aria-label="缩放">
             <button
               v-for="value in ZOOMS"
@@ -41,35 +56,53 @@
           </button>
         </div>
       </header>
-      <p v-if="pageHint" class="page-hint" data-testid="prototype-page-hint">{{ pageHint }}</p>
-      <p v-if="mode === 'template'" class="export-hint" data-testid="prototype-export-hint">
-        当前为设计产物（按所选模板渲染，{{ previewLabel }}）；导出 PNG 使用模板风格截图。
-      </p>
-      <div v-if="mode === 'template' && previewSrc" class="preview-wrap" data-testid="prototype-preview-wrap">
-        <iframe
-          :src="previewSrc"
-          class="preview-frame"
-          data-testid="prototype-preview-frame"
-          title="设计产物模板风格预览"
-        />
-      </div>
-      <div v-else class="canvas-wrap">
-        <PrototypeCanvas
-          :page="currentPage!"
-          :page-set="pageSet"
-          :page-sets="[pageSet]"
-          :entities="entities"
-          :skin="skin"
-          :app-name="appName"
-          :zoom="zoom"
-        />
-      </div>
+
+      <PageSetOverview
+        v-if="overview"
+        :page-set="{ id: pageSet.id, title: pageSet.title, epic: pageSet.epic }"
+        :pages="pages"
+        :app-id="appId"
+        :application-type="applicationType"
+        :style-id="styleId"
+        :design-hash="designHash"
+        :exporting="overviewExporting"
+        :progress="overviewProgress"
+        :error="overviewError"
+        @select-page="selectPage"
+        @export-overview="emit('export-overview')"
+      />
+      <template v-else>
+        <p v-if="pageHint" class="page-hint" data-testid="prototype-page-hint">{{ pageHint }}</p>
+        <p v-if="mode === 'template'" class="export-hint" data-testid="prototype-export-hint">
+          当前为设计产物（按所选模板渲染，{{ previewLabel }}）；导出 PNG 使用模板风格截图。
+        </p>
+        <div v-if="mode === 'template' && previewSrc" class="preview-wrap" data-testid="prototype-preview-wrap">
+          <iframe
+            ref="frameRef"
+            :src="previewSrc"
+            class="preview-frame"
+            data-testid="prototype-preview-frame"
+            title="设计产物模板风格预览"
+          />
+        </div>
+        <div v-else class="canvas-wrap">
+          <PrototypeCanvas
+            :page="currentPage!"
+            :page-set="pageSet"
+            :page-sets="[pageSet]"
+            :entities="entities"
+            :skin="skin"
+            :app-name="appName"
+            :zoom="zoom"
+          />
+        </div>
+      </template>
     </template>
     <StatePanel
       v-else
       variant="empty"
       test-id="prototype-empty"
-      title="这个模块还没有页面"
+      title="这个页面集还没有页面"
       description="先让 agent 生成设计，页面会出现在这里。"
       class="proto-state"
       compact
@@ -78,8 +111,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import PrototypeCanvas from '../design/PrototypeCanvas.vue'
+import PageSetOverview from './PageSetOverview.vue'
 import StatePanel from '../shared/StatePanel.vue'
 import { PAGE_TYPE_LABELS, type DesignEntity, type DesignPageRender, type DesignPageSet, type PrototypeSkin } from '../design/types'
 import { buildDesignPreviewUrl } from './design-template-helpers.js'
@@ -97,7 +131,6 @@ const props = defineProps<{
   skin: PrototypeSkin
   appName: string
   appId: string
-  moduleKey: string
   applicationType?: string
   styleId?: string
   designHash?: string
@@ -105,13 +138,37 @@ const props = defineProps<{
   templatePages?: Array<{ id: string; name?: string; recipe?: string }>
   /** 整包导出进行中（由 DesignView 控制） */
   exporting?: boolean
+  /** 页面集总览导出（由 DesignView 控制） */
+  overviewExporting?: boolean
+  overviewProgress?: { current: number; total: number }
+  overviewError?: string
 }>()
 
-const emit = defineEmits<{ (event: 'export'): void }>()
+const emit = defineEmits<{
+  (event: 'export'): void
+  (event: 'export-overview'): void
+}>()
 
 const ZOOMS = [75, 100, 125]
 const zoom = ref(100)
+const overview = ref(false)
 const currentId = ref<string | null>(null)
+const frameRef = ref<HTMLIFrameElement | null>(null)
+
+/** B5 交互预览：iframe 内「切页」动作 → 父层切到目标页面 Tab */
+function onPreviewMessage(event: MessageEvent): void {
+  const frameWindow = frameRef.value?.contentWindow
+  if (!frameWindow || event.source !== frameWindow) return
+  if (event.origin !== window.location.origin) return
+  const data = event.data as Record<string, unknown> | null
+  if (!data || data.source !== 'adp-design-preview' || data.type !== 'navigate-page') return
+  const pageId = typeof data.pageId === 'string' ? data.pageId : ''
+  if (!pageId || !props.pages.some(page => page.id === pageId)) return
+  selectPage(pageId)
+}
+
+onMounted(() => window.addEventListener('message', onPreviewMessage))
+onUnmounted(() => window.removeEventListener('message', onPreviewMessage))
 
 /** 调试入口（仅内部/测试）：URL `?prototype=wireframe` 强制结构草图，用户界面不提供切换 */
 const debugWireframe =
@@ -136,12 +193,11 @@ const renderModeLabel = computed(() => {
   return '结构草图（缺设计模板）'
 })
 
-/** `design.json` 页面契约 → 模板风格渲染入口（iframe 同源读取 artifacts） */
+/** `pages.json` 页面契约 → 模板风格渲染入口（iframe 同源读取 artifacts） */
 const previewSrc = computed(() =>
   previewable.value
     ? buildDesignPreviewUrl({
         appId: props.appId,
-        moduleKey: props.moduleKey,
         pageId: currentPage.value?.id ?? '',
         applicationType: props.applicationType ?? '',
         style: props.styleId ?? '',
@@ -163,8 +219,8 @@ const pageHint = computed(() => {
   const page = currentPage.value
   if (!page) return ''
   if (mode.value === 'template') {
-    if (page.entityId) return ''
-    return '该页面没有绑定本模块实体：设计产物仅渲染页面结构，实体相关内容为空。'
+    if (!page.entityId) return '该页面没有绑定实体：设计产物仅渲染页面结构，实体相关内容为空。'
+    return ''
   }
   if (!hasExplicitContract(page)) {
     return '该页面没有显式设计契约（recipe/catalogRef/blueprint），显示结构草图；补齐契约后自动套模板。'
@@ -176,6 +232,23 @@ const pageHint = computed(() => {
 function pageTypeLabel(type: string): string {
   return PAGE_TYPE_LABELS[type as keyof typeof PAGE_TYPE_LABELS] ?? type
 }
+
+function selectPage(id: string): void {
+  currentId.value = id
+  overview.value = false
+}
+
+function showOverview(): void {
+  overview.value = true
+}
+
+watch(
+  () => props.pageSet.id,
+  () => {
+    overview.value = false
+    currentId.value = props.pages[0]?.id ?? null
+  }
+)
 
 watch(
   () => props.pages,
@@ -208,31 +281,22 @@ watch(
   gap: 10px;
   flex-wrap: wrap;
 }
-.pages {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+.page-tabs {
+  flex: 1;
   min-width: 0;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: thin;
+}
+.page-tabs::-webkit-scrollbar {
+  height: 6px;
 }
 .page-chip {
-  border: 1px solid var(--rg-border);
-  background: var(--rg-surface);
-  color: var(--rg-text-2);
-  border-radius: 999px;
-  padding: 4px 11px;
-  font-size: 12px;
-  cursor: pointer;
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-}
-.page-chip.on {
-  border-color: var(--rg-ink);
-  color: var(--rg-text);
-  background: var(--rg-fill-2);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .page-chip .type {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--rg-text-3);
 }
 .tools {
@@ -247,6 +311,16 @@ watch(
   color: var(--rg-text-3);
   background: var(--rg-fill-2);
   border: 1px solid var(--rg-border);
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+.interaction-hint {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  color: var(--rg-ok);
+  background: var(--rg-ok-soft);
+  border: 1px solid var(--rg-ok-border);
   border-radius: 999px;
   padding: 3px 9px;
   white-space: nowrap;

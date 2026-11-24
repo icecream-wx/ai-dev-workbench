@@ -1,18 +1,19 @@
 /**
- * 开发对照表 `docs/design/<MOD>/ui-check.md`（P7-5b，软门禁）
+ * 开发对照表 `docs/design/ui-check.md`（应用级，D1 去模块；软门禁）
  *
- * - 只在开发 prompt 且模块明确时由后端生成骨架；
- * - 设计缺失 / 模块非法时跳过，不抛 500；
+ * - 只在开发 prompt 且设计产物存在时由后端生成骨架；
+ * - 设计缺失时跳过，不抛 500；
  * - 已存在不改写（agent 填写内容不被覆盖）；
  * - 软门禁：未填不阻断，只用于开发视图/汇报标记“流程未完成”。
  *
- * 骨架行来自 `design.json` 页面契约 + `docs/design/design-system.json` 的页面库
- * （blueprint / recipe 等）；不复制大段需求/设计原文。
+ * 分节按页面集（= Epic）组织；骨架行来自 `pages.json` 页面契约 +
+ * `design-system.json` 的页面库（blueprint / recipe 等）；不复制大段需求原文。
  */
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { appDirOf } from '../apps/scaffold'
+import { readApiDesign, type ApiDesignArtifact } from './api-design'
 
 export type UiCheckStatus = 'missing' | 'skeleton' | 'filled'
 
@@ -25,21 +26,12 @@ export interface UiCheckInfo {
 export interface UiCheckEnsureResult extends UiCheckInfo {
   created: boolean
   skipped: boolean
-  reason?: 'design-missing' | 'invalid-module' | 'workspace-missing' | 'write-failed'
+  reason?: 'design-missing' | 'workspace-missing' | 'write-failed'
 }
 
-/** 模块 id 只允许安全字符，避免从请求体拼出越界路径 */
-export const MODULE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{1,64}$/
+export const UI_CHECK_RELATIVE = 'docs/design/ui-check.md'
 
 const MARKER_PATTERN = /^<!-- adw:ui-check:skeleton hash:[a-f0-9]{64} -->\n/m
-
-export function isSafeModuleId(module: string): boolean {
-  return MODULE_ID_PATTERN.test(module)
-}
-
-export function uiCheckRelativePath(module: string): string {
-  return `docs/design/${module}/ui-check.md`
-}
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null
@@ -67,16 +59,12 @@ function cell(value: string): string {
   return clean || '待填'
 }
 
-interface DesignPageEntry {
-  id: string
-  name: string
-  kind: 'blueprint' | 'reference' | 'contract'
-  source: string
-  blueprint: string
-  contract: string
-  columns: string
-  actions: string
-  layout: string
+function readJsonRecord(file: string): Record<string, unknown> | null {
+  try {
+    return asRecord(JSON.parse(fs.readFileSync(file, 'utf8')))
+  } catch {
+    return null
+  }
 }
 
 interface DesignSystemPageEntry {
@@ -96,43 +84,38 @@ interface DesignSystemFile {
 }
 
 function readDesignSystemFile(appDir: string): DesignSystemFile | null {
-  const file = path.join(appDir, 'docs', 'design', 'design-system.json')
-  try {
-    const parsed = asRecord(JSON.parse(fs.readFileSync(file, 'utf8')))
-    if (!parsed) return null
-    return {
-      blueprintRoot: text(parsed.blueprintRoot) || undefined,
-      templateDir: text(parsed.templateDir) || undefined,
-      pages: asArray(parsed.pages)
-        .map(item => asRecord(item))
-        .filter((item): item is Record<string, unknown> => Boolean(item))
-        .map(item => {
-          const kindText = text(item.kind)
-          const source = asRecord(item.source)
-          return {
-            id: text(item.id),
-            name: text(item.name),
-            blueprint: text(item.blueprint),
-            recipe: text(item.recipe),
-            ...(kindText === 'reference' || kindText === 'contract' || kindText === 'blueprint'
-              ? { kind: kindText as 'blueprint' | 'reference' | 'contract' }
-              : {}),
-            ...(text(item.contractFile) ? { contractFile: text(item.contractFile) } : {}),
-            ...(source
-              ? {
-                  source: {
-                    ...(text(source.pack) ? { pack: text(source.pack) } : {}),
-                    ...(text(source.applicationType) ? { applicationType: text(source.applicationType) } : {}),
-                    ...(text(source.pageId) ? { pageId: text(source.pageId) } : {})
-                  }
+  const parsed = readJsonRecord(path.join(appDir, 'docs', 'design', 'design-system.json'))
+  if (!parsed) return null
+  return {
+    blueprintRoot: text(parsed.blueprintRoot) || undefined,
+    templateDir: text(parsed.templateDir) || undefined,
+    pages: asArray(parsed.pages)
+      .map(item => asRecord(item))
+      .filter((item): item is Record<string, unknown> => Boolean(item))
+      .map(item => {
+        const kindText = text(item.kind)
+        const source = asRecord(item.source)
+        return {
+          id: text(item.id),
+          name: text(item.name),
+          blueprint: text(item.blueprint),
+          recipe: text(item.recipe),
+          ...(kindText === 'reference' || kindText === 'contract' || kindText === 'blueprint'
+            ? { kind: kindText as 'blueprint' | 'reference' | 'contract' }
+            : {}),
+          ...(text(item.contractFile) ? { contractFile: text(item.contractFile) } : {}),
+          ...(source
+            ? {
+                source: {
+                  ...(text(source.pack) ? { pack: text(source.pack) } : {}),
+                  ...(text(source.applicationType) ? { applicationType: text(source.applicationType) } : {}),
+                  ...(text(source.pageId) ? { pageId: text(source.pageId) } : {})
                 }
-              : {})
-          }
-        })
-        .filter(item => item.id)
-    }
-  } catch {
-    return null
+              }
+            : {})
+        }
+      })
+      .filter(item => item.id)
   }
 }
 
@@ -173,9 +156,21 @@ function layoutSummary(page: Record<string, unknown>): string {
   return parts.join('；')
 }
 
-function designPages(design: Record<string, unknown>, system: DesignSystemFile | null): DesignPageEntry[] {
+interface UiCheckPageEntry {
+  id: string
+  name: string
+  kind: 'blueprint' | 'reference' | 'contract'
+  source: string
+  blueprint: string
+  contract: string
+  columns: string
+  actions: string
+  layout: string
+}
+
+function designPages(pageSet: Record<string, unknown>, system: DesignSystemFile | null): UiCheckPageEntry[] {
   const systemById = new Map((system?.pages ?? []).map(page => [page.id, page]))
-  return asArray(design.pages)
+  return asArray(pageSet.pages)
     .map(item => asRecord(item))
     .filter((item): item is Record<string, unknown> => Boolean(item))
     .map(page => {
@@ -201,62 +196,110 @@ function designPages(design: Record<string, unknown>, system: DesignSystemFile |
         blueprint,
         contract,
         columns: list(page.columns, 12) || list(asRecord(page.form)?.fields, 12) || '待填',
-        actions: actions || list(page.actions, 8) || '待填',
+        actions: actions || '待填',
         layout: layoutSummary(page) || '待填'
       }
     })
 }
 
+function pageSetTitle(pageSet: Record<string, unknown>, index: number): string {
+  const epic = text(pageSet.epic)
+  const title = text(pageSet.title) || text(pageSet.id) || `页面集 ${index + 1}`
+  return epic ? `${epic} ${title}` : title
+}
+
 /** 生成 ui-check 骨架文本（不写文件；导出便于单测） */
-export function buildUiCheckSkeleton(module: string, design: Record<string, unknown>, system: DesignSystemFile | null): string {
-  const title = text(design.title) || module
-  const pages = designPages(design, system)
-  const before = pages.length
-    ? pages.map(page => {
-        const kindCell = page.source ? `${page.kind} ← ${page.source}` : page.kind
-        return `| \`${page.id}\` ${cell(page.name)} | ${cell(kindCell)} | ${cell(page.blueprint)} | ${cell(
-          page.contract
-        )} | ${cell(page.columns)} | ${cell(page.actions)} | ${cell(page.layout)} | 待填 |`
-      })
-    : ['| 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 |']
-  const after = pages.length
-    ? pages.map(page => `| \`${page.id}\` ${cell(page.name)} | 待填 | 待填 | 待填 | 待填 | 待填 |`)
-    : ['| 待填 | 待填 | 待填 | 待填 | 待填 | 待填 |']
+export function buildUiCheckSkeleton(
+  pages: Record<string, unknown> | null,
+  system: DesignSystemFile | null,
+  apiDesign?: ApiDesignArtifact | null
+): string {
+  const pageSets = asArray(pages?.pageSets)
+    .map(item => asRecord(item))
+    .filter((item): item is Record<string, unknown> => Boolean(item))
   const blueprintRoot = system?.blueprintRoot || 'docs/design/template'
+  const sections: string[] = []
+  const afterSections: string[] = []
+  pageSets.forEach((pageSet, index) => {
+    const heading = pageSetTitle(pageSet, index)
+    const entries = designPages(pageSet, system)
+    const before = entries.length
+      ? entries.map(page => {
+          const kindCell = page.source ? `${page.kind} ← ${page.source}` : page.kind
+          return `| \`${page.id}\` ${cell(page.name)} | ${cell(kindCell)} | ${cell(page.blueprint)} | ${cell(
+            page.contract
+          )} | ${cell(page.columns)} | ${cell(page.actions)} | ${cell(page.layout)} | 待填 |`
+        })
+      : ['| 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 |']
+    sections.push(`### ${heading}`, '', '| 设计页 | 类型/来源 | 蓝图 | 契约 | 字段/列 | 操作 | 布局/交互 | 差异/决策 |',
+      '| --- | --- | --- | --- | --- | --- | --- | --- |', ...before, '')
+    const after = entries.length
+      ? entries.map(page => `| \`${page.id}\` ${cell(page.name)} | 待填 | 待填 | 待填 | 待填 | 待填 |`)
+      : ['| 待填 | 待填 | 待填 | 待填 | 待填 | 待填 |']
+    afterSections.push(`### ${heading}`, '', '| 设计页 | 实现文件 | 截图 | 一致项 | 差异 | 原因/处理 |',
+      '| --- | --- | --- | --- | --- | --- |', ...after, '')
+  })
+  if (!sections.length) sections.push('| 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 |')
+  if (!afterSections.length) afterSections.push('| 待填 | 待填 | 待填 | 待填 | 待填 | 待填 |')
+
+  const covered = new Map(
+    (apiDesign?.coverage?.pageActions ?? []).map(item => [`${item.page}::${item.action}`, item.interface])
+  )
+  const actionRows: string[] = []
+  pageSets.forEach((pageSet, index) => {
+    const title = pageSetTitle(pageSet, index)
+    for (const rawPage of asArray(pageSet.pages)) {
+      const page = asRecord(rawPage)
+      if (!page) continue
+      const pageId = text(page.id)
+      if (!pageId) continue
+      const actions: string[] = []
+      for (const action of [...asArray(page.rowActions), ...asArray(page.toolbarActions)]) {
+        const code = text(action)
+        if (code && !actions.includes(code)) actions.push(code)
+      }
+      if (text(page.type) === 'form' && !actions.includes('submit')) actions.push('submit')
+      for (const action of actions) {
+        actionRows.push(`| ${cell(title)} | \`${pageId}\` | ${cell(action)} | ${cell(covered.get(`${pageId}::${action}`) || '待填')} | 待填 | 待填 |`)
+      }
+    }
+  })
+  if (!actionRows.length) actionRows.push('| 待填 | 待填 | 待填 | 待填 | 待填 | 待填 |')
+
   const body = [
     '',
     '> 工作台生成（软门禁）：实现前先填写对照表，再写代码；未填写不阻断，但完成汇报需标记“流程未完成”。',
-    `> 设计事实：\`docs/design/${module}/design.json\` 与 \`${blueprintRoot}/\` 蓝图；契约页（无蓝图）读 \`contracts/<page>.json\` 按契约实现。`,
+    `> 设计事实：\`docs/design/entities.json\` / \`docs/design/pages.json\` 与 \`${blueprintRoot}/\` 蓝图；契约页（无蓝图）读 \`contracts/<page>.json\` 按契约实现。`,
     '> PNG 是模板风格截图（无显式契约的旧设计为线框）。',
     '',
     '## 实现前',
     '',
-    '| 设计页 | 类型/来源 | 蓝图 | 契约 | 字段/列 | 操作 | 布局/交互 | 差异/决策 |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- |',
-    ...before,
-    '',
+    ...sections,
     '## 实现后',
     '',
-    '| 设计页 | 实现文件 | 截图 | 一致项 | 差异 | 原因/处理 |',
+    ...afterSections,
+    '## 接口对照（页面动作 → 接口）',
+    '',
+    '| 页面集 | 页面 | 动作 | 接口 | 后端实现 | 前端调用 |',
     '| --- | --- | --- | --- | --- | --- |',
-    ...after,
+    ...actionRows,
     '',
     '## 未实现/待确认',
     '',
-    `- ${title} 的页面/交互如有未实现项，在这里逐条列出并说明原因。`,
+    '- 页面/交互如有未实现项，在这里逐条列出并说明原因。',
     ''
   ].join('\n')
-  const head = `# 页面对照表（${module}）`
+  const head = '# 页面对照表（应用级）'
   const base = `${head}\n\n${body}`
   const hash = createHash('sha256').update(base).digest('hex')
   return `${head}\n\n<!-- adw:ui-check:skeleton hash:${hash} -->\n${body}`
 }
 
 /** 读取 ui-check 状态（只读；不创建） */
-export function readUiCheck(appDir: string, module: string): UiCheckInfo {
-  const file = uiCheckRelativePath(module)
+export function readUiCheck(appDir: string): UiCheckInfo {
+  const file = UI_CHECK_RELATIVE
   const full = path.join(appDir, file)
-  if (!isSafeModuleId(module) || !fs.existsSync(full)) return { exists: false, file, status: 'missing' }
+  if (!fs.existsSync(full)) return { exists: false, file, status: 'missing' }
   try {
     const content = fs.readFileSync(full, 'utf8')
     const marker = MARKER_PATTERN.exec(content)
@@ -272,30 +315,21 @@ export function readUiCheck(appDir: string, module: string): UiCheckInfo {
 
 /**
  * 确保 ui-check 骨架存在：缺失时创建，已存在不改写。
- * 设计文件缺失/模块非法/应用目录缺失时返回 skipped（不抛错）。
+ * 设计文件缺失/应用目录缺失时返回 skipped（不抛错）。
  */
-export function ensureUiCheck(appId: string, module: string, appDir: string = appDirOf(appId)): UiCheckEnsureResult {
-  const existing = readUiCheck(appDir, module)
+export function ensureUiCheck(appId: string, appDir: string = appDirOf(appId)): UiCheckEnsureResult {
+  const existing = readUiCheck(appDir)
   if (!fs.existsSync(appDir)) {
     return { ...existing, created: false, skipped: true, reason: 'workspace-missing' }
   }
-  if (!isSafeModuleId(module)) {
-    return { exists: false, file: uiCheckRelativePath(module), status: 'missing', created: false, skipped: true, reason: 'invalid-module' }
-  }
   if (existing.exists) return { ...existing, created: false, skipped: false }
 
-  const designFile = path.join(appDir, 'docs', 'design', module, 'design.json')
-  let design: Record<string, unknown> | null = null
-  try {
-    design = asRecord(JSON.parse(fs.readFileSync(designFile, 'utf8')))
-  } catch {
-    design = null
-  }
-  if (!design) {
+  const pages = readJsonRecord(path.join(appDir, 'docs', 'design', 'pages.json'))
+  if (!pages) {
     return { ...existing, created: false, skipped: true, reason: 'design-missing' }
   }
 
-  const content = buildUiCheckSkeleton(module, design, readDesignSystemFile(appDir))
+  const content = buildUiCheckSkeleton(pages, readDesignSystemFile(appDir), readApiDesign(appDir))
   try {
     fs.mkdirSync(path.dirname(path.join(appDir, existing.file)), { recursive: true })
     fs.writeFileSync(path.join(appDir, existing.file), content, 'utf8')

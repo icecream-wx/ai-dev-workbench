@@ -26,14 +26,15 @@ npm run build:prod   # 产物：dist/<app.name>/（remoteEntry.js + index.html +
 ## 页面从哪里来
 
 1. 读 `AGENTS.md`、`docs/design/design-system.json`（应用类型/风格/页面库）；
-2. 读 `docs/design/template/<applicationType>/pages/*.vue` 蓝图与 `structure.css`；
-3. 读 `docs/design/template/styles/shared.css` 与选中风格的
+2. 读 `docs/design/entities.json` + `docs/design/pages.json`（实体/页面集/页面契约）与 `docs/design/api-design.md`（接口设计）；
+3. 读 `docs/design/template/<applicationType>/pages/*.vue` 蓝图与 `structure.css`；
+4. 读 `docs/design/template/styles/shared.css` 与选中风格的
    `docs/design/template/styles/<styleId>/style.css`（以 `design-system.json` 的 `styles` 为准）；
-4. 先填 `docs/design/<MOD>/ui-check.md` 的对照表（软门禁，不阻断），再把蓝图复制到
+5. 先填 `docs/design/ui-check.md` 的对照表（软门禁，不阻断），再把蓝图复制到
    `src/views/`，保留结构/样式/组件，替换 mock/接口；
-5. 优先使用 `src/components/PageTemplates/` 的模板与宿主 `pm-*` 组件，偏好统一读
+6. 优先使用 `src/components/PageTemplates/` 的模板与宿主 `pm-*` 组件，偏好统一读
    `src/preferences/GlobalPreference.js`；
-6. 把新页面挂到 `src/router/index.js`，需要给宿主单独消费时在 `build/mfp.config.js`
+7. 把新页面挂到 `src/router/index.js`，需要给宿主单独消费时在 `build/mfp.config.js`
    的 `exposes` 追加。
 
 ## 开发规范（模板与本项目一致）
@@ -45,7 +46,7 @@ npm run build:prod   # 产物：dist/<app.name>/（remoteEntry.js + index.html +
 - 统一导入 `GlobalPreference`，预设只在页面 computed 合并；
 - 禁止手写一套表格/表单/样式替代 PageTemplates/pm-*；缺少宿主组件时停下说明，不自造。
 
-蓝图/预览是视觉与结构基准；`prototypes/*.png` 是模板风格截图（无显式契约的旧设计为线框）。与需求或 `design.json` 冲突时
+蓝图/预览是视觉与结构基准；`prototypes/*.png` 是模板风格截图（无显式契约的旧设计为线框）。与需求或 `pages.json` 冲突时
 先上报并说明，不要静默偏离；偏离写进 `ui-check.md` 与完成汇报。EOS 后端不吃风格。
 
 ## 目录

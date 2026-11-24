@@ -12,11 +12,12 @@
       </p>
       <ol>
         <li>
-          读 <code>docs/design/design-system.json</code> 与
+          读 <code>docs/design/design-system.json</code>、<code>docs/design/entities.json</code> +
+          <code>docs/design/pages.json</code>、<code>docs/design/api-design.md</code> 与
           <code>docs/design/template/</code> 下的页面蓝图。
         </li>
         <li>
-          按 <code>docs/design/&lt;MOD&gt;/ui-check.md</code> 的对照表，把蓝图页面复制到
+          按 <code>docs/design/ui-check.md</code> 的对照表，把蓝图页面复制到
           <code>src/views/</code>，替换 mock/接口。
         </li>
         <li>

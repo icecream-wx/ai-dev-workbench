@@ -3,7 +3,7 @@
  *
  * - 需求：应用默认（有效）→ 全局默认；
  *
- * 模板被删除/损坏时静默回退默认（不 500）；模块级模板覆盖以文件 frontmatter 为准
+ * 模板被删除/损坏时静默回退默认（不 500）；单需求文档 frontmatter 的 template 以文件为准
  * （见 `templates/distribution` 与 `workspace/artifacts`）。
  *
  * 设计阶段不再有“原型模板”：统一由应用设计系统（pack × 应用类型 × 风格）决定。

@@ -12,10 +12,10 @@
           <p>{{ description }}</p>
         </div>
         <pm-toolbar class="contract-toolbar heading-actions" :bordered="false">
-          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="notify(actionLabel(action))">
+          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="emitAction(action)">
             {{ actionLabel(action) }}
           </pm-toolbar-item>
-          <pm-toolbar-item v-if="toolbar.hasCreate" type="primary" :icon="Plus" @click="notify('新增')">
+          <pm-toolbar-item v-if="toolbar.hasCreate" type="primary" :icon="Plus" @click="emitAction('create')">
             新增
           </pm-toolbar-item>
         </pm-toolbar>
@@ -30,6 +30,7 @@
               type="primary"
               plain
               :disabled="!selected.length"
+              @click="emitAction(action)"
             >
               {{ actionLabel(action) }}
             </pm-toolbar-item>
@@ -66,7 +67,7 @@
               :key="action.code"
               type="button"
               class="link-button"
-              @click="notify(`${action.label}：${row[entityKeyField] ?? ''}`)"
+              @click.stop="emitAction(action.code, action.label, row)"
             >
               {{ action.label }}
             </button>
@@ -122,10 +123,10 @@
               <p>{{ description }}</p>
             </div>
             <pm-toolbar class="contract-toolbar ledger-actions" :bordered="false">
-              <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="notify(actionLabel(action))">
+              <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="emitAction(action)">
                 {{ actionLabel(action) }}
               </pm-toolbar-item>
-              <pm-toolbar-item v-if="toolbar.hasCreate" type="primary" :icon="Plus" @click="notify('新增')">
+              <pm-toolbar-item v-if="toolbar.hasCreate" type="primary" :icon="Plus" @click="emitAction('create')">
                 新增
               </pm-toolbar-item>
             </pm-toolbar>
@@ -139,6 +140,7 @@
                 type="primary"
                 plain
                 :disabled="!selected.length"
+                @click="emitAction(action)"
               >
                 {{ actionLabel(action) }}
               </pm-toolbar-item>
@@ -173,7 +175,7 @@
                 :key="action.code"
                 type="button"
                 class="link-button"
-                @click="notify(`${action.label}：${row[entityKeyField] ?? ''}`)"
+                @click.stop="emitAction(action.code, action.label, row)"
               >
                 {{ action.label }}
               </button>
@@ -203,13 +205,13 @@
           <p>{{ description }}</p>
         </div>
         <pm-toolbar class="contract-toolbar heading-actions" :bordered="false">
-          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="notify(actionLabel(action))">
+          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="emitAction(action)">
             {{ actionLabel(action) }}
           </pm-toolbar-item>
         </pm-toolbar>
       </header>
       <section class="panel form-panel" data-testid="contract-form-panel">
-        <ContractFormFields :page="page" :form="form" :model="formModel" show-actions @action="notify" />
+        <ContractFormFields :page="page" :form="form" :model="formModel" show-actions @action="onFormAction" />
       </section>
     </template>
 
@@ -221,7 +223,7 @@
           <p>{{ description }}</p>
         </div>
         <pm-toolbar class="contract-toolbar heading-actions" :bordered="false">
-          <pm-toolbar-item type="primary" :icon="Plus">{{ actionLabel('create') }}</pm-toolbar-item>
+          <pm-toolbar-item type="primary" :icon="Plus" @click="dialogVisible = true">{{ actionLabel('create') }}</pm-toolbar-item>
         </pm-toolbar>
       </header>
       <section class="panel" data-testid="contract-dialog-backdrop">
@@ -229,13 +231,14 @@
       </section>
 
       <pm-form-dialog
-        :dialog-visible="true"
+        :dialog-visible="dialogVisible"
         :title="page.title"
         :width="`${form.width}px`"
         :modal="false"
         :append-to-body="false"
-        @submit="notify('提交')"
-        @cancel="notify('取消')"
+        @update:dialog-visible="dialogVisible = $event"
+        @submit="onDialogSubmit"
+        @cancel="onDialogCancel"
       >
         <template #form>
           <ContractFormFields :page="page" :form="form" :model="formModel" />
@@ -251,10 +254,10 @@
           <p>{{ description }}</p>
         </div>
         <pm-toolbar class="contract-toolbar heading-actions" :bordered="false">
-          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="notify(actionLabel(action))">
+          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="emitAction(action)">
             {{ actionLabel(action) }}
           </pm-toolbar-item>
-          <pm-toolbar-item v-if="toolbar.hasCreate" type="primary" :icon="Plus" @click="notify('新增')">
+          <pm-toolbar-item v-if="toolbar.hasCreate" type="primary" :icon="Plus" @click="emitAction('create')">
             新增
           </pm-toolbar-item>
         </pm-toolbar>
@@ -309,7 +312,7 @@
           <p>{{ description }}</p>
         </div>
         <pm-toolbar class="contract-toolbar heading-actions" :bordered="false">
-          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="notify(actionLabel(action))">
+          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="emitAction(action)">
             {{ actionLabel(action) }}
           </pm-toolbar-item>
         </pm-toolbar>
@@ -317,7 +320,7 @@
 
       <section v-if="detail.empty" class="panel" data-testid="contract-detail-empty">
         <h2 class="panel-title">基本信息</h2>
-        <div class="asset-empty">该页面未绑定本模块实体：暂无可展示的详情字段。</div>
+        <div class="asset-empty">该页面未绑定实体：暂无可展示的详情字段。</div>
       </section>
 
       <template v-else>
@@ -397,24 +400,24 @@
           <p>{{ description }}</p>
         </div>
         <pm-toolbar class="contract-toolbar heading-actions" :bordered="false">
-          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="notify(actionLabel(action))">
+          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="emitAction(action)">
             {{ actionLabel(action) }}
           </pm-toolbar-item>
-          <pm-toolbar-item v-if="toolbar.hasCreate" type="primary" :icon="Plus" @click="notify('新增')">
+          <pm-toolbar-item v-if="toolbar.hasCreate" type="primary" :icon="Plus" @click="emitAction('create')">
             新增
           </pm-toolbar-item>
         </pm-toolbar>
       </header>
 
       <section class="panel form-panel" data-testid="contract-main-sub-form">
-        <div v-if="!entity" class="asset-empty">该页面未绑定本模块实体：暂无表单字段。</div>
+        <div v-if="!entity" class="asset-empty">该页面未绑定实体：暂无表单字段。</div>
         <ContractFormFields
           v-else
           :page="page"
           :form="form"
           :model="formModel"
           show-actions
-          @action="notify"
+          @action="onFormAction"
         />
       </section>
 
@@ -460,7 +463,7 @@
           <p>{{ description }}</p>
         </div>
         <pm-toolbar class="contract-toolbar heading-actions" :bordered="false">
-          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="notify(actionLabel(action))">
+          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="emitAction(action)">
             {{ actionLabel(action) }}
           </pm-toolbar-item>
         </pm-toolbar>
@@ -476,7 +479,7 @@
       </section>
 
       <section class="panel form-panel" data-testid="contract-wizard-panel">
-        <div v-if="!entity" class="asset-empty">该页面未绑定本模块实体：暂无表单字段。</div>
+        <div v-if="!entity" class="asset-empty">该页面未绑定实体：暂无表单字段。</div>
         <ContractFormFields
           v-else
           :page="page"
@@ -498,7 +501,7 @@
         >
           下一步
         </el-button>
-        <el-button v-else type="primary" data-testid="contract-wizard-submit" @click="notify('提交')">
+        <el-button v-else type="primary" data-testid="contract-wizard-submit" @click="emitAction('submit')">
           提交
         </el-button>
       </div>
@@ -512,7 +515,7 @@
           <p>{{ description }}</p>
         </div>
         <pm-toolbar class="contract-toolbar heading-actions" :bordered="false">
-          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="notify(actionLabel(action))">
+          <pm-toolbar-item v-for="action in toolbar.heading" :key="action" @click="emitAction(action)">
             {{ actionLabel(action) }}
           </pm-toolbar-item>
         </pm-toolbar>
@@ -533,7 +536,6 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import ContractSearch from './ContractSearch.vue'
 import ContractFormFields from './ContractFormFields.vue'
@@ -570,11 +572,17 @@ const props = defineProps<{
   page: any
   entity: any
   recipe: string
-  /** 本模块全部实体（详情子表 target 解析用） */
+  /** 应用全部实体（详情子表 target 解析用） */
   entities?: any[]
   /** 模板主色（驾驶舱图表 series 颜色，来自所选视觉风格 tokens） */
   primary?: string
 }>()
+
+/**
+ * 交互预览层（B5）：动作只 emit 给宿主（DesignPreviewApp / TemplatePreviewApp），
+ * 由宿主决定弹窗 / 切页 / 确认 / 提示；本组件不写数据、不调接口。
+ */
+const emit = defineEmits<{ (event: 'action', payload: { code: string; label: string; row?: any }): void }>()
 
 const rows = computed(() => mockRowsForEntity(props.entity, mockRowCountOf(props.page)))
 const pageSize = computed(() => pageSizeOf(props.page))
@@ -607,6 +615,8 @@ const activeSubTable = ref(0)
 const activeMainSub = ref(0)
 const activeStep = ref(0)
 const formModel = reactive<Record<string, any>>({})
+/** dialog-form 默认打开（与既有预览行为一致），可取消关闭、页头「新增」重新打开 */
+const dialogVisible = ref(true)
 
 const treeProps = { id: 'id', label: 'label', children: 'children', isLeaf: 'isLeaf' }
 
@@ -637,7 +647,19 @@ const statusField = computed(() =>
   statusColumn.value ? props.entity?.fields?.find((field: any) => field.name === statusColumn.value?.prop) ?? null : null
 )
 
-const tableColumns = computed(() => decorateColumns(columnsModel.value.columns, props.entity))
+const tableColumns = computed(() => {
+  const columns = decorateColumns(columnsModel.value.columns, props.entity)
+  if (!rowActions.value.length) return columns
+  return [
+    ...columns,
+    {
+      prop: '__actions',
+      label: '操作',
+      scope: 'action',
+      width: Math.max(96, rowActions.value.length * 52)
+    }
+  ]
+})
 
 const backgroundColumns = computed(() =>
   (props.entity?.fields ?? []).slice(0, 4).map((field: any) => ({ prop: field.name, label: field.label || field.name }))
@@ -684,7 +706,7 @@ const pagerText = computed(
 
 const notes = computed(() => {
   const list: string[] = []
-  if (!props.entity) list.push('页面未绑定本模块实体：表格与表单内容为空，仅渲染模板结构')
+  if (!props.entity) list.push('页面未绑定实体：表格与表单内容为空，仅渲染模板结构')
   if (columnsModel.value.skipped.length) {
     list.push(`已跳过实体不存在的列：${columnsModel.value.skipped.join('、')}`)
   }
@@ -723,8 +745,24 @@ function onNodeClick(node: any): void {
   selected.value = []
 }
 
-function notify(label: string): void {
-  ElMessage.info(`预览：${label}`)
+/** 动作冒泡到宿主（工具栏 / 行操作 / 批量 / 表单 / 向导） */
+function emitAction(code: string, label?: string, row?: any): void {
+  emit('action', { code, label: label || actionLabel(code), row })
+}
+
+/** 表单动作（ContractFormFields emit `{ code, label }`） */
+function onFormAction(payload: { code: string; label?: string }): void {
+  emitAction(payload?.code, payload?.label)
+}
+
+function onDialogSubmit(): void {
+  dialogVisible.value = false
+  emitAction('submit')
+}
+
+function onDialogCancel(): void {
+  dialogVisible.value = false
+  emitAction('cancel')
 }
 
 watch(
@@ -742,6 +780,7 @@ watch(
     activeSubTable.value = 0
     activeMainSub.value = 0
     activeStep.value = 0
+    dialogVisible.value = true
   },
   { immediate: true }
 )

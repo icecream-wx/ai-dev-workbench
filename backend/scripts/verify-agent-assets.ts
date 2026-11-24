@@ -78,6 +78,7 @@ async function main(): Promise<void> {
   const expectedSkills = [
     'adw-requirements-document',
     'adw-design-artifacts',
+    'adw-api-design',
     'adw-frontend-implementation',
     'afcenter-page-generation',
     'pm-components-usage',
@@ -87,6 +88,7 @@ async function main(): Promise<void> {
   const expectedCommands = [
     'update-requirements',
     'generate-design',
+    'generate-api-design',
     'preview-app',
     'check-consistency',
     'check-design-fidelity'
@@ -97,7 +99,7 @@ async function main(): Promise<void> {
   for (const name of expectedCommands) {
     if (!commandNames.includes(name)) throw new Error(`缺少 command：${name}`)
   }
-  console.log('[verify] 通过：2 个方法 skill + 开发方法 skill + 2 个团队 skill + 设计模板 skill + 需求模板 skill + 5 个 command 已被 opencode 加载')
+  console.log('[verify] 通过：3 个方法 skill（需求/设计/接口设计）+ 开发方法 skill + 2 个团队 skill + 设计模板 skill + 需求模板 skill + 6 个 command 已被 opencode 加载')
 }
 
 main()

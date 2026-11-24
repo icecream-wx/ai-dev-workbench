@@ -46,9 +46,13 @@ export function artifactErrorLine(error) {
   return `${file} · ${path} · ${message}${expected}`
 }
 
-/** 产物概览文案（人话）：N 个模块 · M 个设计；错误数在视图里单独提示“N 处待处理” */
+/** 产物概览文案（人话）：单需求文档 + Epic/页面集/实体；错误数在视图里单独提示“N 处待处理” */
 export function artifactSummary(artifacts) {
-  const modules = Array.isArray(artifacts?.modules) ? artifacts.modules.length : 0
-  const designs = Array.isArray(artifacts?.designs) ? artifacts.designs.length : 0
-  return `${modules} 个模块 · ${designs} 个设计`
+  const requirement = artifacts?.requirement ?? null
+  const epics = Array.isArray(requirement?.epics) ? requirement.epics.length : 0
+  const pageSets = Array.isArray(artifacts?.pages?.pageSets) ? artifacts.pages.pageSets.length : 0
+  const pages = Array.isArray(artifacts?.pages?.pages) ? artifacts.pages.pages.length : 0
+  const entities = Array.isArray(artifacts?.entities?.entities) ? artifacts.entities.entities.length : 0
+  if (!requirement?.exists && !pageSets && !entities) return '未生成需求文档'
+  return `${requirement?.exists ? '需求文档' : '无需求文档'} · ${epics} 个 Epic · 实体 ${entities} · 页面集 ${pageSets} · 页面 ${pages}`
 }

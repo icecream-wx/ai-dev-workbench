@@ -1,9 +1,9 @@
 /**
- * 设计参考包导出纯函数（P6-3，不依赖 Vue/DOM）
+ * 设计参考包导出纯函数（应用级，D1 去模块；不依赖 Vue/DOM）
  *
  * - 页面 id 安全化（后端只接受 [A-Za-z0-9._-]{1,80}）
- * - 构造 POST /apps/:id/design/:module/prototypes 的 payload
- * - 从 artifacts.hashes 找到 design.json 当前 hash
+ * - 构造 POST /apps/:id/design/prototypes 的 payload
+ * - designHash 由后端 artifacts.designHash 提供（entities + pages + design-system）
  * - 解析 prototypes manifest / 判断 stale
  */
 
@@ -30,7 +30,11 @@ export function normalizeExportPages(pages) {
         suffix += 1
       }
       used.add(id)
-      return { id, dataUrl: page.dataUrl }
+      return {
+        id,
+        dataUrl: page.dataUrl,
+        ...(typeof page.pageSet === 'string' && page.pageSet.trim() ? { pageSet: page.pageSet.trim() } : {})
+      }
     })
 }
 
@@ -43,14 +47,14 @@ export function buildPrototypePayload(input = {}) {
   return { designHash, styleId, pages }
 }
 
-/** artifacts.hashes 的 key 是相对 docs/ 的路径 */
-export function designHashOf(hashes, moduleKey) {
-  const key = `docs/design/${String(moduleKey ?? '').trim()}/design.json`
-  const value = hashes && typeof hashes === 'object' ? hashes[key] : ''
+/** 兼容旧调用：currentDesignHash 直接来自 artifacts.designHash */
+export function designHashOf(artifactsOrHash) {
+  if (typeof artifactsOrHash === 'string') return artifactsOrHash.trim()
+  const value = artifactsOrHash && typeof artifactsOrHash === 'object' ? artifactsOrHash.designHash : ''
   return typeof value === 'string' ? value : ''
 }
 
-/** 接受 artifacts.designs[].prototypes（对象）或原始 manifest（pages 对象） */
+/** 接受 artifacts.prototypes（对象）或原始 manifest（pages 对象） */
 export function parsePrototypeArtifact(raw) {
   if (!raw || typeof raw !== 'object') return null
   const nested = raw.prototypes && typeof raw.prototypes === 'object' ? raw.prototypes : raw
@@ -67,7 +71,8 @@ export function parsePrototypeArtifact(raw) {
       pages.push({
         id,
         file: typeof page.file === 'string' ? page.file : '',
-        hash: typeof page.hash === 'string' ? page.hash : ''
+        hash: typeof page.hash === 'string' ? page.hash : '',
+        ...(typeof page.pageSet === 'string' && page.pageSet ? { pageSet: page.pageSet } : {})
       })
     }
   } else if (source && typeof source === 'object') {
@@ -76,7 +81,8 @@ export function parsePrototypeArtifact(raw) {
       pages.push({
         id,
         file: typeof page.file === 'string' ? page.file : '',
-        hash: typeof page.hash === 'string' ? page.hash : ''
+        hash: typeof page.hash === 'string' ? page.hash : '',
+        ...(typeof page.pageSet === 'string' && page.pageSet ? { pageSet: page.pageSet } : {})
       })
     }
   }
@@ -85,22 +91,22 @@ export function parsePrototypeArtifact(raw) {
 }
 
 /** 没有 manifest、没有页面、hash 不一致或后端标记 stale → 需要导出 */
-export function needsPrototypeExport(design, currentHash) {
-  const artifact = parsePrototypeArtifact(design?.prototypes)
+export function needsPrototypeExport(prototypes, currentHash) {
+  const artifact = parsePrototypeArtifact(prototypes)
   if (!artifact || !artifact.pages.length) return true
   if (!currentHash) return true
   return artifact.designHash !== currentHash
 }
 
-export function isPrototypeStale(design, currentHash) {
-  const artifact = parsePrototypeArtifact(design?.prototypes)
+export function isPrototypeStale(prototypes, currentHash) {
+  const artifact = parsePrototypeArtifact(prototypes)
   if (!artifact || !artifact.pages.length) return false
   return artifact.designHash !== currentHash
 }
 
 /** “N 页 · 导出时间”摘要；无导出返回空串 */
-export function prototypeSummary(design) {
-  const artifact = parsePrototypeArtifact(design?.prototypes)
+export function prototypeSummary(prototypes) {
+  const artifact = parsePrototypeArtifact(prototypes)
   if (!artifact || !artifact.pages.length) return ''
   return `${artifact.pages.length} 页 · 导出于 ${artifact.exportedAt || '—'}`
 }

@@ -85,11 +85,17 @@ test('scaffoldApp：EOS 渲染 + 工作区结构 + 受管资源', async () => {
     '.opencode/skills/adw-template-req-builtin-prd-lite/assets/template.md',
     '.opencode/skills/adw-template-req-builtin-prd-lite/_manifest.json',
     '.opencode/skills/adw-design-artifacts/SKILL.md',
-    '.opencode/skills/adw-design-artifacts/references/design.schema.json',
-    '.opencode/skills/adw-design-artifacts/references/design-example.json',
+    '.opencode/skills/adw-design-artifacts/references/entities.schema.json',
+    '.opencode/skills/adw-design-artifacts/references/pages.schema.json',
+    '.opencode/skills/adw-design-artifacts/references/entities-example.json',
+    '.opencode/skills/adw-design-artifacts/references/pages-example.json',
     '.opencode/skills/adw-design-artifacts/scripts/validate.mjs',
+    '.opencode/skills/adw-api-design/SKILL.md',
+    '.opencode/skills/adw-api-design/scripts/lib/api-design-core.cjs',
+    '.opencode/skills/adw-api-design/scripts/validate-api-design.mjs',
     '.opencode/commands/update-requirements.md',
     '.opencode/commands/generate-design.md',
+    '.opencode/commands/generate-api-design.md',
     '.opencode/commands/preview-app.md',
     '.opencode/commands/check-consistency.md'
   ]) {
@@ -134,12 +140,23 @@ test('scaffoldApp：EOS 渲染 + 工作区结构 + 受管资源', async () => {
     false
   )
 
-  // 模板 skill：每个被选中的模板一个 skill
+  // 单需求文档骨架：title/template，无 module/order，含 Epic/Story 约定
+  const requirementFile = path.join(appDir, 'docs', 'requirements', 'requirements.md')
+  assert.ok(fs.existsSync(requirementFile), '缺少需求文档骨架')
+  const requirementText = fs.readFileSync(requirementFile, 'utf8')
+  assert.match(requirementText, /^---\n/)
+  assert.match(requirementText, /^title: "请假管理"$/m)
+  assert.match(requirementText, /^template: builtin-prd-lite$/m)
+  assert.doesNotMatch(requirementText, /^module:/m)
+  assert.doesNotMatch(requirementText, /^order:/m)
+  assert.match(requirementText, /### EP-001 <Epic 标题>/)
+
+  // 模板 skill：每个被选中的模板一个 skill（示例骨架是 requirements.md 占位）
   const reqSkillDir = path.join(appDir, '.opencode', 'skills', 'adw-template-req-builtin-prd-lite')
   const templateCopy = fs.readFileSync(path.join(reqSkillDir, 'assets', 'template.md'), 'utf8')
-  assert.match(templateCopy, /^module: MOD-XXX$/m, '模板副本应是示例占位，不是具体模块')
-  assert.match(templateCopy, /^title: "<模块标题>"$/m)
-  assert.match(templateCopy, /模板示例：新建模块时替换 module \/ title \/ order/)
+  assert.match(templateCopy, /^title: "<应用名>"$/m, '模板副本应是示例占位，不是具体应用')
+  assert.match(templateCopy, /^template: builtin-prd-lite$/m)
+  assert.match(templateCopy, /模板示例：本文件是受管副本/)
 })
 
 test('未提供的敏感项写成 CHANGE_ME；removeAppDir 只删本地目录', async () => {
@@ -315,7 +332,9 @@ test('带设计系统：MF remote 骨架 + PageTemplates + design-system.json + 
   assert.match(agentsMd, /PageTemplates/)
   assert.match(agentsMd, /pm-form-dialog/)
   assert.match(agentsMd, /GlobalPreference/)
-  assert.match(agentsMd, /需求 > design-system\/design\.json 契约 > 蓝图/)
+  assert.match(agentsMd, /需求 > design-system\/pages\.json 契约 > entities\.json > 蓝图/)
+  assert.match(agentsMd, /api-design\.md/)
+  assert.match(agentsMd, /adw-api-design/)
   assert.match(agentsMd, /EOS 后端不吃风格/)
   assert.match(fs.readFileSync(path.join(appDir, 'README.md'), 'utf8'), /frontend\/.*Module Federation/)
 })

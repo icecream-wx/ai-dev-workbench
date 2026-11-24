@@ -48,6 +48,7 @@
             :recipe="recipe"
             :entities="entities"
             :primary="primaryColor"
+            @action="onAction"
           />
           <div v-else class="tpl-state error" data-testid="template-preview-error">
             <strong>预览加载失败</strong>
@@ -75,6 +76,7 @@
  * - 只用于模板预览，不写 PNG；风格类来自内置 registry（自定义 pack 复制的是内置风格）。
  */
 import { computed, onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import ContractPage from '../design-preview/ContractPage.vue'
 import { resolveContractRecipe } from '../design-preview/contract-preview.js'
 import { adaptDesign } from '../design/design-adapter.js'
@@ -244,6 +246,12 @@ async function load(): Promise<void> {
   } finally {
     loading.value = false
   }
+}
+
+/** 模板预览里动作只做轻提示（不写数据、不跨页） */
+function onAction(payload: { code: string; label?: string }): void {
+  const label = payload?.label || payload?.code || '操作'
+  ElMessage.info(`${label}（模板预览）`)
 }
 
 onMounted(() => {

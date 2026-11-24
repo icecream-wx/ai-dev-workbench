@@ -22,7 +22,7 @@
         v-for="action in formActions"
         :key="action.code"
         :type="action.primary ? 'primary' : undefined"
-        @click="emit('action', action.label)"
+        @click="emit('action', { code: action.code, label: action.label })"
       >
         {{ action.label }}
       </el-button>
@@ -49,7 +49,7 @@ const props = defineProps<{
   onlyGroup?: number
 }>()
 
-const emit = defineEmits<{ (event: 'action', label: string): void }>()
+const emit = defineEmits<{ (event: 'action', payload: { code: string; label: string }): void }>()
 
 const groupOffset = computed(() =>
   Number.isInteger(props.onlyGroup) && Number(props.onlyGroup) >= 0 ? Number(props.onlyGroup) : 0

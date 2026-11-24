@@ -1,8 +1,9 @@
 /**
- * P7-6a：设计一致性检查（脚本 + 服务/API 语义）
+ * 设计一致性检查（应用级，D1；脚本 + 服务/API 语义）
  *
- * - 脚本 fixture：pass/warn/fail、缺设计/缺模块、--module 过滤、--strict；
- * - 后端：正常、无应用、无设计、模块非法、应用目录缺失；
+ * - 脚本 fixture：pass/warn/fail、无设计、--strict；
+ * - 后端：正常、无应用、无设计、应用目录缺失；
+ * - D2 保持 14 项（新增 api-design）；
  * - 临时目录；不启动 opencode、不调用模型。
  */
 import assert from 'node:assert/strict'
@@ -60,10 +61,6 @@ function json(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`
 }
 
-function sha256File(file: string): string {
-  return createHash('sha256').update(fs.readFileSync(file)).digest('hex')
-}
-
 function appRoot(name: string): string {
   const dir = path.join(root, 'fixtures', name)
   fs.mkdirSync(dir, { recursive: true })
@@ -79,6 +76,11 @@ const DESIGN_SYSTEM = {
   styleName: '平台蓝白',
   blueprintRoot: 'docs/design/template',
   templateDir: 'docs/design/template/enterprise-application-platform',
+  styles: {
+    shared: 'docs/design/template/styles/shared.css',
+    style: 'docs/design/template/styles/platform-blue/style.css',
+    styleId: 'platform-blue'
+  },
   pages: [
     {
       id: 'organization',
@@ -95,6 +97,44 @@ const DESIGN_SYSTEM = {
   ]
 }
 
+const ENTITIES = {
+  schemaVersion: 2,
+  entities: [{ id: 'product', name: '商品', fields: [{ code: 'productName', name: '商品名称', type: 'string' }] }],
+  relations: []
+}
+
+const PASS_PAGES = {
+  schemaVersion: 2,
+  pageSets: [
+    {
+      id: 'product',
+      epic: 'EP-001',
+      title: '商品管理',
+      pages: [
+        {
+          id: 'product-list',
+          name: '商品列表',
+          type: 'list',
+          recipe: 'list',
+          entity: 'product',
+          columns: ['productName'],
+          rowActions: ['detail', 'edit', 'delete'],
+          toolbarActions: ['create', 'export'],
+          catalogRef: 'enterprise-application-platform/organization'
+        },
+        {
+          id: 'product-form',
+          name: '商品编辑',
+          type: 'form',
+          recipe: 'dialog-form',
+          entity: 'product',
+          blueprint: 'application-types/enterprise-application-platform/pages/ApplicationForm.vue'
+        }
+      ]
+    }
+  ]
+}
+
 function writeBlueprint(appDir: string, name: string): void {
   write(
     path.join(appDir, 'docs/design/template/enterprise-application-platform/pages', name),
@@ -106,33 +146,43 @@ function designSystemFile(appDir: string, value: unknown = DESIGN_SYSTEM): void 
   write(path.join(appDir, 'docs/design/design-system.json'), json(value))
 }
 
-function designFile(appDir: string, moduleKey: string, pages: unknown[]): string {
-  const file = path.join(appDir, 'docs/design', moduleKey, 'design.json')
-  write(file, json({ module: moduleKey, title: '商品管理', entities: [], relations: [], pages }))
-  return file
+function designFiles(appDir: string, pages: unknown = PASS_PAGES, entities: unknown = ENTITIES): void {
+  write(path.join(appDir, 'docs/design/entities.json'), json(entities))
+  write(path.join(appDir, 'docs/design/pages.json'), json(pages))
 }
 
-function uiCheckFile(appDir: string, moduleKey: string, content?: string): void {
+function uiCheckFile(appDir: string, content?: string): void {
   write(
-    path.join(appDir, 'docs/design', moduleKey, 'ui-check.md'),
-    content ?? `# 页面对照表（${moduleKey}）\n\n## 实现前\n\n| 设计页 | 路由 |\n| --- | --- |\n| product-list | /product |\n`
+    path.join(appDir, 'docs/design/ui-check.md'),
+    content ?? '# 页面对照表（应用级）\n\n## 实现前\n\n| 设计页 | 路由 |\n| --- | --- |\n| product-list | /product |\n'
   )
 }
 
-function skeletonUiCheckFile(appDir: string, moduleKey: string): void {
-  const body = `# 页面对照表（${moduleKey}）\n\n## 实现前\n\n| 设计页 | 路由 |\n| --- | --- |\n| product-list | /product |\n`
+function skeletonUiCheckFile(appDir: string): void {
+  const body = '# 页面对照表（应用级）\n\n## 实现前\n\n| 设计页 | 路由 |\n| --- | --- |\n| product-list | /product |\n'
   const hash = createHash('sha256').update(body).digest('hex')
-  write(path.join(appDir, 'docs/design', moduleKey, 'ui-check.md'), `<!-- adw:ui-check:skeleton hash:${hash} -->\n${body}`)
+  write(path.join(appDir, 'docs/design/ui-check.md'), `<!-- adw:ui-check:skeleton hash:${hash} -->\n${body}`)
 }
 
-function prototypesFresh(appDir: string, moduleKey: string, designPath: string): void {
-  write(
-    path.join(appDir, 'docs/design', moduleKey, 'prototypes/_manifest.json'),
+/** 与 core/后端一致：sha256(entities + pages + design-system) */
+function designHashOf(appDir: string): string {
+  const hash = createHash('sha256')
+  for (const relative of ['docs/design/entities.json', 'docs/design/pages.json', 'docs/design/design-system.json']) {
+    const file = path.join(appDir, relative)
+    hash.update(fs.existsSync(file) ? fs.readFileSync(file) : Buffer.alloc(0))
+  }
+  return hash.digest('hex')
+}
+
+function prototypesFresh(appDir: string): void {  write(
+    path.join(appDir, 'docs/design/prototypes/_manifest.json'),
     json({
-      designHash: sha256File(designPath),
-      templateId: 'platform-blue',
+      designHash: designHashOf(appDir),
+      styleId: 'platform-blue',
       exportedAt: '2026-11-19T00:00:00.000Z',
-      pages: { 'product-list': { file: 'product-list.png', hash: 'h', exportedAt: '2026-11-19T00:00:00.000Z' } }
+      pages: {
+        'product-list': { file: 'product-list.png', hash: 'h', exportedAt: '2026-11-19T00:00:00.000Z', pageSet: 'product' }
+      }
     })
   )
 }
@@ -181,31 +231,120 @@ function frontend(appDir: string, options: { views?: boolean; routes?: number } 
   )
 }
 
-const PASS_PAGES = [
-  {
-    id: 'product-list',
-    name: '商品列表',
-    type: 'list',
-    recipe: 'list',
-    catalogRef: 'enterprise-application-platform/organization'
-  },
-  {
-    id: 'product-form',
-    name: '商品编辑',
-    type: 'form',
-    recipe: 'dialog-form',
-    blueprint: 'application-types/enterprise-application-platform/pages/ApplicationForm.vue'
-  }
-]
+/** D2：为 fidelity pass fixture 生成可 0 warning 的接口设计文档（entity product 全 CRUD + 页面动作覆盖） */
+function apiMarkdown(): string {
+  const methods = {
+    'product.list': ['GET', '/api/products', 'list', 'product-list'],
+    'product.detail': ['GET', '/api/products/{id}', 'detail', 'product-list'],
+    'product.create': ['POST', '/api/products', 'create', 'product-list'],
+    'product.update': ['PUT', '/api/products/{id}', 'update', 'product-form'],
+    'product.delete': ['DELETE', '/api/products/{id}', 'delete', 'product-list'],
+    'product.export': ['POST', '/api/products/export', 'export', 'product-list']
+  } as const
+  const indexRows = Object.entries(methods)
+    .map(([id, [method, apiPath, operation, page]]) => `| ${id} | ${method} | ${apiPath} | ${id} | ${operation} | EP-001 商品管理 | ${page} | product | product:read |`)
+    .join('\n')
+  const actionRows = [
+    ['product-list', 'create', 'product.create'],
+    ['product-list', 'detail', 'product.detail'],
+    ['product-list', 'edit', 'product.update'],
+    ['product-list', 'delete', 'product.delete'],
+    ['product-list', 'export', 'product.export'],
+    ['product-form', 'submit', 'product.update']
+  ]
+    .map(([page, action, id]) => `| EP-001 商品管理 | ${page} | ${action} | ${id} | |`)
+    .join('\n')
+  const details = Object.entries(methods)
+    .map(([id, [method, apiPath, operation, page]]) => {
+      const isList = operation === 'list'
+      const request = isList
+        ? '| page | query | integer | 否 | 1 | 页码 |\n| size | query | integer | 否 | 20 | 每页 |'
+        : '| id | path | string | 否 | - | 主键 |'
+      const response = isList
+        ? '| total | integer | 总数 |\n| items[].productName | string | 实体 product.productName |'
+        : '| productName | string | 实体 product.productName |'
+      return [
+        `#### ${id} ${id}`,
+        '',
+        '| 项 | 值 |',
+        '| --- | --- |',
+        `| 方法/路径 | \`${method} ${apiPath}\` |`,
+        `| 操作 | \`${operation}\` |`,
+        '| 页面集 | EP-001 商品管理 |',
+        `| 页面 | ${page} |`,
+        '| 实体 | product |',
+        '| 权限 | product:read |',
+        '| 说明 | 测试接口 |',
+        '',
+        '**请求参数**',
+        '',
+        '| 参数 | 位置 | 类型 | 必填 | 默认 | 说明 |',
+        '| --- | --- | --- | --- | --- | --- |',
+        request,
+        '',
+        '**响应 data**',
+        '',
+        '| 字段 | 类型 | 来源/说明 |',
+        '| --- | --- | --- |',
+        response,
+        '',
+        '**错误码**',
+        '',
+        '| code | http | 说明 |',
+        '| --- | --- | --- |',
+        '| AUTH_FORBIDDEN | 403 | 无权限 |',
+        '',
+        '**示例**',
+        '',
+        '```http',
+        `${method} ${apiPath}`,
+        '```',
+        ''
+      ].join('\n')
+    })
+    .join('\n')
+  return [
+    '# 商品管理应用 · 接口设计',
+    '',
+    '## 0. 文档信息',
+    '| 项 | 值 |',
+    '| --- | --- |',
+    '| 版本 | 1.0 |',
+    '| Base path | `/api` |',
+    '',
+    '## 1. 接口规范',
+    '',
+    '## 2. 接口索引',
+    '| ID | 方法 | 路径 | 名称 | 操作 | Epic/页面集 | 页面 | 实体 | 权限 |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    indexRows,
+    '',
+    '## 3. 覆盖矩阵',
+    '### 3.1 页面动作覆盖',
+    '| 页面集 | 页面 | 动作 | 接口 | 说明 |',
+    '| --- | --- | --- | --- | --- |',
+    actionRows,
+    '### 3.2 实体 CRUD 覆盖',
+    '| 实体 | list | detail | create | update | delete | 说明 |',
+    '| --- | --- | --- | --- | --- | --- | --- |',
+    '| product | product.list | product.detail | product.create | product.update | product.delete | |',
+    '',
+    '## 5. 接口详情',
+    details
+  ].join('\n')
+}
 
 function buildPassApp(name: string): string {
   const appDir = appRoot(name)
   designSystemFile(appDir)
   writeBlueprint(appDir, 'OrganizationUsers.vue')
   writeBlueprint(appDir, 'ApplicationForm.vue')
-  const designPath = designFile(appDir, 'MOD-001', PASS_PAGES)
-  uiCheckFile(appDir, 'MOD-001')
-  prototypesFresh(appDir, 'MOD-001', designPath)
+  write(path.join(appDir, 'docs/design/template/styles/shared.css'), '/* shared */\n')
+  write(path.join(appDir, 'docs/design/template/styles/platform-blue/style.css'), '/* style */\n')
+  designFiles(appDir)
+  uiCheckFile(appDir)
+  prototypesFresh(appDir)
+  write(path.join(appDir, 'docs/design/api-design.md'), apiMarkdown())
   frontend(appDir, { routes: 2 })
   return appDir
 }
@@ -214,20 +353,33 @@ function buildWarnApp(name: string): string {
   const appDir = appRoot(name)
   designSystemFile(appDir)
   writeBlueprint(appDir, 'OrganizationUsers.vue')
-  designFile(appDir, 'MOD-001', [
-    {
-      id: 'product-list',
-      name: '商品列表',
-      type: 'list',
-      recipe: 'list',
-      catalogRef: 'enterprise-application-platform/organization'
-    }
-  ])
+  write(path.join(appDir, 'docs/design/template/styles/shared.css'), '/* shared */\n')
+  write(path.join(appDir, 'docs/design/template/styles/platform-blue/style.css'), '/* style */\n')
+  designFiles(appDir, {
+    schemaVersion: 2,
+    pageSets: [
+      {
+        id: 'product',
+        epic: 'EP-001',
+        title: '商品管理',
+        pages: [
+          {
+            id: 'product-list',
+            name: '商品列表',
+            type: 'list',
+            recipe: 'list',
+            entity: 'product',
+            columns: ['productName'],
+            catalogRef: 'enterprise-application-platform/organization'
+          }
+        ]
+      }
+    ]
+  })
   frontend(appDir, { views: false, routes: 1 })
   return appDir
 }
 
-/** P7-7c：自定义模板（reference + contract）fixture */
 const CUSTOM_SYSTEM = {
   schemaVersion: 1,
   pack: 'supplier-hub',
@@ -266,6 +418,21 @@ const CUSTOM_SYSTEM = {
   ]
 }
 
+const CUSTOM_PAGES = {
+  schemaVersion: 2,
+  pageSets: [
+    {
+      id: 'supplier',
+      epic: 'EP-001',
+      title: '供应商管理',
+      pages: [
+        { id: 'supplier-list', name: '供应商列表', type: 'list', recipe: 'list', catalogRef: 'supplier-hub/supplier-list' },
+        { id: 'supplier-form', name: '供应商表单', type: 'form', recipe: 'dialog-form', catalogRef: 'supplier-hub/supplier-form' }
+      ]
+    }
+  ]
+}
+
 function buildContractApp(name: string, withContract = true): string {
   const appDir = appRoot(name)
   designSystemFile(appDir, CUSTOM_SYSTEM)
@@ -276,13 +443,10 @@ function buildContractApp(name: string, withContract = true): string {
   if (withContract) {
     write(
       path.join(appDir, 'docs/design/template/supplier-hub/contracts/supplier-form.json'),
-      json({ schemaVersion: 1, pageId: 'supplier-form', name: '供应商表单', recipe: 'dialog-form', contract: {}, sampleEntity: { id: 'supplier', name: '供应商', fields: [{ name: 'name', type: 'string' }] } })
+      json({ schemaVersion: 1, pageId: 'supplier-form', name: '供应商表单', recipe: 'dialog-form', contract: {} })
     )
   }
-  designFile(appDir, 'MOD-001', [
-    { id: 'supplier-list', name: '供应商列表', type: 'list', recipe: 'list', catalogRef: 'supplier-hub/supplier-list' },
-    { id: 'supplier-form', name: '供应商表单', type: 'form', recipe: 'dialog-form', catalogRef: 'supplier-hub/supplier-form' }
-  ])
+  designFiles(appDir, CUSTOM_PAGES)
   return appDir
 }
 
@@ -301,12 +465,11 @@ function checkById(report: Record<string, any>, id: string): Record<string, any>
   return (report.checks as Array<Record<string, any>>).find(check => check.id === id) ?? {}
 }
 
-test('脚本：完整 fixture 全部通过（exit 0）', () => {
+test('脚本：完整 fixture 全部通过（exit 0，14 项）', () => {
   const appDir = buildPassApp('pass')
   const { report } = runCli(appDir)
   assert.equal(report.empty, false)
-  assert.deepEqual(report.modules, ['MOD-001'])
-  assert.equal(report.summary.total, 13)
+  assert.equal(report.summary.total, 14)
   assert.equal(report.summary.fail, 0)
   assert.equal(report.summary.warn, 0)
   assert.equal(report.summary.status, 'pass')
@@ -326,7 +489,8 @@ test('脚本：完整 fixture 全部通过（exit 0）', () => {
     'style-imports',
     'template-contract',
     'ui-check',
-    'prototypes'
+    'prototypes',
+    'api-design'
   ]) {
     assert.equal(statuses[id], 'pass', `${id} 应通过：${JSON.stringify(statuses)}`)
   }
@@ -349,40 +513,33 @@ test('脚本：无视图/ui-check/PNG → warn 且 exit 0；--strict 不改退�
 
   const uiCheckWarn = checkById(report, 'ui-check')
   assert.match(String(uiCheckWarn.hint), /自动生成/, '缺失 hint 提示自动生成')
-  assert.match(String(uiCheckWarn.evidence), /MOD-001: 未生成/, 'evidence 保留模块状态')
+  assert.match(String(uiCheckWarn.evidence), /docs\/design\/ui-check\.md: 未生成/)
 
   const strict = spawnSync(process.execPath, [script, '--app', appDir, '--json', '--strict'], { encoding: 'utf8' })
   assert.equal(strict.status, 0, '无 fail 时 --strict 仍为 0')
 
   const human = execFileSync(process.execPath, [script, '--app', appDir], { encoding: 'utf8' })
-  assert.match(human, /设计一致性检查（只读）/)
+  assert.match(human, /设计一致性检查（只读，应用级）/)
   assert.match(human, /总体：有警告/)
   assert.match(human, /--- JSON ---/)
   assert.ok(stdout.length > 0)
 })
 
-test('ui-check 警告 hint：仅骨架/混合给出对应可操作提示（仍 13 项）', () => {
+test('ui-check 警告 hint：骨架/缺失给出对应可操作提示（仍 14 项）', () => {
   const skeletonApp = buildWarnApp('ui-check-skeleton')
-  skeletonUiCheckFile(skeletonApp, 'MOD-001')
+  skeletonUiCheckFile(skeletonApp)
   const skeletonReport = runCli(skeletonApp).report
-  assert.equal(skeletonReport.summary.total, 13)
+  assert.equal(skeletonReport.summary.total, 14)
   const skeletonCheck = checkById(skeletonReport, 'ui-check')
   assert.equal(skeletonCheck.status, 'warn')
-  assert.match(String(skeletonCheck.evidence), /MOD-001: 已生成未填/)
+  assert.match(String(skeletonCheck.evidence), /已生成未填/)
   assert.match(String(skeletonCheck.hint), /实现前/)
   assert.doesNotMatch(String(skeletonCheck.hint), /自动生成/)
 
-  const mixedApp = buildWarnApp('ui-check-mixed')
-  skeletonUiCheckFile(mixedApp, 'MOD-001')
-  designFile(mixedApp, 'MOD-002', [])
-  const mixedReport = runCli(mixedApp).report
-  assert.equal(mixedReport.summary.total, 13)
-  const mixedCheck = checkById(mixedReport, 'ui-check')
-  assert.equal(mixedCheck.status, 'warn')
-  assert.match(String(mixedCheck.evidence), /MOD-001: 已生成未填/)
-  assert.match(String(mixedCheck.evidence), /MOD-002: 未生成/)
-  assert.match(String(mixedCheck.hint), /自动生成/)
-  assert.match(String(mixedCheck.hint), /实现前/)
+  const missingApp = buildWarnApp('ui-check-missing')
+  const missingReport = runCli(missingApp).report
+  const missingCheck = checkById(missingReport, 'ui-check')
+  assert.match(String(missingCheck.hint), /自动生成/)
 })
 
 test('脚本：缺蓝图 → fail（默认 exit 0，--strict exit 1）', () => {
@@ -398,7 +555,6 @@ test('脚本：缺蓝图 → fail（默认 exit 0，--strict exit 1）', () => {
   const strict = spawnSync(process.execPath, [script, '--app', appDir, '--json', '--strict'], { encoding: 'utf8' })
   assert.equal(strict.status, 1, '--strict 且 fail 时 exit 1')
 
-  // 缺 frontend → implementation fail（其它检查继续给结果，不抛错）
   const noFrontend = buildPassApp('fail-no-frontend')
   fs.rmSync(path.join(noFrontend, 'frontend'), { recursive: true, force: true })
   const noFrontendReport = runCli(noFrontend).report
@@ -410,24 +566,16 @@ test('脚本：缺蓝图 → fail（默认 exit 0，--strict exit 1）', () => {
 test('脚本：风格样式新/旧路径都接受，缺失只 warn 不 fail', () => {
   const appDir = buildPassApp('style-path')
   const stylesDir = path.join(appDir, 'docs/design/template/styles')
-  const system = JSON.parse(JSON.stringify(DESIGN_SYSTEM)) as Record<string, any>
-  system.styleId = 'platform-blue'
-  system.styles = {
-    shared: 'docs/design/template/styles/shared.css',
-    style: 'docs/design/template/styles/platform-blue/style.css',
-    styleId: 'platform-blue'
-  }
-  designSystemFile(appDir, system)
   write(path.join(stylesDir, 'shared.css'), '/* shared */\n')
   write(path.join(stylesDir, 'platform-blue/style.css'), '/* style */\n')
 
   const fresh = runCli(appDir)
-  assert.equal(fresh.report.summary.total, 13, '检查项总数固定为 13')
+  assert.equal(fresh.report.summary.total, 14, '检查项总数固定为 14')
   assert.equal(checkStatuses(fresh.report)['design-system'], 'pass')
 
-  // 旧应用：仍指向 styles/style.css（不迁移）→ pass + 提示
   fs.rmSync(path.join(stylesDir, 'platform-blue'), { recursive: true, force: true })
   write(path.join(stylesDir, 'style.css'), '/* legacy style */\n')
+  const system = JSON.parse(JSON.stringify(DESIGN_SYSTEM)) as Record<string, any>
   system.styles = { shared: 'docs/design/template/styles/shared.css', style: 'docs/design/template/styles/style.css' }
   designSystemFile(appDir, system)
   const legacy = runCli(appDir)
@@ -435,7 +583,6 @@ test('脚本：风格样式新/旧路径都接受，缺失只 warn 不 fail', ()
   const legacyCheck = (legacy.report.checks as Array<{ id: string; evidence: string }>).find(item => item.id === 'design-system')
   assert.match(String(legacyCheck?.evidence), /旧路径/)
 
-  // 新旧都不存在 → warn（不 fail）
   fs.rmSync(path.join(stylesDir, 'style.css'))
   const missing = runCli(appDir)
   assert.equal(checkStatuses(missing.report)['design-system'], 'warn')
@@ -445,7 +592,7 @@ test('脚本：风格样式新/旧路径都接受，缺失只 warn 不 fail', ()
 test('脚本：自定义模板契约页 → 跳过蓝图、校验契约文件；缺契约只 warn', () => {
   const okDir = buildContractApp('contract-ok')
   const ok = runCli(okDir)
-  assert.equal(ok.report.summary.total, 13)
+  assert.equal(ok.report.summary.total, 14)
   const okStatuses = checkStatuses(ok.report)
   assert.equal(okStatuses['design-system'], 'pass')
   assert.equal(okStatuses['page-contract'], 'pass')
@@ -468,7 +615,7 @@ test('脚本：自定义模板契约页 → 跳过蓝图、校验契约文件；
   assert.match(String(contractCheck?.hint), /只报告|不阻断/)
 })
 
-test('脚本：缺设计 → empty/no-design；指定缺失模块 → empty/design-missing', () => {
+test('脚本：无设计 → empty/no-design（2 项）', () => {
   const emptyDir = appRoot('no-design')
   fs.mkdirSync(path.join(emptyDir, 'docs/design'), { recursive: true })
   const empty = runCli(emptyDir).report
@@ -476,48 +623,16 @@ test('脚本：缺设计 → empty/no-design；指定缺失模块 → empty/desi
   assert.equal(empty.reason, 'no-design')
   assert.equal(empty.summary.status, 'warn')
   assert.equal(empty.checks.length, 2)
-
-  const appDir = buildPassApp('missing-module')
-  const missing = runCli(appDir, ['--module', 'MOD-404']).report
-  assert.equal(missing.empty, true)
-  assert.equal(missing.reason, 'design-missing')
-  assert.equal(missing.module, 'MOD-404')
-  assert.equal(missing.summary.status, 'fail')
 })
 
-test('脚本：--module 只检查指定模块', () => {
-  const appDir = buildPassApp('module-filter')
-  const designPath = designFile(appDir, 'MOD-002', [
-    {
-      id: 'order-list',
-      name: '订单列表',
-      type: 'list',
-      recipe: 'list',
-      catalogRef: 'enterprise-application-platform/organization'
-    }
-  ])
-  prototypesFresh(appDir, 'MOD-002', designPath)
-  uiCheckFile(appDir, 'MOD-002')
-
-  const filtered = runCli(appDir, ['--module', 'MOD-002']).report
-  assert.deepEqual(filtered.modules, ['MOD-002'])
-  assert.equal(filtered.module, 'MOD-002')
-  assert.match(JSON.stringify(filtered.checks), /MOD-002/)
-  assert.doesNotMatch(JSON.stringify(filtered.checks), /MOD-001/)
-
-  const all = runCli(appDir).report
-  assert.deepEqual(all.modules, ['MOD-001', 'MOD-002'])
-  assert.equal(all.module, null)
-})
-
-test('脚本：参数错误（目录不存在/模块非法）exit 2', () => {
+test('脚本：未知参数 → exit 2；目录不存在 → exit 2', () => {
   const missing = spawnSync(process.execPath, [script, '--app', path.join(root, 'nope'), '--json'], {
     encoding: 'utf8'
   })
   assert.equal(missing.status, 2)
 
-  const appDir = buildPassApp('bad-module')
-  const invalid = spawnSync(process.execPath, [script, '--app', appDir, '--module', '../escape', '--json'], {
+  const appDir = buildPassApp('bad-arg')
+  const invalid = spawnSync(process.execPath, [script, '--app', appDir, '--module', 'MOD-001', '--json'], {
     encoding: 'utf8'
   })
   assert.equal(invalid.status, 2)
@@ -530,7 +645,7 @@ async function registerApp(appId: string): Promise<string> {
   scaffold.scaffoldApp(
     {
       appId,
-      appName: `P7-6a ${appId}`,
+      appName: `D1 ${appId}`,
       backendPort: 18126,
       designSystem: {
         pack: 'afcenter-app-templates-v1',
@@ -549,10 +664,10 @@ async function registerApp(appId: string): Promise<string> {
 }
 
 async function seedServiceDesign(appDir: string): Promise<void> {
-  const designPath = path.join(appDir, 'docs/design/MOD-001/design.json')
-  write(designPath, json({ module: 'MOD-001', title: '商品管理', entities: [], relations: [], pages: PASS_PAGES }))
-  uiCheckFile(appDir, 'MOD-001')
-  prototypesFresh(appDir, 'MOD-001', designPath)
+  write(path.join(appDir, 'docs/design/entities.json'), json(ENTITIES))
+  write(path.join(appDir, 'docs/design/pages.json'), json(PASS_PAGES))
+  uiCheckFile(appDir)
+  prototypesFresh(appDir)
   write(
     path.join(appDir, 'frontend/src/views/product/ProductList.vue'),
     [
@@ -575,17 +690,15 @@ async function seedServiceDesign(appDir: string): Promise<void> {
   )
 }
 
-test('后端：正常检查返回 13 项/摘要/设计系统（规则与脚本一致）', async () => {
+test('后端：正常检查返回 14 项/摘要/设计系统（规则与脚本一致）', async () => {
   const { fidelity } = await setup()
   const appDir = await registerApp('fid-ok')
   await seedServiceDesign(appDir)
 
   const report = fidelity.runDesignFidelity('fid-ok')
   assert.equal(report.appId, 'fid-ok')
-  assert.equal(report.module, null)
-  assert.deepEqual(report.modules, ['MOD-001'])
-  assert.equal(report.checks.length, 13)
-  assert.equal(report.summary.total, 13)
+  assert.equal(report.checks.length, 14)
+  assert.equal(report.summary.total, 14)
   assert.equal(report.designSystem.pack, 'afcenter-app-templates-v1')
   assert.ok(!Number.isNaN(Date.parse(report.generatedAt)))
   const statuses = Object.fromEntries(report.checks.map(check => [check.id, check.status]))
@@ -593,13 +706,12 @@ test('后端：正常检查返回 13 项/摘要/设计系统（规则与脚本�
   assert.equal(statuses['blueprint-files'], 'pass')
   assert.equal(statuses['template-contract'], 'pass')
   assert.equal(statuses['ui-check'], 'pass')
-
-  const filtered = fidelity.runDesignFidelity('fid-ok', { module: 'MOD-001' })
-  assert.equal(filtered.module, 'MOD-001')
-  assert.deepEqual(filtered.modules, ['MOD-001'])
+  assert.equal(statuses['api-design'], 'warn')
+  assert.equal('module' in report, false)
+  assert.equal('modules' in report, false)
 })
 
-test('后端：无应用 404 / 模块非法 400 / 目录缺失 409 / 无设计 empty', async () => {
+test('后端：无应用 404 / 目录缺失 409 / 无设计 empty', async () => {
   const { fidelity, db } = await setup()
 
   assert.throws(
@@ -613,19 +725,6 @@ test('后端：无应用 404 / 模块非法 400 / 目录缺失 409 / 无设计 e
   assert.equal(empty.reason, 'no-design')
   assert.equal(empty.summary.status, 'warn')
   assert.equal(empty.checks.length, 2)
-
-  const missingModule = fidelity.runDesignFidelity('fid-empty', { module: 'MOD-404' })
-  assert.equal(missingModule.empty, true)
-  assert.equal(missingModule.reason, 'design-missing')
-
-  assert.throws(
-    () => fidelity.runDesignFidelity('fid-empty', { module: '../escape' }),
-    (error: unknown) => (error as { status?: number }).status === 400
-  )
-  assert.throws(
-    () => fidelity.runDesignFidelity('fid-empty', { module: 123 }),
-    (error: unknown) => (error as { status?: number }).status === 400
-  )
 
   const now = new Date().toISOString()
   db.prepare(

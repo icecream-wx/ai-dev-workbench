@@ -245,25 +245,41 @@ test('formatExecutionFailure 把免费额度 429 转成可读提示', () => {
   assert.equal(other.includes('{"'), false)
 })
 
-test('buildViewPrompt：按视图给出产物路径与 skill，不输出聊天协议', () => {
-  const requirements = service.buildViewPrompt('requirements', '加一个字段', 'MOD-001')
+test('buildViewPrompt：按视图给出产物路径与 skill，不输出聊天协议（应用级，无模块）', () => {
+  const chinese = '所有面向用户的文字——回复、思考/进度说明、工具说明、汇报——一律使用中文'
+  const requirements = service.buildViewPrompt('requirements', '加一个字段')
   assert.match(requirements, /当前视图：需求/)
-  assert.match(requirements, /MOD-001/)
-  assert.match(requirements, /docs\/requirements\/MOD-xxx-/)
+  assert.match(requirements, /docs\/requirements\/requirements\.md/)
+  assert.match(requirements, /EP-001/)
+  assert.match(requirements, /US-001/)
   assert.match(requirements, /adw-requirements-document/)
-  const chinese = '所有面向用户的文字——回复、思考\/进度说明、工具说明、汇报——一律使用中文'
+  assert.match(requirements, /可能尚未生成/)
+  assert.match(requirements, /不要主动读取不存在的设计文件/)
+  assert.match(requirements, /不存在是正常的/)
   assert.ok(requirements.includes(chinese), '需求视图应注入中文要求')
   assert.equal(requirements.includes('<<<DOC_JSON>>>'), false)
+  assert.equal(requirements.includes('MOD-001'), false)
 
   const design = service.buildViewPrompt('design', '生成设计')
   assert.match(design, /adw-design-artifacts/)
-  assert.match(design, /design\.schema\.json/)
+  assert.match(design, /entities\.schema\.json/)
+  assert.match(design, /pages\.schema\.json/)
+  assert.match(design, /entities\.json/)
+  assert.match(design, /pages\.json/)
+  assert.match(design, /api-design\.md/)
+  assert.match(design, /adw-api-design/)
+  assert.match(design, /同轮生成/)
+  assert.match(design, /不要只生成 entities\/pages/)
   assert.ok(design.includes(chinese), '设计视图应注入中文要求')
+  assert.equal(design.includes('design.schema.json'), false)
 
   const development = service.buildViewPrompt('development', '开始开发')
   assert.match(development, /当前视图：开发/)
   assert.ok(development.includes(chinese), '开发视图应注入中文要求')
   assert.match(development, /docs\/design\/design-system\.json/)
+  assert.match(development, /docs\/design\/entities\.json/)
+  assert.match(development, /docs\/design\/pages\.json/)
+  assert.match(development, /docs\/design\/api-design\.md/)
   assert.match(development, /docs\/design\/template\//)
   assert.match(development, /adw-frontend-implementation/)
   assert.match(development, /afcenter-page-generation/)
@@ -272,15 +288,59 @@ test('buildViewPrompt：按视图给出产物路径与 skill，不输出聊天�
   assert.match(development, /PageTemplates/)
   assert.match(development, /pm-form-dialog/)
   assert.match(development, /GlobalPreference/)
-  assert.match(development, /需求 > design-system\/design\.json 契约 > 蓝图/)
+  assert.match(development, /需求 > design-system\/pages\.json 契约 > entities\.json \/ api-design\.md > 蓝图/)
   assert.match(development, /冲突先报告/)
   assert.match(development, /EOS 后端不吃风格/)
   assert.match(development, /用户消息：\n开始开发/)
+  assert.equal(development.includes('本轮目标模块'), false)
 
-  const withDigest = service.buildViewPrompt('development', '开始开发', 'MOD-001', { digest: '【设计摘要】\n- 测试摘要' })
+  const withDigest = service.buildViewPrompt('development', '开始开发', { digest: '【设计摘要】\n- 测试摘要' })
   assert.match(withDigest, /工作台注入的设计摘要/)
   assert.match(withDigest, /【设计摘要】\n- 测试摘要/)
-  assert.match(withDigest, /MOD-001/)
+})
+
+test('buildViewPrompt：需求章节 focus 注入在「用户消息：」之前，含标题/锚点/层级', () => {
+  const focused = service.buildViewPrompt('requirements', '请基于「1. 目标」这一章节补齐验收标准', {
+    focus: { anchor: 'sec-1', title: '1. 目标', level: 2, kind: 'requirements-section' }
+  })
+  assert.match(focused, /本轮聚焦章节：docs\/requirements\/requirements\.md 的「1\. 目标」/)
+  assert.match(focused, /锚点 #sec-1/)
+  assert.match(focused, /层级 2/)
+  assert.ok(focused.indexOf('本轮聚焦章节') < focused.indexOf('用户消息：'), '章节上下文在用户消息之前')
+  assert.match(focused, /用户消息：\n请基于「1\. 目标」这一章节补齐验收标准/)
+})
+
+test('buildViewPrompt：非需求视图忽略 focus；无 focus 输出不含章节上下文', () => {
+  const focus = { anchor: 'sec-2', title: 'EP-001 商品管理', level: 3 }
+  const design = service.buildViewPrompt('design', '生成设计', { focus })
+  assert.equal(design.includes('本轮聚焦章节'), false)
+  const development = service.buildViewPrompt('development', '开始开发', { focus })
+  assert.equal(development.includes('本轮聚焦章节'), false)
+
+  const plain = service.buildViewPrompt('requirements', '加一个字段')
+  assert.equal(plain.includes('本轮聚焦章节'), false)
+  assert.ok(plain.endsWith('用户消息：\n加一个字段'))
+})
+
+test('buildViewPrompt：focus 文本清洗（单行 + 限长），非法 level 忽略', () => {
+  const sanitized = service.buildViewPrompt('requirements', 'x', {
+    focus: { anchor: 'sec-1\nbad', title: '标题\n换行', level: 2 }
+  })
+  const focusLine = sanitized.split('\n').find(line => line.startsWith('本轮聚焦章节')) ?? ''
+  assert.equal(focusLine.includes('\n'), false)
+  assert.match(focusLine, /「标题 换行」/)
+  assert.match(focusLine, /锚点 #sec-1 bad/)
+
+  const longTitle = service.buildViewPrompt('requirements', 'x', {
+    focus: { anchor: 'sec-1', title: '长'.repeat(400), level: 3 }
+  })
+  const longLine = longTitle.split('\n').find(line => line.startsWith('本轮聚焦章节')) ?? ''
+  assert.ok(longLine.length < 260, `标题应限长（实际 ${longLine.length}）`)
+
+  const invalidLevel = service.buildViewPrompt('requirements', 'x', {
+    focus: { anchor: 'sec-1', title: '目标', level: Number.NaN }
+  })
+  assert.equal(invalidLevel.includes('本轮聚焦章节'), false)
 })
 
 test('handleAppChat：每视图一个活跃会话，第二轮复用同一会话', async () => {
@@ -351,13 +411,13 @@ test('command 模式：走 runCommand（name/text），不发普通 prompt', asy
   const res = fakeRes()
   await service.handleAppChat(
     { id: 'chat-app', name: '对话应用' },
-    fakeReq({ view: 'design', command: 'generate-design', text: 'MOD-001' }) as never,
+    fakeReq({ view: 'design', command: 'generate-design', text: 'EP-001' }) as never,
     res as never
   )
   assert.equal(state.prompts.length, 0)
   assert.equal(state.commands.length, 1)
   assert.equal(state.commands[0].name, 'generate-design')
-  assert.equal(state.commands[0].text, 'MOD-001')
+  assert.equal(state.commands[0].text, 'EP-001')
   const meta = res.frames[0] as Record<string, unknown>
   assert.equal(meta.command, 'generate-design')
   assert.equal(meta.view, 'design')

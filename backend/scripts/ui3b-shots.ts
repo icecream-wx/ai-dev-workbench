@@ -7,7 +7,7 @@
  * - 临时 SQLite/projects + 独立端口 3438（stub opencode 4438）；`OPENCODE_AUTO_START=false`
  * - 复用 p2 harness：真实后端 + 前端 dist；不占用真实 3300 / 4771
  * - 覆盖 1440/1024/390：首页、外壳、需求、设计（ER/原型）、开发、聊天面板、
- *   新建应用 / 模板库 / 新建模块对话框、设计模板中心分类 tab、模板中心工作室 narrow tab
+ *   新建应用 / 模板库对话框、设计模板中心分类 tab、模板中心工作室 narrow tab
  * - 每屏校验无整页横向溢出；并测量卡片 padding/radius/shadow、tab 高度、对话框间距
  * - 输出目录默认 `docs/plans/evidence/2026-11-23-ui3b/`（可用 UI3B_SHOTS_DIR 覆盖）
  */
@@ -16,6 +16,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { chromium, type Browser, type Page } from 'playwright'
+import { writeDesignArtifacts, writeRequirementsDoc } from './ui-shots-fixtures'
 
 const backendDir = path.resolve(__dirname, '..')
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'workbench-ui3b-shots-'))
@@ -281,50 +282,54 @@ async function closeElDialog(page: Page): Promise<void> {
 }
 
 function seedDesign(harnessState: HarnessState): void {
-  const designDir = path.join(harnessState.appDir, 'docs', 'design', 'MOD-001')
-  fs.mkdirSync(designDir, { recursive: true })
-  fs.writeFileSync(
-    path.join(designDir, 'design.json'),
-    `${JSON.stringify(
+  writeRequirementsDoc(harnessState.appDir)
+  writeDesignArtifacts(
+    harnessState.appDir,
+    [
       {
-        module: 'MOD-001',
-        title: '商品管理',
-        designSystem: {
-          pack: 'afcenter-app-templates-v1',
-          applicationType: 'enterprise-application-platform',
-          style: 'platform-blue'
-        },
-        entities: [
+        id: 'product',
+        name: '商品',
+        fields: [
+          { code: 'productCode', name: '商品编码', type: 'string' },
+          { code: 'productName', name: '商品名称', type: 'string' },
+          { code: 'categoryId', name: '分类', type: 'ref', ref: 'category' },
           {
-            id: 'product',
-            name: '商品',
-            fields: [
-              { name: '商品编码', type: 'string' },
-              { name: '商品名称', type: 'string' },
-              { name: '状态', type: 'enum', options: ['上架', '下架'] }
-            ]
-          },
-          {
-            id: 'category',
-            name: '分类',
-            fields: [
-              { name: '分类编码', type: 'string' },
-              { name: '分类名称', type: 'string' }
+            code: 'status',
+            name: '状态',
+            type: 'enum',
+            options: [
+              { value: 'ON_SALE', label: '上架' },
+              { value: 'OFF_SALE', label: '下架' }
             ]
           }
-        ],
-        relations: [{ from: 'product', to: 'category', type: 'n1', name: '所属分类' }],
+        ]
+      },
+      {
+        id: 'category',
+        name: '分类',
+        fields: [
+          { code: 'categoryCode', name: '分类编码', type: 'string' },
+          { code: 'categoryName', name: '分类名称', type: 'string' }
+        ]
+      }
+    ],
+    [
+      {
+        id: 'product',
+        epic: 'EP-001',
+        title: '商品管理',
+        primaryEntity: 'product',
         pages: [
           {
             id: 'product-list',
             name: '商品列表',
             type: 'list',
+            entity: 'product',
             recipe: 'tree-list',
             catalogRef: 'enterprise-application-platform/organization',
             blueprint: 'application-types/enterprise-application-platform/pages/OrganizationUsers.vue',
-            entity: 'product',
-            filters: ['商品名称', '状态'],
-            columns: ['商品编码', '商品名称', '状态'],
+            filters: ['productName', 'status'],
+            columns: ['productCode', 'productName', 'status'],
             rowActions: ['detail', 'edit', 'delete'],
             toolbarActions: ['create'],
             selection: true,
@@ -333,18 +338,17 @@ function seedDesign(harnessState: HarnessState): void {
           {
             id: 'product-form',
             name: '商品表单',
-            type: 'dialog-form',
-            recipe: 'dialog-form',
-            catalogRef: 'enterprise-application-platform/application-form',
+            type: 'form',
             entity: 'product',
-            form: { fields: ['商品编码', '商品名称', '状态'] }
+            recipe: 'wizard',
+            catalogRef: 'enterprise-application-platform/application-form',
+            blueprint: 'application-types/enterprise-application-platform/pages/ApplicationForm.vue',
+            form: { columns: 2, width: 800, fields: ['productCode', 'productName', 'status'] }
           }
         ]
-      },
-      null,
-      2
-    )}\n`,
-    'utf8'
+      }
+    ],
+    [{ from: 'product', to: 'category', type: 'N:1', label: '所属分类' }]
   )
 }
 
@@ -364,9 +368,6 @@ async function captureHomeCards(page: Page, label: string): Promise<void> {
 async function main(): Promise<void> {
   await startHarness()
   const harnessState = await readState()
-
-  const created = await request('POST', `/apps/${appId}/requirements-modules`, { title: '商品管理' })
-  if (created.status !== 201) throw new Error(`准备需求模块失败（HTTP ${created.status}）`)
   seedDesign(harnessState)
 
   const draft = await request('POST', '/design-templates/drafts', {
@@ -431,43 +432,25 @@ async function main(): Promise<void> {
       await desktop.page.locator('[data-testid=design-template-close]').click()
       await desktop.page.locator('[data-testid=design-template-center]').waitFor({ state: 'hidden', timeout: 10000 })
 
-      // 需求视图（外壳、文档卡、模块卡、对话框、聊天面板）
+      // 需求视图（外壳、文档卡、聊天面板）
       await gotoAndWait(desktop.page, `#/apps/${appId}/requirements`, 'requirements-view')
-      await desktop.page.locator('[data-testid=module-item-MOD-001]').waitFor({ state: 'visible', timeout: 15000 })
       await delay(300)
       await captureShell(desktop.page, 'ui3b-shell-1440.png', '应用外壳 + 需求工具栏（1440）')
-      await capture(desktop.page, 'ui3b-requirements-1440.png', '需求视图 · 文档卡 + 模块卡（1440）')
+      await capture(desktop.page, 'ui3b-requirements-1440.png', '需求视图 · 文档卡（1440）')
       await assertDocPanel(desktop.page, '.col-doc .doc', '需求文档面板')
-      await assertCard(desktop.page, '[data-testid=module-item-MOD-001]', '需求模块卡')
       await desktop.page.locator('[data-testid=chat-panel]').screenshot({ path: path.join(shotsDir, 'ui3b-chat-panel-1440.png') })
       shots += 1
       console.log('[ui3b-shots] ui3b-chat-panel-1440.png  AI 对话面板（1440）')
 
-      // 新建模块（Element Plus 对话框 + footer）
-      await desktop.page.locator('[data-testid=new-module-btn]').click()
-      const moduleDialog = desktop.page.locator('.el-dialog:visible').last()
-      await moduleDialog.waitFor({ state: 'visible', timeout: 15000 })
-      await delay(300)
-      await capture(desktop.page, 'ui3b-requirements-dialog-1440.png', '新建模块对话框 · header/footer（1440）')
-      metricChecks += 1
-      const footer = await moduleDialog.locator('.el-dialog__footer').evaluate(el => ({
-        border: getComputedStyle(el).borderTopWidth,
-        top: Number.parseFloat(getComputedStyle(el).paddingTop || '0'),
-        gap: getComputedStyle(el).gap
-      }))
-      if (footer.border !== '1px' || footer.top !== 14) {
-        failures.push(`el-dialog footer 应为 1px 上边框 + 14 顶内边距（实际 ${footer.border}/${footer.top}）`)
-      }
-      if (footer.gap !== '8px') failures.push(`el-dialog footer 按钮间距应为 8px（实际 ${footer.gap}）`)
-      await closeElDialog(desktop.page)
 
       // 设计视图（ER / 原型 tabs）
       await gotoAndWait(desktop.page, `#/apps/${appId}/design`, 'design-view')
-      await desktop.page.locator('[data-testid=design-module-MOD-001]').waitFor({ state: 'visible', timeout: 15000 })
       await delay(500)
-      await capture(desktop.page, 'ui3b-design-er-1440.png', '设计视图 · ER 画布 + 实体表（1440）')
+      await capture(desktop.page, 'ui3b-design-er-1440.png', '设计视图 · ER 画布 + 实体字段浮层（1440）')
       await assertCard(desktop.page, '.er-canvas', '设计视图 ER 画布卡')
-      await assertCard(desktop.page, '.field-panel', '设计视图实体表卡')
+      await desktop.page.locator('.er-node').first().click()
+      await delay(200)
+      await assertCard(desktop.page, '.entity-inspector', '设计视图实体字段浮层卡')
       await assertTabs(desktop.page, '[data-testid=design-tab-er]', '设计 ER 图 tab')
       await desktop.page.locator('[data-testid=design-tab-prototype]').click()
       await desktop.page
@@ -500,7 +483,6 @@ async function main(): Promise<void> {
       await capture(tablet.page, 'ui3b-requirements-1024.png', '需求视图（1024）')
 
       await gotoAndWait(tablet.page, `#/apps/${appId}/design`, 'design-view')
-      await tablet.page.locator('[data-testid=design-module-MOD-001]').waitFor({ state: 'visible', timeout: 15000 })
       await capture(tablet.page, 'ui3b-design-1024.png', '设计视图 · ER（1024）')
 
       await gotoAndWait(tablet.page, `#/apps/${appId}/development`, 'dev-view')
@@ -554,7 +536,6 @@ async function main(): Promise<void> {
 
       // 设计原型（390）
       await gotoAndWait(mobile.page, `#/apps/${appId}/design`, 'design-view')
-      await mobile.page.locator('[data-testid=design-module-MOD-001]').waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined)
       await mobile.page.locator('[data-testid=design-tab-prototype]').click()
       await mobile.page
         .locator('[data-testid=prototype-preview-frame]')

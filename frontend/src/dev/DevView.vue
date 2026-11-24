@@ -15,16 +15,9 @@
         />
         <strong class="session-title" :title="headerTitleFull">{{ headerTitle }}</strong>
         <RgChip class="model-chip" :dot="false" :title="modelTitle" data-testid="dev-model-chip">{{ modelChipLabel }}</RgChip>
-        <label v-if="moduleOptions.length" class="module-pick" title="开发目标模块；prompt 会带上模块并生成 ui-check 骨架">
-          <span>模块</span>
-          <select v-model="moduleKey" data-testid="dev-module-select" :disabled="actionBusy !== ''">
-            <option value="">未指定</option>
-            <option v-for="option in moduleOptions" :key="option.key" :value="option.key">
-              {{ option.key }} · {{ option.title }}{{ option.hasDesign ? '' : '（无设计）' }}
-            </option>
-          </select>
-        </label>
-        <span v-else class="meta" data-testid="dev-module-empty">暂无设计模块</span>
+        <RgChip v-if="designCounts" class="counts-chip" :dot="false" data-testid="dev-design-counts">
+          {{ designCounts.label }}
+        </RgChip>
         <RgChip v-if="readOnly" tone="warn" size="sm" class="readonly-chip">只读 · {{ sessionStatusLabel(session?.status ?? '') }}</RgChip>
       </div>
       <div class="dev-actions">
@@ -129,7 +122,7 @@
           <ol class="start-checklist" data-testid="dev-start-checklist">
             <li>
               <span class="step-no">1</span>
-              <span class="step-text"><strong>确认目标</strong>：选择开发模块，并在右侧「设计参考」核对应用类型与页面库。</span>
+              <span class="step-text"><strong>确认目标</strong>：在对话里指定 Epic/页面集，并在右侧「设计参考」核对应用类型与页面库。</span>
             </li>
             <li>
               <span class="step-no">2</span>
@@ -276,12 +269,15 @@
             <div><dt>应用类型</dt><dd :title="designRef.applicationTypeName">{{ designRef.applicationTypeName || '—' }}</dd></div>
             <div><dt>视觉风格</dt><dd :title="designRef.styleName">{{ designRef.styleName || '—' }}</dd></div>
             <div><dt>页面库</dt><dd>{{ designRef.pageCount }} 页</dd></div>
-            <div><dt>模块</dt><dd :title="selectedModule?.title ?? ''">{{ selectedModule ? `${selectedModule.key} · ${selectedModule.title}` : '未指定' }}</dd></div>
+            <div><dt>Epic</dt><dd data-testid="dev-epic-count">{{ designCounts?.epicCount ?? 0 }} 个</dd></div>
+            <div><dt>页面集 / 页面</dt><dd data-testid="dev-pageset-count">{{ designCounts?.pageSetCount ?? 0 }} / {{ designCounts?.pageCount ?? 0 }}</dd></div>
+            <div><dt>实体</dt><dd data-testid="dev-entity-count">{{ designCounts?.entityCount ?? 0 }} 个</dd></div>
+            <div><dt>接口设计</dt><dd data-testid="dev-api-count">{{ designCounts?.apiInterfaceCount ?? 0 }} 个接口{{ designCounts?.apiExists ? '' : '（未生成）' }}</dd></div>
             <div>
               <dt>ui-check</dt>
               <dd
                 :class="['ui-check', uiCheckTone(uiCheckStatus)]"
-                :title="selectedModule?.uiCheckFile || 'docs/design/<MOD>/ui-check.md'"
+                title="docs/design/ui-check.md"
                 data-testid="dev-ui-check-status"
               >
                 {{ uiCheckLabel(uiCheckStatus) }}
@@ -296,6 +292,11 @@
           <div class="side-actions">
             <RgButton
               size="sm"
+              data-testid="dev-design-view"
+              @click="openDesignView"
+            >查看设计</RgButton>
+            <RgButton
+              size="sm"
               data-testid="dev-fidelity-check"
               :disabled="fidelityBusy"
               :loading="fidelityBusy"
@@ -305,7 +306,7 @@
             </RgButton>
             <RgButton size="sm" data-testid="dev-open-templates" @click="openDesignTemplates">打开模板中心</RgButton>
           </div>
-          <p class="muted">只读静态检查：PageTemplates/pm-*/表单/列表/样式/ui-check/PNG stale；不阻断、不改代码。</p>
+          <p class="muted">只读静态检查（应用级 14 项）：PageTemplates/pm-*/表单/列表/样式/ui-check/PNG stale/接口设计；不阻断、不改代码。</p>
           <p v-if="fidelityError" class="muted warn" data-testid="dev-fidelity-error">{{ fidelityError }}</p>
           <section v-if="fidelityReport" class="fidelity-report" data-testid="dev-fidelity-report">
             <div class="fidelity-head">
@@ -419,10 +420,10 @@ import {
   replyDevPermission,
   type DevEventConnection
 } from './api'
-import { getArtifacts } from '../workbench/api'
+import { getArtifacts, type ArtifactsResponse } from '../workbench/api'
 import { getAppDesignSystem, type AppDesignSystem } from '../shared/design-system-api'
 import {
-  buildModuleOptions,
+  designRefCounts,
   designRefHint,
   designRefSummary,
   fidelityCheckLabel,
@@ -430,8 +431,6 @@ import {
   fidelityStatusLabel,
   fidelityStatusTone,
   fidelitySummaryText,
-  moduleOptionOf,
-  pickModuleKey,
   uiCheckHint,
   uiCheckLabel,
   uiCheckTone
@@ -486,14 +485,12 @@ const sidebarOpen = ref(true)
 const asideOpen = ref(true)
 const narrow = ref(false)
 const maskVisible = computed(() => narrow.value && (sidebarOpen.value || asideOpen.value))
-const moduleOptions = ref<ReturnType<typeof buildModuleOptions>>([])
-const moduleKey = ref('')
+const artifacts = ref<ArtifactsResponse | null>(null)
 const designSystem = ref<AppDesignSystem | null>(null)
 const designCenterOpen = ref(false)
 const fidelityReport = ref<DesignFidelityReport | null>(null)
 const fidelityBusy = ref(false)
 const fidelityError = ref('')
-const MODULE_STORAGE_PREFIX = 'adw.dev.module.'
 
 let connection: DevEventConnection | null = null
 let refreshTimer: ReturnType<typeof setTimeout> | null = null
@@ -573,11 +570,19 @@ const contextTone = computed<'ok' | 'warn' | 'danger' | 'neutral'>(() => {
   if (level === 'ok') return 'ok'
   return 'neutral'
 })
-const selectedModule = computed(() => moduleOptionOf(moduleOptions.value, moduleKey.value))
-const uiCheckStatus = computed(() => selectedModule.value?.uiCheckStatus ?? 'missing')
-const uiCheckFlowPending = computed(() => Boolean(selectedModule.value) && uiCheckStatus.value !== 'filled')
+const designCountsInfo = computed(() => (artifacts.value ? designRefCounts(artifacts.value) : null))
+const designCounts = computed(() => {
+  const info = designCountsInfo.value
+  if (!info) return null
+  return {
+    ...info,
+    label: `Epic ${info.epicCount} · 页面集 ${info.pageSetCount} · 页面 ${info.pageCount} · 实体 ${info.entityCount} · 接口 ${info.apiInterfaceCount}`
+  }
+})
+const uiCheckStatus = computed(() => designCountsInfo.value?.uiCheckStatus ?? 'missing')
+const uiCheckFlowPending = computed(() => Boolean(artifacts.value) && uiCheckStatus.value !== 'filled')
 const designRef = computed(() => designRefSummary(designSystem.value))
-const designHint = computed(() => designRefHint(moduleOptions.value))
+const designHint = computed(() => designRefHint(artifacts.value))
 const designCenterSelection = computed(() => {
   const design = designSystem.value
   if (!design || !design.pack || !design.applicationType || !design.style) return undefined
@@ -590,9 +595,7 @@ const fidelityEmpty = computed(() => fidelityEmptyText(fidelityReport.value))
 const fidelityScope = computed(() => {
   const report = fidelityReport.value
   if (!report) return ''
-  if (report.module) return `模块 ${report.module}`
-  if (report.modules.length) return `全部模块 ${report.modules.join('、')}`
-  return '无模块'
+  return report.empty ? '应用级 · 无设计' : '应用级'
 })
 
 const pendingId = computed(() => pendingTestId(pending.value, 'dev'))
@@ -695,28 +698,7 @@ async function loadSessions(): Promise<void> {
   }
 }
 
-function moduleStorageKey(): string {
-  return `${MODULE_STORAGE_PREFIX}${props.appId}`
-}
-
-function readSavedModule(): string {
-  try {
-    return localStorage.getItem(moduleStorageKey()) ?? ''
-  } catch {
-    return ''
-  }
-}
-
-function persistModule(key: string): void {
-  try {
-    if (key) localStorage.setItem(moduleStorageKey(), key)
-    else localStorage.removeItem(moduleStorageKey())
-  } catch {
-    // 隐私模式/存储不可用：仅本次会话生效
-  }
-}
-
-/** 读取 artifacts（模块 + ui-check 状态）与应用设计系统（只读参考） */
+/** 读取 artifacts（应用级设计产物 + ui-check 状态）与应用设计系统（只读参考） */
 async function loadDesignRef(): Promise<void> {
   const [artifactsResult, designResult] = await Promise.allSettled([
     getArtifacts(props.appId),
@@ -724,15 +706,16 @@ async function loadDesignRef(): Promise<void> {
   ])
   if (designResult.status === 'fulfilled') designSystem.value = designResult.value
   if (artifactsResult.status !== 'fulfilled') return
-  const options = buildModuleOptions(artifactsResult.value)
-  moduleOptions.value = options
-  const next = pickModuleKey(options, readSavedModule(), moduleKey.value)
-  moduleKey.value = next
-  persistModule(next)
+  artifacts.value = artifactsResult.value
 }
 
 function openDesignTemplates(): void {
   designCenterOpen.value = true
+}
+
+/** 跳转设计视图：查看 Epic/页面集/实体 */
+function openDesignView(): void {
+  window.location.hash = `#/apps/${encodeURIComponent(props.appId)}/design`
 }
 
 /** P7-6a：只读一致性检查；报告仅供查看，不自动改代码 */
@@ -741,7 +724,7 @@ async function runFidelityCheck(): Promise<void> {
   fidelityBusy.value = true
   fidelityError.value = ''
   try {
-    fidelityReport.value = await checkDesignFidelity(props.appId, moduleKey.value || undefined)
+    fidelityReport.value = await checkDesignFidelity(props.appId)
   } catch (err) {
     fidelityReport.value = null
     fidelityError.value = err instanceof Error ? err.message : String(err)
@@ -822,11 +805,11 @@ async function start(): Promise<void> {
   error.value = ''
   beginPending()
   try {
-    const next = await createDevSession(props.appId, { view: 'development', module: moduleKey.value || undefined })
+    const next = await createDevSession(props.appId, { view: 'development' })
     selectedSessionId.value = next.session?.id ?? null
     applyData(next)
     ensureEvents()
-    await promptDevSession(props.appId, prompt, 'development', { module: moduleKey.value || undefined })
+    await promptDevSession(props.appId, prompt, 'development')
     composer.value = ''
     startPrompt.value = next.defaultPrompt
     await Promise.all([refresh(true), loadDesignRef()])
@@ -859,7 +842,7 @@ async function newSession(): Promise<void> {
   error.value = ''
   applyPending({ type: 'reset' })
   try {
-    const next = await createDevSession(props.appId, { new: true, view: 'development', module: moduleKey.value || undefined })
+    const next = await createDevSession(props.appId, { new: true, view: 'development' })
     selectedSessionId.value = next.session?.id ?? null
     applyData(next, false)
     composer.value = next.defaultPrompt
@@ -1053,7 +1036,7 @@ async function send(): Promise<void> {
   error.value = ''
   beginPending()
   try {
-    await promptDevSession(props.appId, text, 'development', { module: moduleKey.value || undefined })
+    await promptDevSession(props.appId, text, 'development')
     composer.value = ''
     ensureEvents()
     await Promise.all([refresh(true), loadDesignRef()])
@@ -1182,13 +1165,6 @@ watch(assistantCount, next => {
   if (pending.value?.phase === 'awaiting' && next > assistantBaseline) applyPending({ type: 'content' })
 })
 
-watch(moduleKey, key => {
-  persistModule(key)
-  // 模块切换后旧报告不再对应，清空避免误读
-  fidelityReport.value = null
-  fidelityError.value = ''
-})
-
 watch(
   () => state.value?.status,
   status => {
@@ -1212,8 +1188,7 @@ watch(
     startPrompt.value = ''
     sessions.value = []
     selectedSessionId.value = null
-    moduleOptions.value = []
-    moduleKey.value = ''
+    artifacts.value = null
     designSystem.value = null
     designCenterOpen.value = false
     fidelityReport.value = null
@@ -1294,23 +1269,6 @@ onUnmounted(() => {
 .meta {
   font-size: 11.5px;
   color: var(--rg-text-3);
-}
-.module-pick {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--rg-text-3);
-}
-.module-pick select {
-  max-width: 240px;
-  min-height: 26px;
-  border: 1px solid var(--rg-border-strong);
-  border-radius: 7px;
-  padding: 2px 7px;
-  background: var(--rg-surface);
-  color: var(--rg-text);
-  font-size: 12px;
 }
 .ui-check.ok {
   color: var(--rg-ok);

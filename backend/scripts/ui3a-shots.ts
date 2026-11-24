@@ -15,6 +15,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { chromium, type Browser, type Page } from 'playwright'
+import { writeDesignArtifacts, writeRequirementsDoc } from './ui-shots-fixtures'
 
 const backendDir = path.resolve(__dirname, '..')
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'workbench-ui3a-shots-'))
@@ -60,22 +61,6 @@ async function waitFor(checkFn: () => boolean | Promise<boolean>, timeoutMs: num
     await delay(60)
   }
   throw new Error(`等待超时（${timeoutMs}ms）：${label}`)
-}
-
-async function request(method: string, apiPath: string, body?: unknown): Promise<{ status: number; data: any }> {
-  const res = await fetch(`${base}/api${apiPath}`, {
-    method,
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body)
-  })
-  const text = await res.text()
-  let data: any = null
-  try {
-    data = text ? JSON.parse(text) : null
-  } catch {
-    data = text
-  }
-  return { status: res.status, data }
 }
 
 async function startHarness(): Promise<void> {
@@ -195,53 +180,50 @@ async function gotoAndWait(page: Page, hash: string, testId: string): Promise<vo
 }
 
 function seedDesign(harnessState: HarnessState): void {
-  const designDir = path.join(harnessState.appDir, 'docs', 'design', 'MOD-001')
-  fs.mkdirSync(designDir, { recursive: true })
-  fs.writeFileSync(
-    path.join(designDir, 'design.json'),
-    `${JSON.stringify(
+  writeRequirementsDoc(harnessState.appDir)
+  writeDesignArtifacts(
+    harnessState.appDir,
+    [
       {
-        module: 'MOD-001',
-        title: '商品管理',
-        designSystem: {
-          pack: 'afcenter-app-templates-v1',
-          applicationType: 'enterprise-application-platform',
-          style: 'platform-blue'
-        },
-        entities: [
+        id: 'product',
+        name: '商品',
+        fields: [
+          { code: 'productCode', name: '商品编码', type: 'string' },
+          { code: 'productName', name: '商品名称', type: 'string' },
           {
-            id: 'product',
-            name: '商品',
-            fields: [
-              { name: '商品编码', type: 'string' },
-              { name: '商品名称', type: 'string' },
-              { name: '状态', type: 'enum', options: ['上架', '下架'] }
+            code: 'status',
+            name: '状态',
+            type: 'enum',
+            options: [
+              { value: 'ON_SALE', label: '上架' },
+              { value: 'OFF_SALE', label: '下架' }
             ]
           }
-        ],
-        relations: [],
+        ]
+      }
+    ],
+    [
+      {
+        id: 'product',
+        epic: 'EP-001',
+        title: '商品管理',
+        primaryEntity: 'product',
         pages: [
           {
             id: 'product-list',
             name: '商品列表',
             type: 'list',
-            recipe: 'tree-list',
-            catalogRef: 'enterprise-application-platform/organization',
-            blueprint: 'application-types/enterprise-application-platform/pages/OrganizationUsers.vue',
             entity: 'product',
-            filters: ['商品名称', '状态'],
-            columns: ['商品编码', '商品名称', '状态'],
+            filters: ['productName', 'status'],
+            columns: ['productCode', 'productName', 'status'],
             rowActions: ['detail', 'edit', 'delete'],
             toolbarActions: ['create'],
             selection: true,
             pagination: { layout: 'three-part', pageSize: 20 }
           }
         ]
-      },
-      null,
-      2
-    )}\n`,
-    'utf8'
+      }
+    ]
   )
 }
 
@@ -267,9 +249,6 @@ async function assertPrimitiveSizes(page: Page): Promise<void> {
 async function main(): Promise<void> {
   await startHarness()
   const harnessState = await readState()
-
-  const created = await request('POST', `/apps/${appId}/requirements-modules`, { title: '商品管理' })
-  if (created.status !== 201) throw new Error(`准备需求模块失败（HTTP ${created.status}）`)
   seedDesign(harnessState)
 
   const browser: Browser = await chromium.launch()
@@ -289,7 +268,6 @@ async function main(): Promise<void> {
       console.log('[ui3a-shots] ui3a-chat-panel-1440.png  AI 对话面板（1440）')
 
       await gotoAndWait(desktop.page, `#/apps/${appId}/design`, 'design-view')
-      await desktop.page.locator('[data-testid=design-module-MOD-001]').waitFor({ state: 'visible', timeout: 15000 })
       await delay(400)
       await capture(desktop.page, 'ui3a-design-1440.png', '设计视图（1440）')
 

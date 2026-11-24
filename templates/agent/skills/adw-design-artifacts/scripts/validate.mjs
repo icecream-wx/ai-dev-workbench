@@ -1,22 +1,28 @@
 #!/usr/bin/env node
 /**
- * design.json 自查脚本（只做快速反馈；最终校验以后端 /api/apps/:id/artifacts 为准）。
+ * 设计产物自查脚本（只做快速反馈；最终校验以后端 /api/apps/:id/artifacts 为准）。
  *
- * 用法：node scripts/validate.mjs [design.json ...]
- * 无参数时校验当前目录及 docs/design/* 下的 design.json。
+ * 用法：node scripts/validate.mjs [entities.json pages.json ...]
+ * 无参数时校验当前工作区 `docs/design/entities.json` 与 `docs/design/pages.json`。
  *
- * 校验规则来源：../references/design.schema.json（与后端共用同一份 schema）。
+ * 校验规则来源（与后端共用同一份 schema）：
+ * - `../references/entities.schema.json` → 实体/关系；
+ * - `../references/pages.schema.json` → 页面集/页面契约。
+ *
  * 输出：JSON {ok, files, errors:[{file, path, message, expected}], warnings:[...]}
  *
- * 设计系统/页面契约（P7）新增字段在 schema 里标记了 x-adw-warning：
- * 这些字段的类型/枚举问题只进入 warnings，不影响 ok 与退出码；旧字段仍按 errors 处理。
+ * 页面契约（P7）新增字段在 schema 里标记了 x-adw-warning：类型/枚举问题只进入 warnings，
+ * 不影响 ok 与退出码；结构/必填问题仍按 errors 处理。
  */
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-const schemaPath = path.resolve(here, '..', 'references', 'design.schema.json')
+const SCHEMAS = {
+  entities: path.resolve(here, '..', 'references', 'entities.schema.json'),
+  pages: path.resolve(here, '..', 'references', 'pages.schema.json')
+}
 
 function typeOf(value) {
   if (value === null) return 'null'
@@ -56,7 +62,6 @@ function validate(schema, value, currentPath, errors, warnings, soft = false) {
     pushIssue(sink, currentPath, `取值应为 ${schema.enum.join(' | ')}`, schema.enum)
     return
   }
-  // P7-6c：推荐动作码 / 树形态：只告警，保留原值，不阻断旧 design.json
   if (Array.isArray(schema['x-adw-recommended']) && Array.isArray(value)) {
     const recommended = schema['x-adw-recommended'].map(String)
     for (const [index, item] of value.entries()) {
@@ -104,40 +109,142 @@ function validate(schema, value, currentPath, errors, warnings, soft = false) {
   }
 }
 
-function collectTargets(args) {
-  if (args.length) return args.map(item => path.resolve(item))
-  const found = []
-  const walk = directory => {
-    if (!fs.existsSync(directory)) return
-    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-      if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue
-      const full = path.join(directory, entry.name)
-      if (entry.isDirectory()) walk(full)
-      else if (entry.isFile() && entry.name === 'design.json') found.push(full)
+/** B6 页面集语义：actionTargets 目标 + create/edit 缺表单目标（只 warning，不阻断） */
+const FORM_TARGET_RECIPES = ['dialog-form', 'page-form', 'main-sub', 'wizard']
+const FORM_TARGET_ACTIONS = ['create', 'edit']
+
+function textOf(value) {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function asRecord(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : null
+}
+
+function actionCodes(value) {
+  return Array.isArray(value) ? value.map(item => textOf(item)).filter(Boolean) : []
+}
+
+function pageSetSemanticWarnings(data) {
+  const warnings = []
+  if (!data || typeof data !== 'object' || !Array.isArray(data.pageSets)) return warnings
+  for (const [setIndex, rawSet] of data.pageSets.entries()) {
+    const pageSet = asRecord(rawSet)
+    if (!pageSet) continue
+    const entries = (Array.isArray(pageSet.pages) ? pageSet.pages : [])
+      .map((rawPage, index) => ({ page: asRecord(rawPage), index }))
+      .filter(entry => entry.page)
+    const pages = entries.map(entry => entry.page)
+    const byId = new Map()
+    for (const page of pages) {
+      const id = textOf(page.id)
+      if (id && !byId.has(id)) byId.set(id, page)
+    }
+    for (const entry of entries) {
+      const page = entry.page
+      const base = `pageSets[${setIndex}].pages[${entry.index}]`
+      const targets = asRecord(page.actionTargets)
+      if (targets) {
+        for (const [action, rawTarget] of Object.entries(targets)) {
+          const targetId = textOf(rawTarget)
+          if (!targetId) continue
+          const target = byId.get(targetId)
+          if (!target) {
+            pushIssue(
+              warnings,
+              `${base}.actionTargets.${action}`,
+              `动作「${action}」的目标页「${targetId}」不存在或不在同一页面集；交互预览会忽略该映射并回退启发式`
+            )
+            continue
+          }
+          const recipe = textOf(target.recipe)
+          if (FORM_TARGET_ACTIONS.includes(action) && recipe && !FORM_TARGET_RECIPES.includes(recipe)) {
+            pushIssue(
+              warnings,
+              `${base}.actionTargets.${action}`,
+              `动作「${action}」的目标页「${targetId}」配方 ${recipe} 不是表单配方（${FORM_TARGET_RECIPES.join('/')}）；显式映射仍采用，请确认`
+            )
+          }
+          if (action === 'detail' && recipe && recipe !== 'detail') {
+            pushIssue(
+              warnings,
+              `${base}.actionTargets.detail`,
+              `详情目标页「${targetId}」配方 ${recipe} 不是 detail；显式映射仍采用，请确认`
+            )
+          }
+        }
+      }
+      const declared = new Set([...actionCodes(page.rowActions), ...actionCodes(page.toolbarActions)])
+      const entityId = textOf(page.entity)
+      const selfIsForm =
+        FORM_TARGET_RECIPES.includes(textOf(page.recipe)) ||
+        (!textOf(page.recipe) && textOf(page.type) === 'form')
+      const missing = selfIsForm
+        ? []
+        : FORM_TARGET_ACTIONS.filter(action => {
+            if (!declared.has(action)) return false
+            if (targets && textOf(targets[action])) return false
+            return !pages.some(candidate => {
+              if (candidate === page) return false
+              if (!textOf(candidate.id) || textOf(candidate.entity) !== entityId) return false
+              const candidateRecipe = textOf(candidate.recipe)
+              // 旧设计可能没有 recipe，只有 type:"form"；同样视为表单页（避免误报）
+              return (
+                FORM_TARGET_RECIPES.includes(candidateRecipe) ||
+                (!candidateRecipe && textOf(candidate.type) === 'form')
+              )
+            })
+          })
+      if (missing.length) {
+        pushIssue(
+          warnings,
+          base,
+          `页面声明了动作「${missing.join('/')}」，但既没有 actionTargets 映射，也没有同实体（${
+            entityId || '未绑定实体'
+          }）表单页；交互预览会打开临时表单，建议补表单页或 actionTargets`
+        )
+      }
     }
   }
-  if (fs.existsSync('docs/design')) {
-    walk(path.resolve('docs/design'))
-  } else {
-    walk(process.cwd())
+  return warnings
+}
+
+function kindOf(file) {
+  const base = path.basename(file).toLowerCase()
+  if (base === 'entities.json' || base === 'entities-example.json') return 'entities'
+  if (base === 'pages.json' || base === 'pages-example.json') return 'pages'
+  return ''
+}
+
+function collectTargets(args) {
+  if (args.length) return args.map(item => path.resolve(item))
+  const defaults = ['docs/design/entities.json', 'docs/design/pages.json'].map(item => path.resolve(item))
+  return defaults.filter(file => fs.existsSync(file))
+}
+
+const schemas = {}
+for (const [kind, file] of Object.entries(SCHEMAS)) {
+  try {
+    schemas[kind] = JSON.parse(fs.readFileSync(file, 'utf8'))
+  } catch (error) {
+    schemas[kind] = null
+    void error
   }
-  return found
 }
 
 const errors = []
 const warnings = []
-let schema = null
-try {
-  schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'))
-} catch (error) {
-  errors.push({ file: schemaPath, path: '$', message: `无法读取 schema：${error.message}`, expected: 'schema' })
-}
-
 const files = collectTargets(process.argv.slice(2))
-if (schema && !files.length) {
-  errors.push({ file: '(none)', path: '$', message: '没有找到 design.json', expected: 'design.json' })
+if (!files.length) {
+  errors.push({ file: '(none)', path: '$', message: '没有找到 entities.json / pages.json', expected: 'entities.json + pages.json' })
 }
 for (const file of files) {
+  const kind = kindOf(file)
+  const schema = kind ? schemas[kind] : null
+  if (!schema) {
+    errors.push({ file, path: '$', message: `无法识别或读取 schema：${path.basename(file)}`, expected: 'entities.json / pages.json' })
+    continue
+  }
   let data = null
   try {
     data = JSON.parse(fs.readFileSync(file, 'utf8'))
@@ -148,6 +255,9 @@ for (const file of files) {
   const fileErrors = []
   const fileWarnings = []
   validate(schema, data, '', fileErrors, fileWarnings)
+  if (kind === 'pages') {
+    for (const item of pageSetSemanticWarnings(data)) fileWarnings.push(item)
+  }
   for (const item of fileErrors) errors.push({ file, ...item })
   for (const item of fileWarnings) warnings.push({ file, ...item, severity: 'warning' })
 }

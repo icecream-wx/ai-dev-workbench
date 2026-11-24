@@ -56,13 +56,13 @@ function insertApp(db: Setup['db'], id: string, requirementTemplateId: string | 
   ).run(id, `应用 ${id}`, id, requirementTemplateId, now, now)
 }
 
-function writeModule(appDir: string, key: string, template: string): string {
+function writeRequirementDoc(appDir: string, template: string): string {
   const dir = path.join(appDir, 'docs', 'requirements')
   fs.mkdirSync(dir, { recursive: true })
-  const file = path.join(dir, `${key}-测试.md`)
+  const file = path.join(dir, 'requirements.md')
   fs.writeFileSync(
     file,
-    `---\nmodule: ${key}\ntitle: "测试"\norder: 1\ntemplate: ${template}\n---\n\n# 测试\n\n## 1. 目标\n`,
+    `---\ntitle: "测试"\ntemplate: ${template}\n---\n\n# 测试\n\n## 1. 目标\n`,
     'utf8'
   )
   return file
@@ -195,11 +195,11 @@ test('默认需求模板 → 需求模板 skill + 设计模板 skill + manifest/
   assert.match(skillMd, /description: "需求模板：.*template.*builtin-prd/m)
   assert.match(skillMd, /## 章节清单/)
   assert.match(skillMd, /`## 1\. 文档信息`/)
-  assert.match(skillMd, /`module` \/ `title` \/ `order`/)
-  assert.match(templateMd, /^---\nmodule: MOD-XXX\n/)
-  assert.match(templateMd, /^title: "<模块标题>"$/m)
+  assert.match(skillMd, /docs\/requirements\/requirements\.md/)
+  assert.match(skillMd, /EP-001/)
+  assert.match(templateMd, /^---\ntitle: "<应用名>"\n/)
   assert.match(templateMd, /^template: builtin-prd$/m)
-  assert.match(templateMd, /模板示例：新建模块时替换 module \/ title \/ order/)
+  assert.match(templateMd, /模板示例：本文件是受管副本/)
 
   const reqManifest = manifestOf(appDir, 'builtin-prd')
   assert.equal(reqManifest.managed, true)
@@ -232,18 +232,18 @@ test('默认需求模板 → 需求模板 skill + 设计模板 skill + manifest/
   }
 })
 
-test('模块引用其它需求模板 → 并存；不再引用 → 只清理该模板 skill', async () => {
+test('单需求文档引用其它需求模板 → 并存；不再引用 → 只清理该模板 skill', async () => {
   const { db, scaffold, distribution } = await setup()
   insertApp(db, 'ref-app', 'builtin-prd')
   scaffold.scaffoldApp({ appId: 'ref-app', appName: '引用应用', backendPort: 18092 }, projects)
   const appDir = scaffold.appDirOf('ref-app', projects)
 
-  const moduleFile = writeModule(appDir, 'MOD-001', 'builtin-prd-lite')
+  const moduleFile = writeRequirementDoc(appDir, 'builtin-prd-lite')
   distribution.syncAppTemplates('ref-app')
   assert.ok(fs.existsSync(path.join(appDir, '.opencode', 'skills', 'adw-template-req-builtin-prd-lite', 'SKILL.md')))
   assert.ok(fs.existsSync(path.join(appDir, '.opencode', 'skills', 'adw-template-req-builtin-prd', 'SKILL.md')))
 
-  fs.writeFileSync(moduleFile, `---\nmodule: MOD-001\ntitle: "测试"\norder: 1\ntemplate: builtin-prd\n---\n\n# 测试\n`, 'utf8')
+  fs.writeFileSync(moduleFile, `---\ntitle: "测试"\ntemplate: builtin-prd\n---\n\n# 测试\n`, 'utf8')
   distribution.syncAppTemplates('ref-app')
   assert.equal(
     fs.existsSync(path.join(appDir, '.opencode', 'skills', 'adw-template-req-builtin-prd-lite')),
@@ -253,7 +253,7 @@ test('模块引用其它需求模板 → 并存；不再引用 → 只清理该�
   assert.ok(fs.existsSync(path.join(appDir, '.opencode', 'skills', 'adw-template-req-builtin-prd', 'SKILL.md')))
 })
 
-test('多需求模板并存：两个模块各自引用 → 两个模板 skill', async () => {
+test('单需求文档引用其它需求模板 → 与应用默认模板并存', async () => {
   const { db, scaffold, distribution, requirementTemplates } = await setup()
   const first = requirementTemplates.createTemplate({
     name: '模板甲',
@@ -261,22 +261,14 @@ test('多需求模板并存：两个模块各自引用 → 两个模板 skill', 
     prompt: '写甲',
     sections: [{ id: 'goals', title: '目标', level: 2, kind: 'markdown', guidance: '', required: true }]
   })
-  const second = requirementTemplates.createTemplate({
-    name: '模板乙',
-    stage: 'requirements',
-    prompt: '写乙',
-    sections: [{ id: 'scope', title: '范围', level: 2, kind: 'markdown', guidance: '', required: true }]
-  })
   insertApp(db, 'multi-app', 'builtin-prd')
   scaffold.scaffoldApp({ appId: 'multi-app', appName: '多模板应用', backendPort: 18095 }, projects)
   const appDir = scaffold.appDirOf('multi-app', projects)
-  writeModule(appDir, 'MOD-001', first.id)
-  writeModule(appDir, 'MOD-002', second.id)
+  writeRequirementDoc(appDir, first.id)
   const synced = distribution.syncAppTemplates('multi-app')
-  assert.deepEqual(synced.requirementTemplates, [first.id, second.id, 'builtin-prd'].sort())
-  for (const id of [first.id, second.id]) {
-    assert.ok(fs.existsSync(path.join(appDir, '.opencode', 'skills', `adw-template-req-${id}`, 'SKILL.md')))
-  }
+  assert.deepEqual(synced.requirementTemplates, [first.id, 'builtin-prd'].sort())
+  assert.ok(fs.existsSync(path.join(appDir, '.opencode', 'skills', `adw-template-req-${first.id}`, 'SKILL.md')))
+  assert.ok(fs.existsSync(path.join(appDir, '.opencode', 'skills', 'adw-template-req-builtin-prd', 'SKILL.md')))
 })
 
 test('全局模板保存 → 重新生成模板 skill；syncTemplateToApps 幂等', async () => {
@@ -318,7 +310,7 @@ test('全局模板保存 → 重新生成模板 skill；syncTemplateToApps 幂�
   assert.equal(hashFirst, hashSecond)
 })
 
-test('删除保护：模块仍引用 → 409；解除引用后删除并移除模板 skill', async () => {
+test('删除保护：单需求文档仍引用 → 409；解除引用后删除并移除模板 skill', async () => {
   const { db, scaffold, distribution, requirementTemplates } = await setup()
   const template = requirementTemplates.createTemplate({
     name: '删除测试模板',
@@ -332,22 +324,22 @@ test('删除保护：模块仍引用 → 409；解除引用后删除并移除模
     projects
   )
   const appDir = scaffold.appDirOf('del-app', projects)
-  writeModule(appDir, 'MOD-001', template.id)
+  writeRequirementDoc(appDir, template.id)
   distribution.syncAppTemplates('del-app')
   const skillDir = path.join(appDir, '.opencode', 'skills', `adw-template-req-${template.id}`)
   assert.ok(fs.existsSync(path.join(skillDir, 'SKILL.md')))
 
   const usage = distribution.templateUsage('requirement', template.id)
   assert.equal(usage.apps.length, 1)
-  assert.equal(usage.apps[0].modules[0].module, 'MOD-001')
+  assert.equal(usage.apps[0].documents[0].file, 'docs/requirements/requirements.md')
 
   assert.throws(
     () => requirementTemplates.deleteTemplate(template.id),
     (error: Error & { status?: number }) => error.status === 409
   )
 
-  const moduleFile = path.join(appDir, 'docs', 'requirements', 'MOD-001-测试.md')
-  fs.writeFileSync(moduleFile, `---\nmodule: MOD-001\ntitle: "测试"\norder: 1\ntemplate: builtin-prd\n---\n\n# 测试\n`, 'utf8')
+  const moduleFile = path.join(appDir, 'docs', 'requirements', 'requirements.md')
+  fs.writeFileSync(moduleFile, `---\ntitle: "测试"\ntemplate: builtin-prd\n---\n\n# 测试\n`, 'utf8')
   requirementTemplates.deleteTemplate(template.id)
   assert.equal(fs.existsSync(skillDir), false, '删除模板后应用内模板 skill 应被移除')
 })
@@ -363,7 +355,7 @@ test('清理只按 manifest 白名单：用户 skill / 无 manifest 的同前缀
   insertApp(db, 'safe-app', 'builtin-prd')
   scaffold.scaffoldApp({ appId: 'safe-app', appName: '安全应用', backendPort: 18096 }, projects)
   const appDir = scaffold.appDirOf('safe-app', projects)
-  const moduleFile = writeModule(appDir, 'MOD-001', template.id)
+  const moduleFile = writeRequirementDoc(appDir, template.id)
   distribution.syncAppTemplates('safe-app')
   const managedDir = path.join(appDir, '.opencode', 'skills', `adw-template-req-${template.id}`)
   assert.ok(fs.existsSync(managedDir))
@@ -375,7 +367,7 @@ test('清理只按 manifest 白名单：用户 skill / 无 manifest 的同前缀
   fs.mkdirSync(lookalike, { recursive: true })
   fs.writeFileSync(path.join(lookalike, 'SKILL.md'), '---\nname: user\ndescription: user\n---\n', 'utf8')
 
-  fs.writeFileSync(moduleFile, `---\nmodule: MOD-001\ntitle: "测试"\norder: 1\ntemplate: builtin-prd\n---\n\n# 测试\n`, 'utf8')
+  fs.writeFileSync(moduleFile, `---\ntitle: "测试"\ntemplate: builtin-prd\n---\n\n# 测试\n`, 'utf8')
   distribution.syncAppTemplates('safe-app')
   assert.equal(fs.existsSync(managedDir), false)
   assert.ok(fs.existsSync(path.join(userDir, 'SKILL.md')), '用户 skill 不应被删除')
@@ -414,6 +406,7 @@ test('expectedSkillIds：方法 skill + 团队 skill + 当前选中的模板 ski
   assert.deepEqual(ids, [
     'adw-requirements-document',
     'adw-design-artifacts',
+    'adw-api-design',
     'adw-frontend-implementation',
     'afcenter-page-generation',
     'pm-components-usage',
@@ -572,15 +565,15 @@ test('P7-7c 自定义 pack：设计模板 skill 页面 kind/契约段/manifest�
   assert.equal(fs.existsSync(path.join(appDir, 'docs/design/template/supplier-hub/pages/supplier-form.vue')), false)
 
   // 删除受管副本后对齐恢复；frontend/docs 正文不被覆盖
-  const designBody = path.join(appDir, 'docs/design/MOD-999/design.json')
-  writeFile(designBody, '{"module":"MOD-999"}\n')
+  const designBody = path.join(appDir, 'docs/design/design-brief.md')
+  writeFile(designBody, '# 设计说明\n')
   fs.rmSync(path.join(appDir, 'docs/design/template/supplier-hub/contracts/supplier-form.json'))
   fs.rmSync(path.join(appDir, 'docs/design/design-system.json'))
   const aligned = distribution.ensureWorkspaceAssets('ds-custom')
   assert.deepEqual(aligned.warnings, [])
   assert.ok(fs.existsSync(path.join(appDir, 'docs/design/template/supplier-hub/contracts/supplier-form.json')))
   assert.ok(fs.existsSync(path.join(appDir, 'docs/design/design-system.json')))
-  assert.equal(fs.readFileSync(designBody, 'utf8'), '{"module":"MOD-999"}\n')
+  assert.equal(fs.readFileSync(designBody, 'utf8'), '# 设计说明\n')
 })
 
 test('设计模板 skill 清理只按 manifest：无 manifest 的同前缀目录不受影响', async () => {

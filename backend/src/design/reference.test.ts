@@ -1,10 +1,9 @@
 /**
- * P6-3 设计参考包：PNG 写入接口 / manifest / tokens / artifacts 扩展
+ * 设计参考包（应用级）：PNG 写入接口 / manifest / tokens / artifacts 扩展
  *
  * 使用临时 SQLite + 临时 projects + 本地 Express；不调用模型、不启动 opencode。
  */
 import assert from 'node:assert/strict'
-import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -23,9 +22,9 @@ let base = ''
 let dbModule: typeof import('../db').db | null = null
 let prototypes: typeof import('./prototypes')
 const appId = 'ref-app'
-const moduleKey = 'MOD-001'
-const designDir = path.join(projects, appId, 'docs', 'design', moduleKey)
-const designFile = path.join(designDir, 'design.json')
+const designDir = path.join(projects, appId, 'docs', 'design')
+const entitiesFile = path.join(designDir, 'entities.json')
+const pagesFile = path.join(designDir, 'pages.json')
 const prototypesDir = path.join(designDir, 'prototypes')
 const manifestFile = path.join(prototypesDir, '_manifest.json')
 const tokensFile = path.join(designDir, 'tokens.json')
@@ -34,33 +33,39 @@ const briefFile = path.join(designDir, 'design-brief.md')
 const PNG_1X1 =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2xAAAAABJRU5ErkJggg=='
 
-const DESIGN = {
-  module: moduleKey,
-  title: '商品管理',
+const ENTITIES = {
+  schemaVersion: 2,
   entities: [
     {
       id: 'product',
       name: '商品',
       table: 'biz_product',
-      fields: [{ name: '商品编码', type: 'string', required: true }]
+      fields: [{ code: 'productCode', name: '商品编码', type: 'string', required: true }]
     }
   ],
-  relations: [],
-  pages: [
-    { id: 'product-list', name: '商品列表', type: 'list', entity: 'product', columns: ['商品编码'] },
-    { id: 'product-form', name: '商品编辑', type: 'form', entity: 'product' }
+  relations: []
+}
+
+const PAGES = {
+  schemaVersion: 2,
+  pageSets: [
+    {
+      id: 'product',
+      epic: 'EP-001',
+      title: '商品管理',
+      primaryEntity: 'product',
+      pages: [
+        { id: 'product-list', name: '商品列表', type: 'list', entity: 'product', columns: ['productCode'] },
+        { id: 'product-form', name: '商品编辑', type: 'form', entity: 'product' }
+      ]
+    }
   ]
 }
 
-function hashOf(text: string): string {
-  return createHash('sha256').update(text).digest('hex')
-}
-
-function writeDesign(content = DESIGN): string {
+function writeDesign(entities: unknown = ENTITIES, pages: unknown = PAGES): void {
   fs.mkdirSync(designDir, { recursive: true })
-  const text = `${JSON.stringify(content, null, 2)}\n`
-  fs.writeFileSync(designFile, text, 'utf8')
-  return hashOf(fs.readFileSync(designFile))
+  fs.writeFileSync(entitiesFile, `${JSON.stringify(entities, null, 2)}\n`, 'utf8')
+  fs.writeFileSync(pagesFile, `${JSON.stringify(pages, null, 2)}\n`, 'utf8')
 }
 
 function cleanReference(): void {
@@ -111,23 +116,26 @@ after(async () => {
   fs.rmSync(root, { recursive: true, force: true })
 })
 
-test('写入 PNG + manifest + tokens；artifacts 返回 prototypes/brief/tokens', async () => {
+test('写入 PNG + manifest + tokens（应用级 pageSet）；artifacts 返回 prototypes/brief/tokens', async () => {
   cleanReference()
-  const designHash = writeDesign()
-  const result = await request('POST', `/apps/${appId}/design/${moduleKey}/prototypes`, payload(designHash))
+  writeDesign()
+  const { designHashOf } = await import('./hash')
+  const designHash = designHashOf(path.join(projects, appId))
+  const result = await request('POST', `/apps/${appId}/design/prototypes`, payload(designHash))
   assert.equal(result.status, 200, JSON.stringify(result.data))
   assert.equal(result.data?.ok, true)
   const manifest = result.data?.manifest as {
     designHash: string
     styleId: string
     exportedAt: string
-    pages: Record<string, { file: string; hash: string }>
+    pages: Record<string, { file: string; hash: string; pageSet?: string }>
   }
   assert.equal(manifest.designHash, designHash)
   assert.equal(manifest.styleId, 'platform-blue')
   assert.ok(manifest.exportedAt)
   assert.ok(manifest.pages['product-list'])
   assert.equal(manifest.pages['product-list'].file, 'product-list.png')
+  assert.equal(manifest.pages['product-list'].pageSet, 'product')
   assert.match(manifest.pages['product-list'].hash, /^[a-f0-9]{64}$/)
   assert.ok(fs.existsSync(path.join(prototypesDir, 'product-list.png')))
   assert.ok(fs.existsSync(manifestFile))
@@ -144,39 +152,39 @@ test('写入 PNG + manifest + tokens；artifacts 返回 prototypes/brief/tokens'
 
   const artifacts = await request('GET', `/apps/${appId}/artifacts`)
   assert.equal(artifacts.status, 200)
-  const design = (artifacts.data?.designs as Array<Record<string, unknown>>).find(item => item.module === moduleKey)
-  assert.ok(design)
-  const proto = design?.prototypes as { designHash: string; stale: boolean; pages: Array<{ id: string; file: string }> }
+  const proto = artifacts.data?.prototypes as { designHash: string; stale: boolean; pages: Array<{ id: string; file: string }> }
   assert.equal(proto.designHash, designHash)
   assert.equal(proto.stale, false)
   assert.equal(proto.pages.length, 1)
-  assert.equal(proto.pages[0].file, `docs/design/${moduleKey}/prototypes/product-list.png`)
-  assert.deepEqual(design?.brief, { exists: false, file: `docs/design/${moduleKey}/design-brief.md` })
-  assert.deepEqual(design?.tokens, { exists: true, styleId: 'platform-blue' })
+  assert.equal(proto.pages[0].file, 'docs/design/prototypes/product-list.png')
+  assert.deepEqual(artifacts.data?.brief, { exists: false, file: 'docs/design/design-brief.md' })
+  assert.deepEqual(artifacts.data?.tokens, { exists: true, styleId: 'platform-blue' })
+  assert.equal(artifacts.data?.uiCheck?.status, 'missing')
 
   fs.writeFileSync(briefFile, '# 设计参考\n\n- 概览：商品管理\n', 'utf8')
   const withBrief = await request('GET', `/apps/${appId}/artifacts`)
-  const designAgain = (withBrief.data?.designs as Array<Record<string, unknown>>).find(item => item.module === moduleKey)
-  assert.deepEqual(designAgain?.brief, { exists: true, file: `docs/design/${moduleKey}/design-brief.md` })
+  assert.deepEqual(withBrief.data?.brief, { exists: true, file: 'docs/design/design-brief.md' })
 })
 
 test('designHash 不匹配 → 409 且不写 manifest', async () => {
   cleanReference()
   writeDesign()
-  const result = await request('POST', `/apps/${appId}/design/${moduleKey}/prototypes`, payload('0'.repeat(64)))
+  const result = await request('POST', `/apps/${appId}/design/prototypes`, payload('0'.repeat(64)))
   assert.equal(result.status, 409)
   assert.match(String(result.data?.error ?? ''), /designHash/)
   assert.equal(fs.existsSync(manifestFile), false)
   assert.equal(fs.existsSync(tokensFile), false)
 })
 
-test('非法 page id / PNG 魔数 / 风格 / 模块 → 4xx', async () => {
+test('非法 page id / PNG 魔数 / 风格 / 缺设计产物 → 4xx', async () => {
   cleanReference()
-  const designHash = writeDesign()
+  writeDesign()
+  const { designHashOf } = await import('./hash')
+  const designHash = designHashOf(path.join(projects, appId))
 
   const badId = await request(
     'POST',
-    `/apps/${appId}/design/${moduleKey}/prototypes`,
+    `/apps/${appId}/design/prototypes`,
     payload(designHash, [{ id: '../evil', dataUrl: PNG_1X1 }])
   )
   assert.equal(badId.status, 400)
@@ -184,13 +192,13 @@ test('非法 page id / PNG 魔数 / 风格 / 模块 → 4xx', async () => {
 
   const badMagic = await request(
     'POST',
-    `/apps/${appId}/design/${moduleKey}/prototypes`,
+    `/apps/${appId}/design/prototypes`,
     payload(designHash, [{ id: 'product-list', dataUrl: 'data:image/png;base64,AAAA' }])
   )
   assert.equal(badMagic.status, 400)
   assert.match(String(badMagic.data?.error ?? ''), /魔数/)
 
-  const badStyle = await request('POST', `/apps/${appId}/design/${moduleKey}/prototypes`, {
+  const badStyle = await request('POST', `/apps/${appId}/design/prototypes`, {
     designHash,
     styleId: 'missing-style',
     pages: [{ id: 'product-list', dataUrl: PNG_1X1 }]
@@ -200,7 +208,7 @@ test('非法 page id / PNG 魔数 / 风格 / 模块 → 4xx', async () => {
 
   const duplicate = await request(
     'POST',
-    `/apps/${appId}/design/${moduleKey}/prototypes`,
+    `/apps/${appId}/design/prototypes`,
     payload(designHash, [
       { id: 'product-list', dataUrl: PNG_1X1 },
       { id: 'product-list', dataUrl: PNG_1X1 }
@@ -208,14 +216,13 @@ test('非法 page id / PNG 魔数 / 风格 / 模块 → 4xx', async () => {
   )
   assert.equal(duplicate.status, 400)
 
-  const empty = await request('POST', `/apps/${appId}/design/${moduleKey}/prototypes`, payload(designHash, []))
+  const empty = await request('POST', `/apps/${appId}/design/prototypes`, payload(designHash, []))
   assert.equal(empty.status, 400)
 
-  const badModule = await request('POST', `/apps/${appId}/design/MOD-1/prototypes`, payload(designHash))
-  assert.equal(badModule.status, 400)
-
-  const missingModule = await request('POST', `/apps/${appId}/design/MOD-999/prototypes`, payload(designHash))
-  assert.equal(missingModule.status, 404)
+  cleanReference()
+  fs.rmSync(pagesFile, { force: true })
+  const missing = await request('POST', `/apps/${appId}/design/prototypes`, payload(designHash))
+  assert.equal(missing.status, 404)
 
   assert.equal(fs.existsSync(manifestFile), false)
   assert.equal(fs.existsSync(tokensFile), false)
@@ -234,10 +241,12 @@ test('超限：单页 PNG > 5MB → 400', () => {
 
 test('删除不再存在的旧 PNG（manifest + 目录残留）', async () => {
   cleanReference()
-  const designHash = writeDesign()
+  writeDesign()
+  const { designHashOf } = await import('./hash')
+  const designHash = designHashOf(path.join(projects, appId))
   const first = await request(
     'POST',
-    `/apps/${appId}/design/${moduleKey}/prototypes`,
+    `/apps/${appId}/design/prototypes`,
     payload(designHash, [
       { id: 'product-list', dataUrl: PNG_1X1 },
       { id: 'product-form', dataUrl: PNG_1X1 }
@@ -249,7 +258,7 @@ test('删除不再存在的旧 PNG（manifest + 目录残留）', async () => {
 
   const second = await request(
     'POST',
-    `/apps/${appId}/design/${moduleKey}/prototypes`,
+    `/apps/${appId}/design/prototypes`,
     payload(designHash, [{ id: 'product-list', dataUrl: PNG_1X1 }])
   )
   assert.equal(second.status, 200)
@@ -259,21 +268,20 @@ test('删除不再存在的旧 PNG（manifest + 目录残留）', async () => {
   assert.deepEqual(Object.keys(manifest.pages), ['product-list'])
 })
 
-test('design.json 变化 → artifacts.stale=true', async () => {
+test('pages.json 变化 → artifacts.prototypes.stale=true', async () => {
   cleanReference()
   writeDesign()
-  const designHash = hashOf(fs.readFileSync(designFile))
-  const result = await request('POST', `/apps/${appId}/design/${moduleKey}/prototypes`, payload(designHash))
+  const { designHashOf } = await import('./hash')
+  const designHash = designHashOf(path.join(projects, appId))
+  const result = await request('POST', `/apps/${appId}/design/prototypes`, payload(designHash))
   assert.equal(result.status, 200)
 
   const before = await request('GET', `/apps/${appId}/artifacts`)
-  const first = (before.data?.designs as Array<Record<string, unknown>>).find(item => item.module === moduleKey)
-  assert.equal((first?.prototypes as { stale: boolean }).stale, false)
+  assert.equal((before.data?.prototypes as { stale: boolean }).stale, false)
 
-  fs.appendFileSync(designFile, '\n', 'utf8')
+  fs.appendFileSync(pagesFile, '\n', 'utf8')
   const changed = await request('GET', `/apps/${appId}/artifacts`)
-  const second = (changed.data?.designs as Array<Record<string, unknown>>).find(item => item.module === moduleKey)
-  const proto = second?.prototypes as { stale: boolean; designHash: string }
+  const proto = changed.data?.prototypes as { stale: boolean; designHash: string }
   assert.equal(proto.stale, true)
   assert.equal(proto.designHash, designHash)
 })

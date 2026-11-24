@@ -35,17 +35,17 @@ test('示例 prompts：每个视图 3 条且互不相同；开发/未知共用�
 test('需求视图 AI 示例与需求视图中央空态不重复（AI 专属问法）', () => {
   // 与 RequirementsView.vue 的 EXAMPLE_PROMPTS 对照：两处同屏，文案不得重复
   const central = [
-    '按模板补全当前模块的需求文档，重点写目标与验收标准。',
-    '新增一个「订单管理」模块，包含下单、支付、发货三个场景。',
-    '检查需求与设计是否一致，列出具体差异。'
+    '按模板补全需求文档，重点写目标与验收标准。',
+    '新增一个「订单管理」Epic，包含下单、支付、发货三个用户故事。',
+    '检查需求文档与设计（实体/页面集）是否一致，列出具体差异。'
   ]
   const ai = emptyExamplesFor('requirements')
   assert.equal(ai.length, 3)
   for (const item of ai) {
     assert.equal(central.includes(item), false, `AI 示例不应与中央空态重复：${item}`)
   }
-  assert.match(ai[0], /还缺哪些模块/)
-  assert.match(ai[1], /下一个模块的文档骨架/)
+  assert.match(ai[0], /还缺哪些 Epic/)
+  assert.match(ai[1], /章节骨架/)
   assert.match(ai[2], /缺失的验收标准/)
 })
 
@@ -78,16 +78,15 @@ test('空态标题/CTA：无会话=开始与新会话；有会话=第一条消�
   assert.equal(emptyCopyFor().title, '开始与 AI 协作')
 })
 
-test('上下文 pills：视图必有；模块/pack 按需；模板风格 chip 不重复', () => {
+test('上下文 pills：视图必有；工作室 pack 按需；模块已移除', () => {
   const plain = contextPillsFor({ view: 'requirements' })
   assert.equal(plain.length, 1)
   assert.equal(plain[0].key, 'view')
   assert.equal(plain[0].label, '需求视图')
 
-  const withModule = contextPillsFor({ view: 'design', moduleKey: ' MOD-001 ' })
-  assert.equal(withModule.length, 2)
-  assert.equal(withModule[1].key, 'module')
-  assert.equal(withModule[1].label, '模块 MOD-001')
+  const design = contextPillsFor({ view: 'design' })
+  assert.equal(design.length, 1)
+  assert.equal(design[0].label, '设计视图')
 
   const studio = contextPillsFor({ view: 'template', packId: 'goods-hub' })
   assert.equal(studio.length, 2)
@@ -95,6 +94,4 @@ test('上下文 pills：视图必有；模块/pack 按需；模板风格 chip �
   assert.match(studio[1].label, /goods-hub/)
   // 非工作室视图不显示 pack（即使传了）
   assert.equal(contextPillsFor({ view: 'design', packId: 'goods-hub' }).length, 1)
-  // 空模块 key 不显示
-  assert.equal(contextPillsFor({ view: 'design', moduleKey: '  ' }).length, 1)
 })

@@ -135,8 +135,7 @@ export async function targetForDraft(packId: unknown): Promise<ChatTarget> {
     },
     expectedSkills: () => [STUDIO_SKILL_ID],
     expectedCommands: () => [STUDIO_COMMAND_NAME],
-    buildPrompt: (text: string) => studioPrompt(id, draft.name, text),
-    allowModule: false
+    buildPrompt: (text: string) => studioPrompt(id, draft.name, text)
   }
 }
 

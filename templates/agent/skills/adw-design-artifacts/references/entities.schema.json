@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI Dev Workbench 实体集 entities.json",
+  "description": "docs/design/entities.json 的唯一格式来源；后端解析与 scripts/validate.mjs 共用同一份。实体/关系全局唯一，ER 永远是一张图。",
+  "type": "object",
+  "required": ["schemaVersion", "entities"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "enum": [2] },
+    "entities": {
+      "type": "array",
+      "description": "实体（表）列表；id 应用内唯一",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "fields"],
+        "properties": {
+          "id": { "type": "string", "description": "实体 id，应用内唯一（slug / camel）" },
+          "name": { "type": "string", "description": "实体中文名" },
+          "table": { "type": "string", "description": "物理表名（可选，snake_case）" },
+          "description": { "type": "string" },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["code", "name", "type"],
+              "properties": {
+                "code": { "type": "string", "description": "英文字段名（lowerCamel），API/JSON/DB 使用" },
+                "name": { "type": "string", "description": "中文字段显示名" },
+                "type": {
+                  "type": "string",
+                  "enum": ["string", "text", "number", "decimal", "date", "datetime", "time", "boolean", "enum", "ref"]
+                },
+                "required": { "type": "boolean" },
+                "unique": { "type": "boolean" },
+                "options": {
+                  "type": "array",
+                  "description": "type=enum 时的枚举值：value 为接口值、label 为显示值",
+                  "items": {
+                    "type": "object",
+                    "required": ["value", "label"],
+                    "properties": {
+                      "value": { "type": "string" },
+                      "label": { "type": "string" }
+                    }
+                  }
+                },
+                "ref": { "type": "string", "description": "type=ref 时引用的实体 id" },
+                "note": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "relations": {
+      "type": "array",
+      "description": "实体关系；from/to 直接引用实体 id",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "type"],
+        "properties": {
+          "from": { "type": "string", "description": "源实体 id" },
+          "to": { "type": "string", "description": "目标实体 id" },
+          "type": { "type": "string", "enum": ["1:1", "1:N", "N:1", "N:M"] },
+          "label": { "type": "string", "description": "关系说明，如 所属分类" }
+        }
+      }
+    }
+  }
+}

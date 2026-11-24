@@ -44,7 +44,7 @@ description: 设计模板工作室中加载：读 catalog 的内置页面/组件
 ## 4. 页面契约字段（contract）
 
 `recipe` 必须是 8 个之一：`list` / `tree-list` / `dialog-form` / `page-form` / `main-sub` / `detail` / `dashboard` / `wizard`。
-`type` 可省略（按 recipe 推断）。`contract` 内字段与 `design.json` 页面契约同名，全部可选：
+`type` 可省略（按 recipe 推断）。`contract` 内字段与 `pages.json` 页面契约同名，全部可选：
 
 | 字段 | 用途 | 说明 |
 | --- | --- | --- |
@@ -66,7 +66,7 @@ description: 设计模板工作室中加载：读 catalog 的内置页面/组件
   `name` 是**键**（列/查询/表单/分组引用它），`label` 是显示名；
 - `sampleSubEntities` 可选：子实体数组；`subTables.entity/target` 必须能在 `sampleEntity + sampleSubEntities` 池内解析；
 - 字段类型：`string/text/number/decimal/date/datetime/time/boolean/enum/ref`；`enum` 需要 `options`；
-- 只用于模板预览（synthetic design），不写进应用需求；应用内仍以 `docs/design/<MOD>/design.json` 为准。
+- 只用于模板预览（synthetic design），不写进应用需求；应用内仍以 `docs/design/pages.json` 为准。
 
 ## 6. 组件映射（契约能力边界）
 

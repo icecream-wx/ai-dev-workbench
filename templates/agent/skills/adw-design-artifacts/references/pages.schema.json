@@ -1,0 +1,163 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI Dev Workbench 页面集 pages.json",
+  "description": "docs/design/pages.json 的唯一格式来源；页面集 = Epic，页面 id 应用内唯一。页面契约字段全部可选；字段引用一律使用实体字段 code。",
+  "type": "object",
+  "required": ["schemaVersion", "pageSets"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "enum": [2] },
+    "pageSets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "epic", "title", "pages"],
+        "properties": {
+          "id": { "type": "string", "description": "页面集 id，应用内唯一 slug" },
+          "epic": { "type": "string", "description": "对应需求文档中的 Epic ID（EP-001）" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "primaryEntity": { "type": "string", "description": "主实体 id（可选；页面集可跨实体）" },
+          "pages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "name", "type"],
+              "properties": {
+                "id": { "type": "string", "description": "页面 id，应用内唯一（kebab-case）" },
+                "name": { "type": "string" },
+                "type": {
+                  "type": "string",
+                  "enum": ["list", "form", "detail", "dashboard", "kanban", "gantt", "calendar"]
+                },
+                "entity": { "type": "string", "description": "绑定实体 id" },
+                "columns": { "type": "array", "items": { "type": "string" }, "description": "字段 code" },
+                "requirementRefs": {
+                  "type": "array",
+                  "description": "可选：需求引用（自由文本，不校验）",
+                  "items": { "type": "string" }
+                },
+                "recipe": {
+                  "type": "string",
+                  "description": "页面配方（来自设计模板包 pageRecipes）",
+                  "enum": ["list", "tree-list", "dialog-form", "page-form", "main-sub", "detail", "dashboard", "wizard"],
+                  "x-adw-warning": true
+                },
+                "catalogRef": {
+                  "type": "string",
+                  "description": "模板页面库引用：<applicationType>/<pageId>",
+                  "x-adw-warning": true
+                },
+                "blueprint": {
+                  "type": "string",
+                  "description": "蓝图 Vue 路径（设计模板包相对路径）",
+                  "x-adw-warning": true
+                },
+                "filters": {
+                  "type": "array",
+                  "description": "查询字段 code 数组",
+                  "items": { "type": "string" },
+                  "x-adw-warning": true
+                },
+                "rowActions": {
+                  "type": "array",
+                  "description": "行操作：推荐动作码 create/edit/delete/detail/batchDelete/import/export/submit/cancel/enable/disable/approve/reject/print/copy；自定义值保留原值，只 warning 不阻断",
+                  "items": { "type": "string" },
+                  "x-adw-recommended": ["create", "edit", "delete", "detail", "batchDelete", "import", "export", "submit", "cancel", "enable", "disable", "approve", "reject", "print", "copy"],
+                  "x-adw-warning": true
+                },
+                "toolbarActions": {
+                  "type": "array",
+                  "description": "工具栏操作：推荐动作码同 rowActions；自定义值保留原值，只 warning 不阻断",
+                  "items": { "type": "string" },
+                  "x-adw-recommended": ["create", "edit", "delete", "detail", "batchDelete", "import", "export", "submit", "cancel", "enable", "disable", "approve", "reject", "print", "copy"],
+                  "x-adw-warning": true
+                },
+                "selection": {
+                  "type": "boolean",
+                  "description": "列表是否多选",
+                  "x-adw-warning": true
+                },
+                "pagination": {
+                  "type": "object",
+                  "description": "分页形态与每页条数",
+                  "x-adw-warning": true,
+                  "properties": {
+                    "layout": { "type": "string", "enum": ["bar", "split", "three-part"] },
+                    "pageSize": { "type": "integer" }
+                  }
+                },
+                "form": {
+                  "type": "object",
+                  "description": "表单页契约",
+                  "x-adw-warning": true,
+                  "properties": {
+                    "presentation": { "type": "string", "enum": ["dialog", "page"] },
+                    "columns": { "type": "integer", "enum": [1, 2] },
+                    "width": { "type": "integer", "description": "弹窗宽度（presentation=dialog 时）" },
+                    "fields": { "type": "array", "items": { "type": "string" }, "description": "字段 code" },
+                    "groups": {
+                      "type": "array",
+                      "description": "表单分组；fields 引用字段 code",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "title": { "type": "string" },
+                          "fields": { "type": "array", "items": { "type": "string" } }
+                        }
+                      }
+                    }
+                  }
+                },
+                "tree": {
+                  "type": "object",
+                  "description": "树面板契约（recipe=tree-list 时）",
+                  "x-adw-warning": true,
+                  "properties": {
+                    "titleField": { "type": "string", "description": "树节点标题字段 code" },
+                    "parentField": { "type": "string", "description": "父级字段 code" },
+                    "actionStyle": {
+                      "type": "string",
+                      "description": "操作形态：header / footer / none；未知值只 warning，保留原值",
+                      "x-adw-allowed": ["header", "footer", "none"]
+                    },
+                    "selectionStyle": {
+                      "type": "string",
+                      "description": "选中标记：platform / dot / background；未知值只 warning，保留原值",
+                      "x-adw-allowed": ["platform", "dot", "background"]
+                    }
+                  }
+                },
+                "subTables": {
+                  "type": "array",
+                  "description": "主从页面的子表",
+                  "x-adw-warning": true,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "entity": { "type": "string", "description": "子表实体 id" },
+                      "title": { "type": "string" },
+                      "columns": { "type": "array", "items": { "type": "string" }, "description": "字段 code" },
+                      "mode": { "type": "string", "enum": ["tab", "flow"] }
+                    }
+                  }
+                },
+                "components": {
+                  "type": "object",
+                  "description": "字段 code → pm 组件覆盖（由设计模板包 componentMap 推导，页面可覆盖）",
+                  "additionalProperties": { "type": "string" },
+                  "x-adw-warning": true
+                },
+                "actionTargets": {
+                  "type": "object",
+                  "description": "动作码 → 同页面集目标页面 id（create/edit/detail 等；显式优先）。create/edit 目标应为表单配方（dialog-form/page-form/main-sub/wizard），detail 目标应为 detail；main-sub 是合法表单目标。",
+                  "additionalProperties": { "type": "string" },
+                  "x-adw-warning": true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

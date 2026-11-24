@@ -4,7 +4,7 @@
  * 布局（一个模板一个 skill）：
  *   .opencode/skills/adw-template-req-<id>/
  *     SKILL.md                              何时加载 + 章节清单 + 使用方式
- *     assets/template.md                    需求模板骨架（MOD-XXX 占位）
+ *     assets/template.md                    需求文档骨架（requirements.md 占位）
  *     _manifest.json                        {managed, kind, sourceId, templateName, hash}
  *   .opencode/skills/adw-template-proto-<applicationType>/   设计模板 skill（pack 型）
  *     SKILL.md                              页面库/蓝图/配方/组件映射/一致性清单
@@ -20,7 +20,7 @@
  *   **不改** docs/requirements、docs/design 正文；
  * - 同步是覆盖式、幂等；全部模板保存后立即同步所有引用应用；
  * - 清理只删 `_manifest.json` 白名单里的模板 skill，不碰方法 skill 与用户自建 skill；
- * - 需求模板删除保护：仍被模块 frontmatter 引用 → 拒绝（调用方返回 409）；
+ * - 需求模板删除保护：仍被 `docs/requirements/requirements.md` frontmatter 引用 → 拒绝（调用方返回 409）；
  * - 设计阶段只用设计模板（应用类型 × 视觉风格 + 页面库），旧原型模板已彻底删除。
  */
 import { createHash } from 'node:crypto'
@@ -37,7 +37,7 @@ import {
   type DesignSystemSummary
 } from '../design/system-file'
 import { readFrontmatterFile } from '../workspace/frontmatter'
-import { renderModuleMarkdown } from './render'
+import { renderRequirementsMarkdown } from './render'
 import type { RequirementTemplate } from '../requirements/types'
 
 export type TemplateKind = 'requirement'
@@ -54,7 +54,7 @@ export const TEAM_SKILL_IDS = ['afcenter-page-generation', 'pm-components-usage'
 export const DEVELOPMENT_SKILL_ID = 'adw-frontend-implementation'
 
 /** 方法 skill（所有应用都分发） */
-export const METHOD_SKILL_IDS = [SKILL_IDS.requirement, 'adw-design-artifacts', DEVELOPMENT_SKILL_ID] as const
+export const METHOD_SKILL_IDS = [SKILL_IDS.requirement, 'adw-design-artifacts', 'adw-api-design', DEVELOPMENT_SKILL_ID] as const
 
 const TEMPLATE_SKILL_PREFIX: Record<TemplateKind, string> = {
   requirement: 'adw-template-req-'
@@ -219,24 +219,17 @@ function appRow(appId: string): AppTemplateRow | undefined {
     .get(appId) as AppTemplateRow | undefined
 }
 
-/** 模块 frontmatter 的 template 引用（文件是唯一事实源） */
-function moduleTemplateRefs(appDir: string): Array<{ file: string; module: string; template: string }> {
-  const dir = path.join(appDir, 'docs', 'requirements')
-  if (!fs.existsSync(dir)) return []
-  const refs: Array<{ file: string; module: string; template: string }> = []
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (!entry.isFile() || !entry.name.endsWith('.md') || entry.name.toLowerCase() === 'readme.md') continue
-    const file = path.join(dir, entry.name)
-    try {
-      const parsed = readFrontmatterFile(file)
-      const template = parsed.data.template?.trim()
-      if (!template) continue
-      refs.push({ file: path.relative(appDir, file), module: parsed.data.module ?? '', template })
-    } catch {
-      // 读失败不影响其它文件
-    }
+/** 单需求文档 frontmatter 的 template 引用（文件是唯一事实源） */
+function requirementTemplateRefs(appDir: string): Array<{ file: string; template: string }> {
+  const file = path.join(appDir, 'docs', 'requirements', 'requirements.md')
+  try {
+    const parsed = readFrontmatterFile(file)
+    const template = parsed.data.template?.trim()
+    return template ? [{ file: path.relative(appDir, file).replace(/\\/g, '/'), template }] : []
+  } catch {
+    // 文件不存在/读取失败：没有引用
+    return []
   }
-  return refs
 }
 
 function requirementTemplateOrNull(id: string | null | undefined): RequirementTemplate | null {
@@ -250,7 +243,7 @@ function requirementTemplateOrNull(id: string | null | undefined): RequirementTe
   }
 }
 
-/** 应用要携带的需求模板集合：应用默认模板 + 模块 frontmatter 引用（文件是唯一事实源） */
+/** 应用要携带的需求模板集合：应用默认模板 + 单文档 frontmatter 引用（文件是唯一事实源） */
 function selectedRequirementTemplates(
   appDir: string,
   defaultId: string | null | undefined,
@@ -259,10 +252,10 @@ function selectedRequirementTemplates(
   const defaults = require('../requirements/templates') as typeof import('../requirements/templates')
   const appDefault = requirementTemplateOrNull(defaultId) ?? defaults.defaultRequirementTemplate()
   const ids = new Set<string>([appDefault.id])
-  for (const ref of moduleTemplateRefs(appDir)) {
+  for (const ref of requirementTemplateRefs(appDir)) {
     const template = requirementTemplateOrNull(ref.template)
     if (template) ids.add(template.id)
-    else warnings.push(`模块 ${ref.module || ref.file} 引用的需求模板不存在：${ref.template}`)
+    else warnings.push(`需求文档引用的需求模板不存在：${ref.template}（${ref.file}）`)
   }
   return [...ids]
     .sort()
@@ -277,18 +270,16 @@ function oneLine(text: string): string {
 }
 
 /**
- * 模板副本是“示例骨架”，不是某个具体模块：避免 agent 看到 `MOD-001-标准PRD.md`
- * 就照抄成真实模块。新建模块时必须替换 module / title / order。
+ * 模板副本是“示例骨架”，不是某个具体应用：避免 agent 直接当真实文档复制。
+ * 引用本模板时按章节结构写 `docs/requirements/requirements.md`（单文档）。
  */
 function requirementTemplateAsset(template: RequirementTemplate, templateId: string): string {
-  const skeleton = renderModuleMarkdown(template, {
-    module: 'MOD-XXX',
-    title: '<模块标题>',
-    order: 1,
+  const skeleton = renderRequirementsMarkdown(template, {
+    title: '<应用名>',
     templateId
   })
   const note =
-    '<!-- 模板示例：新建模块时替换 module / title / order；本文件是受管副本，不要直接当模块文件使用。 -->'
+    '<!-- 模板示例：本文件是受管副本，不要直接当应用需求文档使用；应用文档为 docs/requirements/requirements.md。 -->'
   return skeleton.replace('\n# ', `\n${note}\n\n# `)
 }
 
@@ -302,7 +293,7 @@ function requirementSkillMarkdown(template: RequirementTemplate): string {
     '---',
     `name: ${yamlValue(`需求模板：${template.name}`)}`,
     `description: ${yamlValue(
-      `需求模板：${template.name}；模块 frontmatter 的 template 指向 ${id} 时加载，用于章节结构与写作要求`
+      `需求模板：${template.name}；docs/requirements/requirements.md frontmatter 的 template 指向 ${id} 时加载，用于章节结构与写作要求`
     )}`,
     '---',
     '',
@@ -313,8 +304,8 @@ function requirementSkillMarkdown(template: RequirementTemplate): string {
     '',
     '## 何时加载',
     '',
-    `- 模块 frontmatter 的 \`template\` 等于 \`${id}\` 时：先加载本 skill，再写/改该模块。`,
-    '- 找不到模块指定的模板 skill 时，先找应用默认模板 skill；仍找不到则按方法 skill',
+    `- \`docs/requirements/requirements.md\` frontmatter 的 \`template\` 等于 \`${id}\` 时：先加载本 skill，再写/改该文档。`,
+    '- 找不到对应模板 skill 时，先找应用默认模板 skill；仍找不到则按方法 skill',
     '  `adw-requirements-document` 的通用要求写，并在回复里说明缺少模板。',
     '',
     '## 章节清单',
@@ -342,11 +333,10 @@ function requirementSkillMarkdown(template: RequirementTemplate): string {
     '## 使用方式',
     '',
     '- 骨架文件：`assets/template.md`（受管资源，不要修改）。',
-    `- 新建模块：复制骨架到 \`docs/requirements/MOD-xxx-<标题>.md\`，替换 frontmatter 的`,
-    `  \`module\` / \`title\` / \`order\`，保留 \`template: ${id}\`。`,
-    '- 更新模块：按本模板章节结构增量修改，不重写整篇、不新建重复模块。',
+    `- 更新需求：按本模板章节结构增量修改 \`docs/requirements/requirements.md\`，保留 frontmatter 的 \`template: ${id}\`。`,
+    '- 单文档：不要再新建 `MOD-xxx-*.md`；Epic 用 `EP-001`、Story 用 `US-001` 稳定 ID，供设计页面集引用。',
     '- 业务规则、用户故事、验收标准写清楚；Controller 类名、内部表结构、接口路径属于设计/代码，不要写。',
-    '- 需求与设计必须一致；需要时加载 `adw-design-artifacts` 同步 `docs/design/<MOD>/design.json`。',
+    '- 需求与设计必须一致；需要时加载 `adw-design-artifacts` 同步 `docs/design/entities.json` / `pages.json`。',
     '- 完成后用中文汇报：关键判断、改了哪些文件/章节、待确认项。',
     ''
   )
@@ -399,7 +389,7 @@ function designTemplateSkillMarkdown(summary: DesignSystemSummary): string {
     '---',
     `name: ${yamlValue(`设计模板：${summary.applicationTypeName} · ${summary.styleName}`)}`,
     `description: ${yamlValue(
-      `设计模板：${summary.applicationTypeName}（风格 ${summary.style}）；写 design.json 与实现 Vue3 页面时加载，提供页面库/蓝图/组件映射/一致性清单`
+      `设计模板：${summary.applicationTypeName}（风格 ${summary.style}）；写 entities.json / pages.json 与实现 Vue3 页面时加载，提供页面库/蓝图/组件映射/一致性清单`
     )}`,
     '---',
     '',
@@ -414,7 +404,7 @@ function designTemplateSkillMarkdown(summary: DesignSystemSummary): string {
     '',
     '## 何时加载',
     '',
-    '- 设计视图：为一个模块写 `docs/design/<MOD>/design.json` 前加载，确定页面骨架、配方、',
+    '- 设计视图：为应用写 `docs/design/entities.json`、`docs/design/pages.json` 前加载，确定页面骨架、配方、',
     '  组件与交互（`recipe`/`catalogRef`/`blueprint`）。',
     '- 开发视图：把蓝图复制到 `frontend/src/views/`、替换 mock/接口前加载。',
     '- 蓝图是视觉与结构基准；PNG 是模板风格截图（无显式契约的旧设计为线框）。两者冲突时以蓝图/预览为准并记录差异。',
@@ -450,7 +440,7 @@ function designTemplateSkillMarkdown(summary: DesignSystemSummary): string {
       ? [
           '## 契约页实现（无蓝图）',
           '',
-          '- 契约页没有 `.vue` 蓝图：读 `contracts/<page>.json` + `docs/design/<MOD>/design.json` 的页面契约，',
+          '- 契约页没有 `.vue` 蓝图：读 `contracts/<page>.json` + `docs/design/pages.json` 的页面契约，',
           '  用 PageTemplates + pm-* 实现；不要复制/编造蓝图。',
           '- 页面根类用 `baseApplicationType`（见 `docs/design/design-system.json` 的 `preview`）；',
           '  合并后的 `structure.css` 已包含来源类型的结构规则。',
@@ -475,7 +465,8 @@ function designTemplateSkillMarkdown(summary: DesignSystemSummary): string {
     '设计与开发都先读本 skill；随后：',
     '',
     '1. `docs/design/design-system.json`（本应用 pack/类型/风格/页面清单）；',
-    '2. `docs/design/<MOD>/design.json`（数据模型/页面契约），以及 `design-brief.md`、',
+    '2. `docs/design/entities.json`（实体/关系）、`docs/design/pages.json`（页面集/页面契约）、',
+    '   `docs/design/api-design.md`（接口设计），以及 `design-brief.md`、',
     '   `tokens.json`、`prototypes/*.png`（模板风格截图；无显式契约的旧设计为线框，PNG 过期先说明）；',
     `3. 选中的页面蓝图 + \`structure.css\` + \`${summary.styles.style}\`；`,
     '4. 按 `afcenter-page-generation` 选页面配方/偏好，按 `pm-components-usage` 选组件；',
@@ -483,14 +474,14 @@ function designTemplateSkillMarkdown(summary: DesignSystemSummary): string {
     '',
     '## ui-check.md 要求',
     '',
-    '- 工作台在 `docs/design/<MOD>/ui-check.md` 生成骨架；实现前填',
-    '  「设计页 → 路由 → 蓝图 → 字段/列 → 操作 → 布局/交互 → 差异/决策」。',
+    '- 工作台在 `docs/design/ui-check.md` 生成骨架；实现前填',
+    '  「设计页 → 路由 → 蓝图 → 字段/列 → 操作 → 布局/交互 → 差异/决策」与「接口对照（页面动作 → 接口）」；',
     '- 实现后填「设计页 → 实现文件 → 截图 → 一致项 → 差异 → 原因/处理」。',
     '- 未填写不阻断实现，但要在会话摘要/验收中标记“流程未完成”。',
     '',
     '## 冲突上报与边界',
     '',
-    '- 需求 / design.json / 蓝图 / tokens 冲突：先报告并说明取舍，不静默偏离。',
+    '- 需求 / pages.json 契约 / entities.json / api-design.md / 蓝图 / tokens 冲突：先报告并说明取舍，不静默偏离。',
     '- `tokens.json` 与 PNG 只约束 Vue3 前端；EOS 后端不吃风格，不要为样式改后端结构。',
     '- 不要修改本 skill、团队 skill、`design-system.json` 与蓝图副本（受管资源会被覆盖）；',
     '  开发改的是 `frontend/src/views/` 下的实现页面。',
@@ -744,7 +735,7 @@ export interface SyncTemplatesOptions {
 
 /**
  * 分发/对齐单个应用的模板 skill（幂等，覆盖式）；不读 DB 的版本供创建应用使用。
- * 只生成被选中的模板（应用默认 + 模块 frontmatter 引用）。
+ * 只生成被选中的模板（应用默认 + 单需求文档 frontmatter 引用）。
  */
 export function syncTemplatesInto(appDir: string, options: SyncTemplatesOptions = {}): SyncTemplatesResult {
   const warnings: string[] = []
@@ -886,27 +877,27 @@ function templateReferencedBy(appDir: string, appId: string, id: string): boolea
   const app = appRow(appId)
   if (!app) return false
   if (app.requirement_template_id === id) return true
-  if (moduleTemplateRefs(appDir).some(ref => ref.template === id)) return true
+  if (requirementTemplateRefs(appDir).some(ref => ref.template === id)) return true
   return Boolean(readTemplateSkillManifest(appDir, 'requirement', id))
 }
 
 export interface TemplateUsage {
   kind: TemplateKind
   id: string
-  apps: Array<{ appId: string; appName: string; modules: Array<{ module: string; file: string }> }>
+  apps: Array<{ appId: string; appName: string; documents: Array<{ file: string }> }>
 }
 
-/** 模板使用情况：需求模板按模块 frontmatter 引用统计（用于删除保护 409） */
+/** 模板使用情况：需求模板按单需求文档 frontmatter 引用统计（用于删除保护 409） */
 export function templateUsage(kind: TemplateKind, id: string): TemplateUsage {
   const rows = db.prepare('SELECT id, name FROM apps ORDER BY created_at ASC').all() as Array<{ id: string; name: string }>
   const apps: TemplateUsage['apps'] = []
   for (const row of rows) {
     const appDir = appDirOf(row.id)
     if (!fs.existsSync(appDir)) continue
-    const modules = moduleTemplateRefs(appDir)
+    const documents = requirementTemplateRefs(appDir)
       .filter(ref => ref.template === id)
-      .map(ref => ({ module: ref.module, file: ref.file }))
-    if (modules.length) apps.push({ appId: row.id, appName: row.name, modules })
+      .map(ref => ({ file: ref.file }))
+    if (documents.length) apps.push({ appId: row.id, appName: row.name, documents })
   }
   return { kind, id, apps }
 }

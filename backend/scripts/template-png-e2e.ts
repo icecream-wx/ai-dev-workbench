@@ -29,7 +29,6 @@ const shotsDir = process.env.P10_SHOTS_DIR || path.join(os.tmpdir(), 'workbench-
 const port = 3447
 const base = `http://127.0.0.1:${port}`
 const appId = 'p10-e2e'
-const moduleKey = 'MOD-001'
 /** data-cyan 主色（templates/design-system pack tokens.primary = #145fba） */
 const CYAN_PRIMARY = 'rgb(20, 95, 186)'
 const CYAN_RGB = [20, 95, 186] as const
@@ -92,44 +91,48 @@ async function request(method: string, apiPath: string, body?: unknown): Promise
 /** operations-management × data-cyan：dashboard / detail / list 三页（含详情子表） */
 function designFixture(): Record<string, unknown> {
   const productFields = [
-    { name: '商品编码', label: '商品编码', type: 'string', required: true, unique: true },
-    { name: '商品名称', label: '商品名称', type: 'string', required: true },
-    { name: '商品分类', label: '商品分类', type: 'string' },
-    { name: '计量单位', label: '计量单位', type: 'string' },
-    { name: '销售单价', label: '销售单价', type: 'decimal' },
-    { name: '库存数量', label: '库存数量', type: 'number' },
-    { name: '商品状态', label: '商品状态', type: 'enum', options: ['上架', '下架'] },
-    { name: '创建时间', label: '创建时间', type: 'datetime' },
-    { name: '更新时间', label: '更新时间', type: 'datetime' },
-    { name: '商品描述', label: '商品描述', type: 'text' }
+    { code: '商品编码', name: '商品编码', label: '商品编码', type: 'string', required: true, unique: true },
+    { code: '商品名称', name: '商品名称', label: '商品名称', type: 'string', required: true },
+    { code: '商品分类', name: '商品分类', label: '商品分类', type: 'string' },
+    { code: '计量单位', name: '计量单位', label: '计量单位', type: 'string' },
+    { code: '销售单价', name: '销售单价', label: '销售单价', type: 'decimal' },
+    { code: '库存数量', name: '库存数量', label: '库存数量', type: 'number' },
+    { code: '商品状态', name: '商品状态', label: '商品状态', type: 'enum', options: [{ value: '上架', label: '上架' }, { value: '下架', label: '下架' }] },
+    { code: '创建时间', name: '创建时间', label: '创建时间', type: 'datetime' },
+    { code: '更新时间', name: '更新时间', label: '更新时间', type: 'datetime' },
+    { code: '商品描述', name: '商品描述', label: '商品描述', type: 'text' }
   ]
   const detailFields = [
-    { name: '明细编号', label: '明细编号', type: 'string', required: true },
-    { name: '规格型号', label: '规格型号', type: 'string' },
-    { name: '包装方式', label: '包装方式', type: 'enum', options: ['袋', '盒', '罐', '箱'] },
-    { name: '保质期（天）', label: '保质期（天）', type: 'number' }
+    { code: '明细编号', name: '明细编号', label: '明细编号', type: 'string', required: true },
+    { code: '规格型号', name: '规格型号', label: '规格型号', type: 'string' },
+    { code: '包装方式', name: '包装方式', label: '包装方式', type: 'enum', options: [{ value: '袋', label: '袋' }, { value: '盒', label: '盒' }, { value: '罐', label: '罐' }, { value: '箱', label: '箱' }] },
+    { code: '保质期（天）', name: '保质期（天）', label: '保质期（天）', type: 'number' }
   ]
   const supplierFields = [
-    { name: '供应商编码', label: '供应商编码', type: 'string', required: true },
-    { name: '供应商名称', label: '供应商名称', type: 'string' },
-    { name: '合作状态', label: '合作状态', type: 'enum', options: ['合作中', '已终止'] },
-    { name: '结算周期（天）', label: '结算周期（天）', type: 'number' }
+    { code: '供应商编码', name: '供应商编码', label: '供应商编码', type: 'string', required: true },
+    { code: '供应商名称', name: '供应商名称', label: '供应商名称', type: 'string' },
+    { code: '合作状态', name: '合作状态', label: '合作状态', type: 'enum', options: [{ value: '合作中', label: '合作中' }, { value: '已终止', label: '已终止' }] },
+    { code: '结算周期（天）', name: '结算周期（天）', label: '结算周期（天）', type: 'number' }
   ]
   return {
-    module: moduleKey,
-    title: '商品运营',
-    designSystem: {
-      pack: 'afcenter-app-templates-v1',
-      applicationType: 'operations-management',
-      style: 'data-cyan'
+    entities: {
+      schemaVersion: 2,
+      entities: [
+        { id: 'product', name: '商品', table: 'biz_product', fields: productFields },
+        { id: 'productDetail', name: '商品明细', table: 'biz_product_detail', fields: detailFields },
+        { id: 'productSupplier', name: '商品供应商', table: 'biz_product_supplier', fields: supplierFields }
+      ],
+      relations: [{ from: 'product', to: 'productDetail', type: '1:N', label: '商品包含明细' }]
     },
-    entities: [
-      { id: 'product', name: '商品', table: 'biz_product', fields: productFields },
-      { id: 'productDetail', name: '商品明细', table: 'biz_product_detail', fields: detailFields },
-      { id: 'productSupplier', name: '商品供应商', table: 'biz_product_supplier', fields: supplierFields }
-    ],
-    relations: [{ from: 'product', to: 'productDetail', type: '1:N', label: '商品包含明细' }],
-    pages: [
+    pages: {
+      schemaVersion: 2,
+      pageSets: [
+        {
+          id: 'product',
+          epic: 'EP-001',
+          title: '商品运营',
+          primaryEntity: 'product',
+          pages: [
       {
         id: 'overview',
         name: '运营概览',
@@ -212,7 +215,10 @@ function designFixture(): Record<string, unknown> {
         blueprint: 'application-types/operations-management/pages/OperationsIssues.vue',
         entity: 'product'
       }
-    ]
+          ]
+        }
+      ]
+    }
   }
 }
 
@@ -367,9 +373,9 @@ async function waitFrameReady(page: Page, expectedText?: string): Promise<FrameL
 async function openDesignPrototype(page: Page): Promise<void> {
   await page.goto(`${base}/#/apps/${appId}/design`, { waitUntil: 'domcontentloaded' })
   await page.locator('[data-testid=design-view]').waitFor({ state: 'visible', timeout: 20000 })
-  await page.locator('[data-testid=design-module-MOD-001]').waitFor({ state: 'visible', timeout: 20000 })
-  await page.locator('[data-testid=design-module-MOD-001]').click()
   await page.locator('[data-testid=design-tab-prototype]').click()
+  await page.locator('[data-testid=design-pageset-product]').waitFor({ state: 'visible', timeout: 20000 })
+  await page.locator('[data-testid=design-pageset-product]').click()
 }
 
 interface PngSample {
@@ -427,16 +433,16 @@ async function main(): Promise<void> {
   try {
     await startHarness()
     const harnessState = await readState()
-    const designDir = path.join(harnessState.appDir, 'docs', 'design', moduleKey)
+    const designDir = path.join(harnessState.appDir, 'docs', 'design')
     const prototypesDir = path.join(designDir, 'prototypes')
 
-    const created = await request('POST', `/apps/${appId}/requirements-modules`, { title: '商品运营' })
-    check(created.status === 201, '准备需求模块 MOD-001')
+    const fixture = designFixture()
     fs.mkdirSync(designDir, { recursive: true })
-    fs.writeFileSync(path.join(designDir, 'design.json'), `${JSON.stringify(designFixture(), null, 2)}\n`, 'utf8')
+    fs.writeFileSync(path.join(designDir, 'entities.json'), `${JSON.stringify(fixture.entities, null, 2)}\n`, 'utf8')
+    fs.writeFileSync(path.join(designDir, 'pages.json'), `${JSON.stringify(fixture.pages, null, 2)}\n`, 'utf8')
 
     const artifacts = await request('GET', `/apps/${appId}/artifacts`)
-    const designHash = artifacts.data?.hashes?.[`docs/design/${moduleKey}/design.json`] || ''
+    const designHash = artifacts.data?.designHash || ''
     check(Boolean(designHash), `artifacts 返回 designHash（${designHash}）`)
 
     browser = await chromium.launch()
@@ -467,7 +473,7 @@ async function main(): Promise<void> {
       '2.2 根节点带 optimized-suite + application-type-operations'
     )
     check((await dashFrame.locator('[data-testid=contract-page-dashboard]').count()) === 1, '2.3 dashboard 配方渲染')
-    check((await dashFrame.locator('.page-heading h1').first().innerText()).includes('运营概览'), '2.4 页面标题来自 design.json')
+    check((await dashFrame.locator('.page-heading h1').first().innerText()).includes('运营概览'), '2.4 页面标题来自 pages.json')
     check((await dashFrame.locator('.metrics-grid').count()) === 1, '2.5 metrics-grid 模板结构')
     check((await dashFrame.locator('.metric-card').count()) >= 3, `2.6 metric-card ≥3（${await dashFrame.locator('.metric-card').count()}）`)
     check((await dashFrame.locator('.panel').count()) >= 2, '2.7 至少两个 panel')
@@ -597,7 +603,7 @@ async function main(): Promise<void> {
       styleId: string
       pages: Record<string, unknown>
     }
-    check(manifest.designHash === designHash, '5.2 manifest designHash 与 design.json 一致')
+    check(manifest.designHash === designHash, '5.2 manifest designHash 与设计产物一致')
     check(manifest.styleId === 'data-cyan', `5.3 manifest styleId=data-cyan（${manifest.styleId}）`)
     const manifestPages = Object.keys(manifest.pages || {})
     check(manifestPages.length === 6, `5.4 manifest 页数=6（${manifestPages.join(',')}）`)

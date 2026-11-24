@@ -45,9 +45,9 @@ test('reasoning 展示条件：非空才显示', () => {
 test('运行中工具行：取最后一项；无工具为空', () => {
   const steps = [
     { items: [{ name: 'read', target: 'a.md' }] },
-    { items: [{ name: 'write', target: 'docs/requirements/MOD-001.md' }] }
+    { items: [{ name: 'write', target: 'docs/requirements/requirements.md' }] }
   ]
-  assert.equal(runningToolLine(steps), '正在使用 write · docs/requirements/MOD-001.md')
+  assert.equal(runningToolLine(steps), '正在使用 write · docs/requirements/requirements.md')
   assert.equal(runningToolLine([]), '')
   assert.equal(runningToolLine(null), '')
   assert.equal(runningToolLine([{ items: [] }]), '')

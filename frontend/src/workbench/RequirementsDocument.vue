@@ -2,18 +2,18 @@
   <section class="doc" data-testid="requirements-document">
     <header class="doc-head">
       <div class="title-row">
-        <h1 data-testid="doc-title">{{ module.title || module.key }}</h1>
-        <span v-if="module.template" class="badge" data-testid="doc-template-badge">{{ templateLabel }}</span>
-        <span v-if="module.errors.length" class="badge error">错误 {{ module.errors.length }}</span>
-        <span v-else-if="module.warnings.length" class="badge warn">警告 {{ module.warnings.length }}</span>
+        <h1 data-testid="doc-title">{{ requirement.title || '需求文档' }}</h1>
+        <span v-if="requirement.template" class="badge" data-testid="doc-template-badge">{{ templateLabel }}</span>
+        <span v-if="requirement.errors.length" class="badge error">错误 {{ requirement.errors.length }}</span>
+        <span v-else-if="requirement.warnings.length" class="badge warn">警告 {{ requirement.warnings.length }}</span>
       </div>
       <div class="meta-row">
-        <code data-testid="doc-file">{{ module.file }}</code>
+        <code data-testid="doc-file">{{ requirement.file }}</code>
         <span>{{ toc.length }} 节</span>
-        <span>{{ module.key }}</span>
+        <span>{{ summary.epicCount }} 个 Epic · {{ summary.storyCount }} 个 Story</span>
       </div>
-      <p v-for="warning in module.warnings" :key="warning" class="warn-line">{{ warning }}</p>
-      <p v-for="error in module.errors" :key="`${error.path}-${error.message}`" class="error-line">
+      <p v-for="warning in requirement.warnings" :key="warning" class="warn-line">{{ warning }}</p>
+      <p v-for="error in requirement.errors" :key="`${error.path}-${error.message}`" class="error-line">
         {{ error.file }} · {{ error.path }} · {{ error.message }}{{ error.expected ? `（期望：${error.expected}）` : '' }}
       </p>
     </header>
@@ -26,8 +26,10 @@
             <button
               type="button"
               :data-testid="`toc-item-${item.id}`"
+              :title="item.kind === 'epic' ? 'Epic' : item.kind === 'story' ? 'Story' : undefined"
               @click="scrollToAnchor(item.id)"
             >
+              <code v-if="item.key">{{ item.key }}</code>
               {{ item.title }}
             </button>
           </li>
@@ -35,20 +37,20 @@
       </nav>
 
       <div class="doc-main">
-        <div v-if="!module.sections.length" class="empty">
-          <p>这个模块还没有章节。可以在对话里让 AI 按模板补全。</p>
+        <div v-if="!requirement.sections.length" class="empty">
+          <p>这份需求文档还没有章节。可以在对话里让 AI 按模板补全。</p>
         </div>
-        <div ref="docRoot" class="markdown-wrap">
+        <div ref="docRoot" class="markdown-wrap" @click="onDocClick">
           <MarkdownView ref="markdownRef" :markdown="doc.markdown" />
         </div>
 
         <div class="design" data-testid="design-summary">
           <strong>设计摘要</strong>
-          <span v-if="design">
-            实体 {{ design.entities.length }} · 页面 {{ design.pages.length }}
-            <span v-if="design.errors.length" class="badge error">{{ design.errors.length }} 处格式问题</span>
+          <span v-if="hasDesign">
+            实体 {{ entityCount }} · 页面集 {{ pageSetCount }} · 页面 {{ pageCount }}
+            <span v-if="designErrorCount" class="badge error">{{ designErrorCount }} 处格式问题</span>
           </span>
-          <span v-else class="muted">该模块还没有 docs/design/{{ module.key }}/design.json</span>
+          <span v-else class="muted">还没有 docs/design/entities.json 与 pages.json</span>
           <button type="button" class="link" data-testid="go-design-btn" @click="emit('go-design')">去设计</button>
         </div>
       </div>
@@ -59,10 +61,10 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import MarkdownView from '../shared/MarkdownView.vue'
-import { applyHeadingAnchors, buildDocument } from './requirements-helpers.js'
+import { applyHeadingAnchors, buildDocument, requirementSummary } from './requirements-helpers.js'
 
-interface DocModule {
-  key: string
+interface DocRequirement {
+  exists: boolean
   title: string
   template: string
   file: string
@@ -71,23 +73,49 @@ interface DocModule {
   warnings: string[]
 }
 
-interface DocDesign {
-  file: string
-  module: string
-  title: string
-  entities: unknown[]
-  pages: unknown[]
-  errors: unknown[]
+interface DocEntities {
+  exists?: boolean
+  entities?: unknown[]
+  errors?: unknown[]
 }
 
-const props = defineProps<{ module: DocModule; design: DocDesign | null; templateName?: string }>()
-const emit = defineEmits<{ 'go-design': [] }>()
+interface DocPages {
+  exists?: boolean
+  pageSets?: unknown[]
+  pages?: unknown[]
+  errors?: unknown[]
+}
+
+const props = defineProps<{
+  requirement: DocRequirement
+  entities: DocEntities | null
+  pages: DocPages | null
+  templateName?: string
+}>()
+interface TocItem {
+  id: string
+  index: number
+  level: number
+  title: string
+  kind?: string
+  key?: string
+}
+const emit = defineEmits<{ 'go-design': []; 'ask-ai': [item: TocItem] }>()
 
 const markdownRef = ref<InstanceType<typeof MarkdownView> | null>(null)
 const docRoot = ref<HTMLElement | null>(null)
-const doc = computed(() => buildDocument(props.module))
+const doc = computed(() => buildDocument(props.requirement))
 const toc = computed(() => doc.value.toc)
-const templateLabel = computed(() => props.templateName || props.module.template)
+const summary = computed(() => requirementSummary(props.requirement))
+const templateLabel = computed(() => props.templateName || props.requirement.template)
+
+const entityCount = computed(() => (Array.isArray(props.entities?.entities) ? props.entities!.entities!.length : 0))
+const pageSetCount = computed(() => (Array.isArray(props.pages?.pageSets) ? props.pages!.pageSets!.length : 0))
+const pageCount = computed(() => (Array.isArray(props.pages?.pages) ? props.pages!.pages!.length : 0))
+const designErrorCount = computed(
+  () => (props.entities?.errors?.length ?? 0) + (props.pages?.errors?.length ?? 0)
+)
+const hasDesign = computed(() => entityCount.value > 0 || pageCount.value > 0 || pageSetCount.value > 0)
 
 function headingHost(): HTMLElement | null {
   const instance = markdownRef.value as unknown as { $el?: HTMLElement } | null
@@ -96,7 +124,44 @@ function headingHost(): HTMLElement | null {
 
 async function applyAnchors(): Promise<void> {
   await nextTick()
-  applyHeadingAnchors(headingHost(), toc.value)
+  const host = headingHost()
+  applyHeadingAnchors(host, toc.value)
+  injectSectionAskButtons(host, toc.value)
+}
+
+/**
+ * 为 h2/h3 标题注入「问 AI」按钮（DOM 后处理，只用于需求文档，不改共享 MarkdownView）。
+ * 重新渲染后 DOM 被替换，因此每次锚点应用都重新注入；同一标题不重复注入。
+ */
+function injectSectionAskButtons(host: HTMLElement | null, items: TocItem[]): void {
+  if (!host || !items.length) return
+  const byId = new Map(items.map(item => [item.id, item]))
+  const headings = Array.from(host.querySelectorAll('h2, h3, h4'))
+  for (const heading of headings) {
+    const item = heading.id ? byId.get(heading.id) : undefined
+    if (!item || item.level > 3) continue
+    if (heading.querySelector('[data-ask-anchor]')) continue
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'section-ask'
+    button.dataset.testid = `section-ask-ai-${item.id}`
+    button.dataset.askAnchor = item.id
+    button.textContent = '问 AI'
+    button.title = item.title ? `让 AI 基于「${item.title}」回答` : '让 AI 基于本章节回答'
+    heading.appendChild(button)
+  }
+}
+
+/** 事件委托：点击标题内「问 AI」→ 通知父视图（填入默认提问 + 隐藏章节上下文） */
+function onDocClick(event: MouseEvent): void {
+  const target = event.target as HTMLElement | null
+  const button = target?.closest?.('[data-ask-anchor]') as HTMLElement | null
+  if (!button) return
+  const anchor = button.dataset.askAnchor ?? ''
+  const item = toc.value.find(entry => entry.id === anchor)
+  if (!item) return
+  event.preventDefault()
+  emit('ask-ai', item)
 }
 
 function scrollToAnchor(id: string): void {
@@ -105,7 +170,11 @@ function scrollToAnchor(id: string): void {
   element?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-watch(() => [props.module.file, props.module.title, props.module.sections], applyAnchors, { immediate: true, deep: true })
+watch(
+  () => [props.requirement.file, props.requirement.title, props.requirement.sections],
+  applyAnchors,
+  { immediate: true, deep: true }
+)
 </script>
 
 <style scoped>
@@ -181,7 +250,7 @@ watch(() => [props.module.file, props.module.title, props.module.sections], appl
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 184px minmax(0, 1fr);
+  grid-template-columns: 196px minmax(0, 1fr);
 }
 .toc {
   min-height: 0;
@@ -205,6 +274,9 @@ watch(() => [props.module.file, props.module.title, props.module.sections], appl
 .toc li.lvl-3 {
   padding-left: 10px;
 }
+.toc li.lvl-4 {
+  padding-left: 20px;
+}
 .toc button {
   border: none;
   background: transparent;
@@ -217,6 +289,12 @@ watch(() => [props.module.file, props.module.title, props.module.sections], appl
   cursor: pointer;
   width: 100%;
   word-break: break-word;
+}
+.toc button code {
+  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  font-size: 10px;
+  margin-right: 4px;
+  color: var(--rg-text-3);
 }
 .toc button:hover {
   background: var(--rg-hover);
@@ -231,6 +309,31 @@ watch(() => [props.module.file, props.module.title, props.module.sections], appl
 .markdown-wrap {
   min-width: 0;
   max-width: 880px;
+}
+.markdown-wrap :deep(.section-ask) {
+  margin-left: 8px;
+  vertical-align: middle;
+  border: 1px solid var(--rg-border);
+  background: var(--rg-surface);
+  color: var(--rg-text-3);
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 8px;
+  cursor: pointer;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+.markdown-wrap :deep(.section-ask:hover),
+.markdown-wrap :deep(.section-ask:focus-visible) {
+  border-color: var(--rg-ai);
+  color: var(--rg-ai);
+  background: var(--rg-ai-soft);
+  opacity: 1;
+}
+.markdown-wrap :deep(.section-ask:focus-visible) {
+  outline: 2px solid var(--rg-focus-ring);
+  outline-offset: 1px;
 }
 .empty {
   font-size: 12.5px;
@@ -266,7 +369,7 @@ watch(() => [props.module.file, props.module.title, props.module.sections], appl
 }
 @media (max-width: 1280px) {
   .doc-body {
-    grid-template-columns: 160px minmax(0, 1fr);
+    grid-template-columns: 168px minmax(0, 1fr);
   }
 }
 @media (max-width: 768px) {

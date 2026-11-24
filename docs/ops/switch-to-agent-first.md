@@ -4,7 +4,7 @@
 > **本文只给步骤，不在文档里执行任何命令**；由用户在确认备份后手动操作。
 > 旧方向（版本/确认/变更单/交接包/U7/M7-2）已移除；旧库只支持“空应用库”升级，不做旧数据迁移。
 
-> **2026-11-23 14:17 左右只读核对（运行态提示）**：当前真实实例**正在运行**——3300 LISTEN PID **14988**（`node dist/index.js`，启动 **2026-11-23 14:07:54**）、4771 LISTEN PID **27968**（`opencode serve` 2.2.5，启动 **14:07:54**），`/api/health` 200（`ok:true`、`runtime.ready:true`、`pendingSessions:0`）；`backend/dist` **2026-11-23 14:07:25**、`frontend/dist` **2026-11-23 14:46:49**（UI-3b 构建）——后端进程晚于 `backend/dist`（“进程比 dist 早 58 分钟”的 caveat 已不成立），前端 dist 在进程启动之后、Express 静态托管即时生效，刷新即可见 UI-1a/UI-1b/UI-2a/UI-2b/UI-3a/UI-3b。历史：2026-11-20 16:15:08（40704/41744）、2026-11-21 只读核对无 LISTEN、2026-11-23 09:10（39828/19608，人工验收时，`backend/dist` 10:08:23、`frontend/dist` 10:08:49）、2026-11-23 13:12（15992/19208，`backend/dist` 13:11:49、`frontend/dist` 13:27:23）、2026-11-23 13:32（23668/9092，`backend/dist` 13:32:08、`frontend/dist` 13:58:54）、2026-11-23 14:30:55（UI-3a 构建）；§0 的「133/111」基线、PID 34988/15628 与启动 10:35:47 是 2026-11-20 的历史口径；真实 3300 人工验收已于 2026-11-23 由用户确认全部通过（P7-7 评审仍待定）。**以下步骤不变。**
+> **2026-11-23 16:55 左右只读核对（运行态提示）**：当前真实实例**正在运行**——3300 LISTEN PID **31532**（`node dist/index.js`，启动 **2026-11-23 15:08:35**）、4771 LISTEN PID **45096**（`opencode serve` 2.2.5，启动 **15:08:36**），`/api/health` 200（`ok:true`、`runtime.ready:true`、`pendingSessions:0`）；`backend/dist` **2026-11-23 16:48:07**、`frontend/dist` **2026-11-23 16:44:58**（D3 构建）。**后端进程早于 `backend/dist`，运行的是 D1—D3 之前的后端代码；前端 dist 已更新但新 UI 依赖新后端 API，不能只刷新，必须由用户执行 `restart.cmd`/`restart.sh` 后再验收。** 历史：2026-11-20 16:15:08（40704/41744）、2026-11-21 只读核对无 LISTEN、2026-11-23 09:10（39828/19608，人工验收时）、13:12（15992/19208）、13:32（23668/9092）、14:17（14988/27968）为旧口径；真实 3300 人工验收已于 2026-11-23 由用户确认全部通过（P7-7 评审仍待定）。**以下步骤不变。**
 
 ---
 
@@ -115,11 +115,11 @@ node -e "const D=require('./backend/node_modules/better-sqlite3');const db=new D
 
 1. 首页 → 新建应用：填写应用 ID/名称、后端端口（避免 3300）、需求模板（默认即可）、**设计模板（类型 × 风格，默认企业级 · 平台蓝白）**、EOS/DB/邮件可留空（写 `CHANGE_ME`）。
 2. 首页「设计模板」→ 设计模板中心：4 应用类型卡片/分类/搜索、风格切换、页面集 iframe 预览；「模板库」（需求模板中心）保持原样。
-3. 检查工作区：`projects/<app>/AGENTS.md`、`README.md`、`opencode.json`、`.opencode/skills/`（2 方法 + 设计模板 skill + 2 团队 skill + `adw-frontend-implementation`；需求模板 skill）、`.opencode/commands/*.md`（5 个）、`docs/requirements/`、`docs/design/design-system.json` + `template/`、`frontend/`（MF remote）。
-4. 需求视图：新建模块 → 文件 `docs/requirements/MOD-001-*.md` 出现 → 文档渲染与 TOC；手动改文件 → ≤1.5s 刷新；发送消息时可见“思考中…”占位，完成后被正文替换。
-5. 设计视图：徽标显示「设计模板：类型 · 风格」，「模板页面库」可打开并定位；「生成/更新设计」可用（需 opencode + 模型）；ER/原型可渲染；非法 design.json 出现错误条 +「让 AI 修」；打开设计视图后自动导出 `prototypes/*.png`、`tokens.json`。
-6. 开发视图：模块下拉选择设计模块；「设计参考」显示应用类型/风格/页面库/ui-check/蓝图根；发送“先读 AGENTS.md、docs/ 与设计参考包，再实现页面” → 工具卡/文件变化/权限卡正常；首次生成 `docs/design/<MOD>/ui-check.md` 骨架（不覆盖已有内容），实现前先填表。
-7. 开发视图点「检查一致性」→ 只读报告（设计系统/页面契约/蓝图/实现/PageTemplates/pm-*/表单/列表/GlobalPreference/样式/ui-check/PNG），只报告、不阻断。
+3. 检查工作区：`projects/<app>/AGENTS.md`、`README.md`、`opencode.json`、`.opencode/skills/`（3 方法 skill（需求/设计/接口设计）+ 设计模板 skill + 2 团队 skill + `adw-frontend-implementation`；需求模板 skill）、`.opencode/commands/*.md`（6 个，含 `generate-api-design`）、`docs/requirements/`、`docs/design/design-system.json` + `template/`、`frontend/`（MF remote）。
+4. 需求视图：单文档 `docs/requirements/requirements.md` 骨架已生成 → 左侧 AI 对话（可拖拽宽度）+ 右侧文档（文档自带 TOC，Epic/Story 定位）；手动改文件 → ≤1.5s 刷新；发送消息时可见“思考中…”占位，完成后被正文替换。
+5. 设计视图：徽标显示「设计模板：类型 · 风格」，「模板页面库」可打开并定位；布局为左 AI 对话 + 右主区（实体关系/页面集/接口设计三 Tab，无中栏），对话宽度可拖拽（双击复位；窄屏为左抽屉）；「页面集」Tab 内为页面集 Tabs + 页面 Tabs（首项「总览」），总览卡片可点击进入单页并可导出总览 PNG；`generate-design` 一次生成 entities/pages/api-design（`generate-api-design` 仅补/更新）；全局 ER 保留搜索/字段面板；非法 entities.json/pages.json 出现错误条 +「让 AI 修」；「接口设计」Tab 渲染 `docs/design/api-design.md`；打开设计视图后自动导出 `docs/design/prototypes/*.png`、`tokens.json`。
+6. 开发视图：无模块下拉；「设计参考」显示应用类型/风格/页面库/Epic/页面集/实体/ui-check/蓝图根；发送“先读 AGENTS.md、docs/ 与设计参考包，再实现页面” → 工具卡/文件变化/权限卡正常；首次生成 `docs/design/ui-check.md` 骨架（按 Epic 分节，不覆盖已有内容），实现前先填表。
+7. 开发视图点「检查一致性」→ 只读报告（应用级 14 项：设计系统/页面契约/蓝图/实现/PageTemplates/pm-*/表单/列表/GlobalPreference/样式/模板契约/ui-check/PNG/接口设计），只报告、不阻断。
 8. 刷新页面/重启工作台：应用、会话、模板默认值仍在；产物仍以文件为准。
 
 > 若只想验证“不调模型”的基础能力：执行 `npm run smoke:workspace --prefix backend`、`npm run smoke:assets --prefix backend`、`npm run smoke:dev --prefix backend`（均使用临时目录/端口）。

@@ -263,13 +263,16 @@ export function updateTemplate(id: string, body: Record<string, unknown>): Requi
 
 export function deleteTemplate(id: string): void {
   requirePrivateTemplate(id)
-  // 全局删除保护：仍被模块 frontmatter 引用 → 409 并列出引用位置
+  // 全局删除保护：仍被单需求文档 frontmatter 引用 → 409 并列出引用位置
   const usage = templateUsage('requirement', id)
   if (usage.apps.length) {
     const where = usage.apps
-      .map(app => `${app.appName}（${app.modules.map(module => `${module.module || '未命名'} @ ${module.file}`).join('、')}）`)
+      .map(app => `${app.appName}（${app.documents.map(document => document.file).join('、')}）`)
       .join('；')
-    throw new RequirementDocError(409, `模板仍被 ${usage.apps.length} 个应用的模块引用：${where}。请先在对话中让 agent 改掉这些模块的 template`)
+    throw new RequirementDocError(
+      409,
+      `模板仍被 ${usage.apps.length} 个应用的 docs/requirements/requirements.md 引用：${where}。请先在对话中让 agent 改掉这些文档的 template`
+    )
   }
   db.prepare('DELETE FROM requirement_templates WHERE id = ?').run(id)
   removeTemplateAssets('requirement', id)

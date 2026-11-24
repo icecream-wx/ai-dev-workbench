@@ -223,14 +223,14 @@ test('I-09a：空会话 compact（opencode 返回 failed）显示未执行原因
 test('displayUserText：带视图框架的 user 消息只保留用户原文', () => {
   const framed =
     '当前视图：开发。\n' +
-    '本轮目标模块：MOD-001（如果用户目标明显不同，按用户目标判断）。\n' +
+    '需求产物：docs/requirements/requirements.md（单文档）。\n' +
     '产物是工作区代码与 docs/ 下的需求/设计文件。\n' +
     '先读 AGENTS.md、docs/requirements/ 与 docs/design/ 下相关产物，以及现有代码，再动手实现。\n\n' +
     '用户消息：\n给 backend/README.md 补一节运行说明。'
   assert.equal(displayUserText(framed), '给 backend/README.md 补一节运行说明。')
 
   // 只认第一个 marker：用户原文里再次出现“用户消息：”也完整保留
-  const nested = `当前视图：需求。\n本轮目标模块：未指定。\n\n用户消息：\n第一行\n用户消息：\n第二段`
+  const nested = `当前视图：需求。\n需求产物：docs/requirements/requirements.md（单文档）。\n\n用户消息：\n第一行\n用户消息：\n第二段`
   assert.equal(displayUserText(nested), '第一行\n用户消息：\n第二段')
 
   // 归一化后的 user 消息同样只显示原文

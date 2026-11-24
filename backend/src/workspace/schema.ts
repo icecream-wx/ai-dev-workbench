@@ -1,5 +1,5 @@
 /**
- * 极简 JSON Schema 校验（只支持 design.schema.json 用到的关键字）
+ * 极简 JSON Schema 校验（只支持 entities/pages schema 用到的关键字）
  *
  * 支持：type / required / properties / items / enum
  * 不支持 $ref / anyOf / pattern / format —— 保持 schema 与校验器都小。

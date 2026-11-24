@@ -1,17 +1,18 @@
 /**
- * 设计参考包：原型 PNG / manifest / tokens
+ * 设计参考包（应用级，D1 去模块）：原型 PNG / manifest / tokens
  *
- * 工作区：
- *   docs/design/<MOD>/
- *     design.json                 结构唯一来源（schema 校验）
+ * 工作区（全部应用级，不再有 `<MOD>` 目录）：
+ *   docs/design/
+ *     entities.json               实体/关系（设计产物）
+ *     pages.json                  页面集/页面契约（设计产物）
  *     design-brief.md             设计 agent 维护（自由文本，不由工作台写）
  *     tokens.json                 工作台按应用设计系统风格确定性写入
- *     prototypes/_manifest.json   {designHash, styleId, exportedAt, pages:{id:{file,hash,exportedAt}}}
+ *     prototypes/_manifest.json   {designHash, styleId, exportedAt, pages:{id:{file,hash,exportedAt,pageSet}}}
  *     prototypes/<page-id>.png    前端渲染后上传（不调用模型）
  *
  * 写入规则：
  * - 校验全部通过后才落盘（避免半成品）；
- * - designHash 必须等于当前 design.json 的 sha256（防过期写入）；
+ * - designHash 必须等于 sha256(entities.json + pages.json + design-system.json)（防过期写入）；
  * - styleId 必须属于应用设计系统模板包里的视觉风格；
  * - 只接受 data:image/png;base64 + PNG 魔数；单页/总量/页数有上限；
  * - 页面 id 白名单；删除 manifest 中不再存在的旧 PNG。
@@ -22,8 +23,8 @@ import path from 'node:path'
 import { appDirOf } from '../apps/scaffold'
 import { readDesignSelection } from '../apps/design-system'
 import { defaultPackId, getPack, getStyle, type DesignStyle } from './pack'
+import { designHashOf } from './hash'
 
-const MODULE_PATTERN = /^MOD-\d{3,}$/
 const PAGE_ID_PATTERN = /^[A-Za-z0-9._-]{1,80}$/
 const MAX_PAGES = 80
 const MAX_PAGE_BYTES = 5 * 1024 * 1024
@@ -32,6 +33,8 @@ const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0
 
 export interface PrototypePageInput {
   id: string
+  /** 所属页面集（manifest 记录；缺省从 pages.json 推导） */
+  pageSet?: string
   dataUrl: string
 }
 
@@ -39,6 +42,8 @@ export interface PrototypePageManifestEntry {
   file: string
   hash: string
   exportedAt: string
+  /** 页面所属页面集（Epic 分组 id）；旧 manifest 可缺省 */
+  pageSet?: string
 }
 
 export interface PrototypeManifest {
@@ -53,7 +58,7 @@ export interface PrototypeArtifact {
   styleId: string
   exportedAt: string
   stale: boolean
-  pages: Array<{ id: string; file: string; hash: string }>
+  pages: Array<{ id: string; file: string; hash: string; pageSet?: string }>
 }
 
 function fail(status: number, message: string): Error & { status: number } {
@@ -66,28 +71,24 @@ function relative(appDir: string, file: string): string {
   return path.relative(appDir, file).replace(/\\/g, '/')
 }
 
-export function designDirOf(appDir: string, module: string): string {
-  return path.join(appDir, 'docs', 'design', module)
+export function designDirOf(appDir: string): string {
+  return path.join(appDir, 'docs', 'design')
 }
 
-export function designFileOf(appDir: string, module: string): string {
-  return path.join(designDirOf(appDir, module), 'design.json')
+export function tokensFileOf(appDir: string): string {
+  return path.join(designDirOf(appDir), 'tokens.json')
 }
 
-export function tokensFileOf(appDir: string, module: string): string {
-  return path.join(designDirOf(appDir, module), 'tokens.json')
+export function briefFileOf(appDir: string): string {
+  return path.join(designDirOf(appDir), 'design-brief.md')
 }
 
-export function briefFileOf(appDir: string, module: string): string {
-  return path.join(designDirOf(appDir, module), 'design-brief.md')
+export function prototypesDirOf(appDir: string): string {
+  return path.join(designDirOf(appDir), 'prototypes')
 }
 
-export function prototypesDirOf(appDir: string, module: string): string {
-  return path.join(designDirOf(appDir, module), 'prototypes')
-}
-
-export function prototypeManifestFileOf(appDir: string, module: string): string {
-  return path.join(prototypesDirOf(appDir, module), '_manifest.json')
+export function prototypeManifestFileOf(appDir: string): string {
+  return path.join(prototypesDirOf(appDir), '_manifest.json')
 }
 
 export function sha256File(file: string): string {
@@ -100,17 +101,19 @@ function normalizePageEntry(raw: unknown): PrototypePageManifestEntry | null {
   const file = typeof value.file === 'string' ? value.file : ''
   const hash = typeof value.hash === 'string' ? value.hash : ''
   if (!file || path.basename(file) !== file) return null
+  const pageSet = typeof value.pageSet === 'string' ? value.pageSet.trim() : ''
   return {
     file,
     hash,
-    exportedAt: typeof value.exportedAt === 'string' ? value.exportedAt : ''
+    exportedAt: typeof value.exportedAt === 'string' ? value.exportedAt : '',
+    ...(pageSet ? { pageSet } : {})
   }
 }
 
 /** 读原型 manifest；不存在/损坏时返回 null（artifacts 只读，不抛 500） */
-export function readPrototypeManifest(appDir: string, module: string): PrototypeManifest | null {
+export function readPrototypeManifest(appDir: string): PrototypeManifest | null {
   try {
-    const parsed = JSON.parse(fs.readFileSync(prototypeManifestFileOf(appDir, module), 'utf8')) as Record<string, unknown>
+    const parsed = JSON.parse(fs.readFileSync(prototypeManifestFileOf(appDir), 'utf8')) as Record<string, unknown>
     if (!parsed || typeof parsed !== 'object') return null
     const rawPages = parsed.pages && typeof parsed.pages === 'object' ? (parsed.pages as Record<string, unknown>) : {}
     const pages: Record<string, PrototypePageManifestEntry> = {}
@@ -166,20 +169,42 @@ function resolveStyleOrFail(appId: string, styleId: string): DesignStyle {
   }
 }
 
-/** POST /api/apps/:id/design/:module/prototypes */
-export function writePrototypePackage(appId: string, moduleRaw: string, body: unknown): PrototypeWriteResult {
-  const module = String(moduleRaw ?? '').trim()
-  if (!MODULE_PATTERN.test(module)) throw fail(400, `模块 key 格式不正确：${module || '(空)'}`)
+/** 页面 id → 页面集 id（从 pages.json 推导；读不到返回空） */
+function pageSetMap(appDir: string): Map<string, string> {
+  const map = new Map<string, string>()
+  try {
+    const parsed = JSON.parse(fs.readFileSync(path.join(designDirOf(appDir), 'pages.json'), 'utf8')) as Record<string, unknown>
+    for (const raw of Array.isArray(parsed.pageSets) ? parsed.pageSets : []) {
+      if (!raw || typeof raw !== 'object') continue
+      const pageSet = raw as Record<string, unknown>
+      const setId = typeof pageSet.id === 'string' ? pageSet.id.trim() : ''
+      for (const rawPage of Array.isArray(pageSet.pages) ? pageSet.pages : []) {
+        if (!rawPage || typeof rawPage !== 'object') continue
+        const id = typeof (rawPage as Record<string, unknown>).id === 'string' ? ((rawPage as Record<string, unknown>).id as string).trim() : ''
+        if (id && setId) map.set(id, setId)
+      }
+    }
+  } catch {
+    // pages.json 缺失/损坏：manifest 不写 pageSet
+  }
+  return map
+}
+
+/** POST /api/apps/:id/design/prototypes */
+export function writePrototypePackage(appId: string, body: unknown): PrototypeWriteResult {
   const appDir = appDirOf(appId)
-  const designFile = designFileOf(appDir, module)
-  if (!fs.existsSync(designFile)) throw fail(404, `设计文件不存在：docs/design/${module}/design.json`)
+  const entitiesFile = path.join(designDirOf(appDir), 'entities.json')
+  const pagesFile = path.join(designDirOf(appDir), 'pages.json')
+  if (!fs.existsSync(entitiesFile) || !fs.existsSync(pagesFile)) {
+    throw fail(404, '设计产物不存在：docs/design/entities.json 或 pages.json 缺失')
+  }
 
   const payload = body && typeof body === 'object' ? (body as Record<string, unknown>) : {}
   const designHash = typeof payload.designHash === 'string' ? payload.designHash.trim() : ''
   if (!designHash) throw fail(400, 'designHash 不能为空')
-  const currentHash = sha256File(designFile)
+  const currentHash = designHashOf(appDir)
   if (designHash !== currentHash) {
-    throw fail(409, 'designHash 与当前 design.json 不一致（可能已过期，请刷新后重新导出）')
+    throw fail(409, 'designHash 与当前设计产物不一致（可能已过期，请刷新后重新导出）')
   }
 
   const styleId = typeof payload.styleId === 'string' ? payload.styleId.trim() : ''
@@ -190,7 +215,8 @@ export function writePrototypePackage(appId: string, moduleRaw: string, body: un
   if (rawPages.length < 1) throw fail(400, 'pages 至少 1 页')
   if (rawPages.length > MAX_PAGES) throw fail(400, `pages 最多 ${MAX_PAGES} 页`)
 
-  const pages: Array<{ id: string; bytes: Buffer }> = []
+  const setOf = pageSetMap(appDir)
+  const pages: Array<{ id: string; bytes: Buffer; pageSet: string }> = []
   const seen = new Set<string>()
   let totalBytes = 0
   for (const raw of rawPages) {
@@ -203,12 +229,13 @@ export function writePrototypePackage(appId: string, moduleRaw: string, body: un
     const bytes = decodePngDataUrl(item.dataUrl)
     totalBytes += bytes.length
     if (totalBytes > MAX_TOTAL_BYTES) throw fail(400, `PNG 总量超过上限（${MAX_TOTAL_BYTES} 字节）`)
-    pages.push({ id, bytes })
+    const pageSet = (typeof item.pageSet === 'string' ? item.pageSet.trim() : '') || setOf.get(id) || ''
+    pages.push({ id, bytes, pageSet })
   }
 
-  const dir = prototypesDirOf(appDir, module)
-  const manifestFile = prototypeManifestFileOf(appDir, module)
-  const previous = readPrototypeManifest(appDir, module)
+  const dir = prototypesDirOf(appDir)
+  const manifestFile = prototypeManifestFileOf(appDir)
+  const previous = readPrototypeManifest(appDir)
   fs.mkdirSync(dir, { recursive: true })
 
   const now = new Date().toISOString()
@@ -219,7 +246,8 @@ export function writePrototypePackage(appId: string, moduleRaw: string, body: un
     manifestPages[page.id] = {
       file,
       hash: createHash('sha256').update(page.bytes).digest('hex'),
-      exportedAt: now
+      exportedAt: now,
+      ...(page.pageSet ? { pageSet: page.pageSet } : {})
     }
   }
 
@@ -255,30 +283,29 @@ export function writePrototypePackage(appId: string, moduleRaw: string, body: un
   }
   fs.writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
   fs.writeFileSync(
-    tokensFileOf(appDir, module),
+    tokensFileOf(appDir),
     `${JSON.stringify({ styleId: style.id, name: style.name, tokens: style.tokens }, null, 2)}\n`,
     'utf8'
   )
   return { ok: true, manifest }
 }
 
-/** artifacts 只读：manifest + 当前 design.json hash → stale/pages */
-export function readPrototypeArtifact(appDir: string, module: string): PrototypeArtifact | null {
-  const manifest = readPrototypeManifest(appDir, module)
+/** artifacts 只读：manifest + 当前 designHash → stale/pages */
+export function readPrototypeArtifact(appDir: string): PrototypeArtifact | null {
+  const manifest = readPrototypeManifest(appDir)
   if (!manifest) return null
-  const designFile = designFileOf(appDir, module)
-  let currentHash = ''
-  try {
-    currentHash = sha256File(designFile)
-  } catch {
-    currentHash = ''
-  }
-  const dir = prototypesDirOf(appDir, module)
+  const currentHash = designHashOf(appDir)
+  const dir = prototypesDirOf(appDir)
   const pages = Object.keys(manifest.pages)
     .sort()
     .map(id => {
       const entry = manifest.pages[id]
-      return { id, file: relative(appDir, path.join(dir, entry.file)), hash: entry.hash }
+      return {
+        id,
+        file: relative(appDir, path.join(dir, entry.file)),
+        hash: entry.hash,
+        ...(entry.pageSet ? { pageSet: entry.pageSet } : {})
+      }
     })
   return {
     designHash: manifest.designHash,
@@ -290,14 +317,14 @@ export function readPrototypeArtifact(appDir: string, module: string): Prototype
 }
 
 /** artifacts 只读：brief 是否存在 */
-export function readDesignBrief(appDir: string, module: string): { exists: boolean; file: string } {
-  const file = briefFileOf(appDir, module)
+export function readDesignBrief(appDir: string): { exists: boolean; file: string } {
+  const file = briefFileOf(appDir)
   return { exists: fs.existsSync(file), file: relative(appDir, file) }
 }
 
 /** artifacts 只读：tokens.json 是否存在及其 styleId */
-export function readDesignTokens(appDir: string, module: string): { exists: boolean; styleId?: string } {
-  const file = tokensFileOf(appDir, module)
+export function readDesignTokens(appDir: string): { exists: boolean; styleId?: string } {
+  const file = tokensFileOf(appDir)
   if (!fs.existsSync(file)) return { exists: false }
   try {
     const parsed = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, unknown>

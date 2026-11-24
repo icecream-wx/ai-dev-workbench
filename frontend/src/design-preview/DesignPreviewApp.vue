@@ -21,7 +21,7 @@
           <div v-else-if="error" class="design-preview-state error" data-testid="design-preview-error">
             <strong>设计产物渲染失败</strong>
             <span>{{ error }}</span>
-            <p>请回到设计视图检查 design.json，或切换到「线框」查看。</p>
+            <p>请回到设计视图检查 entities.json / pages.json。</p>
           </div>
           <ContractPage
             v-else
@@ -30,9 +30,30 @@
             :recipe="recipe"
             :entities="entities"
             :primary="primaryColor"
+            @action="onAction"
           />
         </div>
       </div>
+    </div>
+
+    <ContractActionDialog
+      v-if="actionDialog"
+      :page="actionDialog.page"
+      :entity="entityOfPage(actionDialog.page)"
+      :row="actionDialog.row"
+      :mode="actionDialog.mode"
+      :temporary="actionDialog.temporary"
+      @submit="onActionDialogSubmit"
+      @cancel="actionDialog = null"
+    />
+
+    <div
+      v-if="!capture"
+      class="design-preview-badge interactive"
+      data-testid="design-preview-interactive-badge"
+    >
+      <i />
+      交互预览 · 不保存
     </div>
 
     <div v-if="structureFallback && !embed && !capture" class="design-preview-badge warn" data-testid="design-preview-structure-warning">
@@ -49,8 +70,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import html2canvas from 'html2canvas'
 import ContractPage from './ContractPage.vue'
+import ContractActionDialog from './ContractActionDialog.vue'
 import { adaptDesign } from '../design/design-adapter.js'
 import {
   applicationTypes,
@@ -59,14 +82,15 @@ import {
   structureLoaders,
   styles
 } from '../preview/registry'
-import { resolveContractRecipe } from './contract-preview.js'
+import { actionLabel, resolveContractRecipe } from './contract-preview.js'
+import { buildTemporaryFormPage, resolveActionTarget } from './interaction.js'
 import { resolveCustomPreview, shortTypeClassOf } from './custom-preview.js'
 
 /**
  * P9 设计产物模板风格预览入口（frontend/design-preview.html，iframe 专用）
  *
- * URL：?app=&module=&page=&type=&style=&embed=1&v=<designHash>
- * 输入是 `GET /api/apps/:id/artifacts` 里该模块的 design.json（不是模板自带页面）；
+ * URL：?app=&page=&type=&style=&embed=1&v=<designHash>&capture=1
+ * 输入是 `GET /api/apps/:id/artifacts` 的实体集/页面集（entities.json + pages.json）；
  * 用所选应用类型的 structure.css + 视觉风格类还原模板结构与组件。
  *
  * P7-7c：自定义模板读 `design-system.preview`——base 应用类型短类 + 应用内资产接口的
@@ -80,7 +104,6 @@ const DESIGN_VIEW_SOURCE = 'adp-design-view'
 
 const query = new URLSearchParams(window.location.search)
 const appId = (query.get('app') || '').trim()
-const moduleKey = (query.get('module') || '').trim()
 const pageId = (query.get('page') || '').trim()
 const embed = (() => {
   const value = (query.get('embed') || '').trim().toLowerCase()
@@ -98,6 +121,12 @@ const error = ref('')
 const page = ref<any>(null)
 const entity = ref<any>(null)
 const entities = ref<any[]>([])
+/** 全部页面（交互预览同页面集解析目标页用） */
+const allPages = ref<any[]>([])
+/** 设计系统模板页面（catalogRef → 配方解析） */
+const templatePages = ref<any[]>([])
+/** 交互预览表单弹窗（create/edit） */
+const actionDialog = ref<{ page: any; row: any; mode: 'create' | 'edit'; temporary?: boolean } | null>(null)
 const typeId = ref(defaultApplicationType)
 const styleId = ref(defaultStyle)
 const recipe = ref('')
@@ -191,22 +220,21 @@ async function load(): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    if (!appId) throw new Error('缺少 app 参数（design-preview.html?app=&module=&page=）')
-    if (!moduleKey || !pageId) throw new Error('缺少 module 或 page 参数')
+    if (!appId) throw new Error('缺少 app 参数（design-preview.html?app=&page=）')
+    if (!pageId) throw new Error('缺少 page 参数')
 
     const [artifacts, designSystem] = await Promise.all([
       fetchJson(`/api/apps/${encodeURIComponent(appId)}/artifacts`),
       fetchJson(`/api/apps/${encodeURIComponent(appId)}/design-system`).catch(() => null)
     ])
-    const design = (Array.isArray(artifacts?.designs) ? artifacts.designs : []).find(
-      (item: any) => item?.module === moduleKey
-    )
-    if (!design) throw new Error(`模块 ${moduleKey} 还没有 design.json`)
-
-    const adapted = adaptDesign(design)
+    const adapted = adaptDesign({
+      entities: artifacts?.entities?.entities ?? [],
+      relations: artifacts?.entities?.relations ?? [],
+      pageSets: artifacts?.pages?.pageSets ?? []
+    })
     const target = adapted.pages.find((item: any) => item.id === pageId)
-    if (!target) throw new Error(`design.json 中找不到页面 ${pageId}`)
-    const templatePages = Array.isArray(designSystem?.pages) ? designSystem.pages : []
+    if (!target) throw new Error(`pages.json 中找不到页面 ${pageId}`)
+    const templatePageList = Array.isArray(designSystem?.pages) ? designSystem.pages : []
 
     preview.value = null
     apiTypeName.value = typeof designSystem?.applicationType?.name === 'string' ? designSystem.applicationType.name : ''
@@ -218,11 +246,14 @@ async function load(): Promise<void> {
     styleId.value =
       (query.get('style') || '').trim() || adapted.designSystem?.style || designSystem?.style?.id || defaultStyle
     preview.value = resolveCustomPreview(designSystem, { typeId: typeId.value })
-    recipe.value = resolveContractRecipe(target, templatePages)
+    recipe.value = resolveContractRecipe(target, templatePageList)
 
     page.value = target
     entity.value = adapted.entities.find((item: any) => item.id === target.entityId) || null
     entities.value = adapted.entities
+    allPages.value = adapted.pages
+    templatePages.value = templatePageList
+    actionDialog.value = null
 
     await applyStructureCss(typeId.value)
     document.title = [target.title, typeName.value, styleName.value].filter(Boolean).join(' · ')
@@ -241,6 +272,88 @@ async function load(): Promise<void> {
       }
     }
   }
+}
+
+/* ------------------------------------------------------------------ *
+ * B5 交互预览层：动作 → 弹窗 / 切页 / 确认 / 提示（不写数据、不调接口）
+ * ------------------------------------------------------------------ */
+
+function entityOfPage(target: any): any {
+  const id = target?.entityId
+  return entities.value.find((item: any) => item.id === id) || null
+}
+
+/** 本地切页（独立打开 design-preview.html 时；iframe 内交给父层切 Tab） */
+function switchPage(target: any): void {
+  page.value = target
+  entity.value = entityOfPage(target)
+  recipe.value = resolveContractRecipe(target, templatePages.value)
+  actionDialog.value = null
+  document.title = [target?.title, typeName.value, styleName.value].filter(Boolean).join(' · ')
+}
+
+function navigateTo(target: any): void {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage(
+      { source: PREVIEW_SOURCE, type: 'navigate-page', pageId: target?.id },
+      location.origin
+    )
+    return
+  }
+  switchPage(target)
+}
+
+async function confirmDelete(label: string): Promise<void> {
+  try {
+    await ElMessageBox.confirm('交互预览不会保存任何修改，是否继续？', `${label}（预览）`, {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    ElMessage.success('已删除（预览）')
+  } catch {
+    // 取消：页面不变
+  }
+}
+
+function onAction(payload: { code: string; label?: string; row?: any }): void {
+  const code = payload?.code || ''
+  const label = payload?.label || actionLabel(code)
+  const result = resolveActionTarget({ action: code, page: page.value, pages: allPages.value })
+  if (result.kind === 'dialog') {
+    actionDialog.value = { page: result.page, row: payload?.row ?? null, mode: code === 'edit' ? 'edit' : 'create' }
+    return
+  }
+  if (result.kind === 'navigate') {
+    navigateTo(result.page)
+    return
+  }
+  if (result.kind === 'confirm') {
+    void confirmDelete(label)
+    return
+  }
+  if (result.kind === 'notify') {
+    ElMessage.info(`${label}（预览）`)
+    return
+  }
+  if (result.kind === 'none') {
+    const reason = (result as any).reason || '该页面集未设计新增/编辑页'
+    const canTemporary = code === 'create' || code === 'edit'
+    const temporary = canTemporary ? buildTemporaryFormPage(page.value, entityOfPage(page.value)) : null
+    if (temporary) {
+      actionDialog.value = { page: temporary, row: payload?.row ?? null, mode: code === 'edit' ? 'edit' : 'create', temporary: true }
+      ElMessage.warning(`${reason}（预览 · 已打开临时表单）`)
+      return
+    }
+    ElMessage.warning(`${reason}（预览）`)
+    return
+  }
+  ElMessage.warning(`${(result as any).reason || '该页面集未设计新增/编辑页'}（预览）`)
+}
+
+function onActionDialogSubmit(): void {
+  actionDialog.value = null
+  ElMessage.success('已提交（预览）')
 }
 
 /* ------------------------------------------------------------------ *
@@ -497,5 +610,19 @@ body {
 
 .design-preview-badge.warn i {
   background: #d99a1c;
+}
+
+/* B5 交互预览角标（左下，避免与模板信息角标重叠；截图模式隐藏） */
+.design-preview-badge.interactive {
+  right: auto;
+  left: 16px;
+  bottom: 14px;
+  color: #1f6b4a;
+  border-color: #bfe3d0;
+  background: rgba(240, 253, 246, 0.95);
+}
+
+.design-preview-badge.interactive i {
+  background: #1f9d63;
 }
 </style>

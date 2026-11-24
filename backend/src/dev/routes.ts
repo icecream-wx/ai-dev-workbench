@@ -19,6 +19,7 @@ import { Router, type NextFunction, type Request, type Response } from 'express'
 import { opencode } from '../opencode/runtime'
 import { appDirOf } from '../apps/scaffold'
 import { redactDeep } from '../opencode/redact'
+import type { RequirementSectionFocus } from '../chat/service'
 import {
   activateDevSession,
   activeOpencodeSessionId,
@@ -57,8 +58,7 @@ function badRequest(message: string): Error & { status?: number } {
 }
 
 /** view 来自 query 或 body；非法值交给 service 回退默认（development） */
-function viewOf(req: Request, body?: Record<string, unknown>): { view?: unknown } {
-  if (body && body.view !== undefined) return { view: body.view }
+function viewOf(req: Request, body?: Record<string, unknown>): { view?: unknown } {  if (body && body.view !== undefined) return { view: body.view }
   return req.query.view === undefined ? {} : { view: req.query.view }
 }
 
@@ -106,12 +106,11 @@ devRoutes.post(
 devRoutes.post(
   '/session',
   asyncRoute(async (req, res) => {
-    const body = (req.body ?? {}) as { new?: unknown; view?: unknown; module?: unknown }
+    const body = (req.body ?? {}) as { new?: unknown; view?: unknown }
     res.json(
       await createDevSession(appIdOf(req), {
         new: body.new === true,
-        view: body.view ?? req.query.view,
-        module: body.module
+        view: body.view ?? req.query.view
       })
     )
   })
@@ -124,16 +123,33 @@ devRoutes.delete(
   })
 )
 
+/** 需求章节上下文：对象 + title/anchor 字符串 + level 数字；非法 400，缺省 undefined */
+function promptFocusOf(value: unknown): RequirementSectionFocus | undefined {
+  if (value === undefined || value === null) return undefined
+  if (typeof value !== 'object' || Array.isArray(value)) throw badRequest('focus 必须为对象')
+  const focus = value as Record<string, unknown>
+  if (typeof focus.title !== 'string' || !focus.title.trim()) throw badRequest('focus.title 不能为空')
+  if (typeof focus.anchor !== 'string' || !focus.anchor.trim()) throw badRequest('focus.anchor 不能为空')
+  if (typeof focus.level !== 'number' || !Number.isFinite(focus.level)) throw badRequest('focus.level 必须为数字')
+  return {
+    anchor: focus.anchor,
+    title: focus.title,
+    level: focus.level,
+    ...(typeof focus.key === 'string' ? { key: focus.key } : {}),
+    ...(typeof focus.kind === 'string' ? { kind: focus.kind } : {})
+  }
+}
+
 devRoutes.post(
   '/prompt',
   asyncRoute(async (req, res) => {
-    const body = (req.body ?? {}) as { text?: unknown; view?: unknown; module?: unknown; command?: unknown }
+    const body = (req.body ?? {}) as { text?: unknown; view?: unknown; command?: unknown; focus?: unknown }
     if (typeof body.text !== 'string') throw badRequest('text 必须为字符串')
     res.json(
       await promptDevSession(appIdOf(req), body.text, {
         view: body.view ?? req.query.view,
-        module: body.module,
-        command: body.command
+        command: body.command,
+        focus: promptFocusOf(body.focus)
       })
     )
   })

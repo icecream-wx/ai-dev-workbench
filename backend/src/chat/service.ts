@@ -4,7 +4,7 @@
  * - body `{ view, text, module?, command?, model? }`
  * - 按 `view` 选择活跃会话（`app_sessions.view`）；没有则创建，已归档则新建
  * - `command` 存在时走 opencode `POST /api/session/:id/command {name, text}`
- * - 其余走普通 prompt；prompt 只给“当前视图/模块 + 去读哪些产物”，
+ * - 其余走普通 prompt；prompt 只给“当前视图 + 去读哪些产物”，
  *   具体做法交给 skill（工作台不拼选项/不推进阶段）
  *
  * 会话是持久会话（不是每轮临时会话）：每视图一个活跃会话 + 历史列表。
@@ -69,11 +69,9 @@ export interface ChatTarget {
   expectedSkills(): string[]
   expectedCommands(): string[]
   /** 本轮 prompt（应用三视图 / 工作室各自提供） */
-  buildPrompt(text: string, options: { module?: string; digest?: string }): string
+  buildPrompt(text: string, options: { digest?: string }): string
   /** 开发视图/工作室摘要；不需要时返回 undefined */
-  digest?(module?: string): string | undefined
-  /** 是否接受 module 语义（工作室无模块） */
-  allowModule: boolean
+  digest?(): string | undefined
 }
 
 /** 单轮对话总超时（20 分钟；长任务也不无限挂起） */
@@ -99,6 +97,7 @@ function chatTimings(): { timeoutMs: number; watchdogIntervalMs: number; watchdo
 const APP_EXPECTED_COMMANDS = [
   'update-requirements',
   'generate-design',
+  'generate-api-design',
   'preview-app',
   'check-consistency',
   'check-design-fidelity'
@@ -252,46 +251,81 @@ export async function resolveFallbackModel(directory: string): Promise<ModelRef 
   }
 }
 
-/** 视图提示：告诉 agent 去哪里读、写哪里；不规定步骤 */
-export function buildViewPrompt(view: AppView, text: string, module?: string, context?: { digest?: string }): string {
-  const moduleLine = module ? `本轮目标模块：${module}（如果用户目标明显不同，按用户目标判断）。` : '本轮目标模块：未指定，按用户目标判断。'
+/** 需求文档章节「问 AI」的隐藏上下文（由前端随 prompt 传入；仅需求视图生效） */
+export interface RequirementSectionFocus {
+  anchor: string
+  title: string
+  level: number
+  key?: string
+  kind?: string
+}
+
+/** 清洗章节上下文文本：单行、去控制空白、限长 */
+function focusLineText(value: unknown, maxChars: number): string {
+  return String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxChars)
+}
+
+/** requirements 视图的「本轮聚焦章节」提示（缺失/非法则返回空串，不改变既有输出） */
+function requirementFocusLine(focus?: RequirementSectionFocus): string {
+  if (!focus || typeof focus !== 'object') return ''
+  const title = focusLineText(focus.title, 120)
+  const anchor = focusLineText(focus.anchor, 80)
+  const level = Number(focus.level)
+  if (!title || !anchor || !Number.isFinite(level)) return ''
+  return `本轮聚焦章节：docs/requirements/requirements.md 的「${title}」（锚点 #${anchor}，层级 ${level}）。请优先基于该章节内容回答/修改；需要跨章节一致性时再检查相关 Epic 与设计产物。`
+}
+
+/** 视图提示：告诉 agent 去哪里读、写哪里；不规定步骤（D1 去模块） */
+export function buildViewPrompt(
+  view: AppView,
+  text: string,
+  context?: { digest?: string; focus?: RequirementSectionFocus }
+): string {
   const framing: Record<AppView, string[]> = {
     requirements: [
       '当前视图：需求。',
-      moduleLine,
-      '需求产物：docs/requirements/MOD-xxx-<标题>.md（frontmatter: module/title/order/template；每模块一个文件）。',
-      '设计产物：docs/design/<MOD>/design.json（必须与需求一致）。',
+      '需求产物：docs/requirements/requirements.md（单文档；frontmatter 只 title/template）。',
+      'Epic 使用 EP-001、Story 使用 US-001 稳定 ID，设计页面集按 Epic 引用。',
+      '设计产物（docs/design/entities.json、pages.json、api-design.md）可能尚未生成；需求阶段不要主动读取不存在的设计文件。',
+      '只有用户明确要求同步设计且文件存在时才读取设计文件；不存在是正常的，不要报错、不要创建空设计文件。',
       '先按 skill adw-requirements-document 的要求读取工作区现有产物，再修改文件；不要输出任何结构化聊天协议。'
     ],
     design: [
       '当前视图：设计。',
-      moduleLine,
-      '需求产物：docs/requirements/MOD-xxx-<标题>.md。',
-      '设计产物：docs/design/<MOD>/design.json（schema 见 skill 内 references/design.schema.json）。',
-      '设计参考：docs/design/<MOD>/design-brief.md（写完/改完 design.json 后维护）；tokens.json 与 prototypes/*.png 由工作台生成，不要手改。',
-      '先按 skill adw-design-artifacts 的要求读取需求与 schema，再修改文件；完成后可运行 scripts/validate.mjs 自查。'
+      '需求产物：docs/requirements/requirements.md（单文档）。',
+      '设计产物：docs/design/entities.json（实体/关系，全局一张 ER 图）、docs/design/pages.json（页面集 = Epic；页面契约）、docs/design/api-design.md（接口设计，固定模板）。',
+      '同一轮生成：不要只生成 entities/pages，api-design.md 必须同轮生成；页面动作/实体 CRUD 覆盖要写全。',
+      '页面动作目标：列表/树表页面声明 create/edit 时，要有同页面集同实体的表单页，并写 actionTargets（显式优先）；create/edit 目标用 dialog-form/page-form/main-sub/wizard（main-sub 是整页表单 + 子表，合法），detail 只做详情目标。',
+      '设计方法 skill：adw-design-artifacts（references/entities.schema.json、pages.schema.json）。',
+      '接口设计 skill：adw-api-design（references/api-conventions.md、api-design-template.md、api-design-example.md；scripts/validate-api-design.mjs 自查）。',
+      '设计参考：docs/design/design-brief.md（写完/改完设计产物后维护）；tokens.json 与 prototypes/*.png 由工作台生成，不要手改。',
+      '先按 design-artifacts 读取需求与 schema，再修改文件；完成后同时运行 scripts/validate.mjs 与 scripts/validate-api-design.mjs 自查。'
     ],
     development: [
       '当前视图：开发。',
-      moduleLine,
-      '需求产物：docs/requirements/MOD-xxx-<标题>.md（先读需求，再按设计实现；需求与设计冲突先报告）。',
+      '需求产物：docs/requirements/requirements.md（单文档；先读需求，再按设计实现；需求与设计冲突先报告）。',
       '应用设计系统：docs/design/design-system.json（pack/应用类型/风格/页面库）；页面蓝图：docs/design/template/<applicationType>/pages/*.vue + structure.css，风格：docs/design/template/styles/shared.css + docs/design/template/styles/<styleId>/style.css（以 design-system.json 的 styles 为准）。',
-      '模块设计：docs/design/<MOD>/design.json（数据模型/页面契约）、design-brief.md（概览/页面/组件/风格）、tokens.json（色板/字体/圆角/间距）、prototypes/*.png（模板风格截图；无显式契约的旧设计为线框）。',
-      '必读顺序：AGENTS.md → design-system.json → design.json / design-brief.md / tokens.json / prototypes → 蓝图 → frontend 现有代码；不要跳过现有代码直接重写。',
+      '设计产物：docs/design/entities.json（实体/关系）、docs/design/pages.json（页面集 = Epic；页面契约）、docs/design/api-design.md（接口设计）、design-brief.md（概览/页面/组件/风格）、tokens.json（色板/字体/圆角/间距）、prototypes/*.png（模板风格截图；无显式契约的旧设计为线框）。',
+      '必读顺序：AGENTS.md → design-system.json → entities.json / pages.json / design-brief.md / tokens.json / prototypes → 蓝图 → frontend 现有代码；不要跳过现有代码直接重写。',
       '团队 skill：afcenter-page-generation（PageTemplates/页面配方/偏好）、pm-components-usage（pm-* 用法）；开发方法 skill：adw-frontend-implementation；页面库/蓝图也可通过设计模板 skill adw-template-proto-<applicationType> 定位。',
-      '优先级：需求 > design-system/design.json 契约 > 蓝图（布局/组件） > design-brief/tokens（视觉变量） > prototypes/*.png（模板风格截图；无显式契约的旧设计为线框）。任何冲突先报告（附文件/字段证据），不要静默取舍。',
+      '优先级：需求 > design-system/pages.json 契约 > entities.json / api-design.md > 蓝图（布局/组件） > design-brief/tokens（视觉变量） > prototypes/*.png（模板风格截图；无显式契约的旧设计为线框）。任何冲突先报告（附文件/字段证据），不要静默取舍。',
       '实现方式：从 docs/design/template/<applicationType>/pages/*.vue 复制页面到 frontend/src/views/，保留结构/样式/组件，替换 mock/接口；使用 PageTemplates（BusinessListPage/TreeListPage/StandardFormPage/FormSection/QueryPanel/RowActions/ThreePartPagination）、宿主 pm-* 与 src/preferences/GlobalPreference.js。',
       '组件规范：pm-* 由 AFCenter 宿主全局提供，不重复注册/打包；新增/编辑默认 pm-form-dialog；el-table 统一 v-auto-height；业务字段 > 8 用双列；批量操作放 batch-actions；树节点菜单用 MoreFilled；禁止自造一套表格/表单样式替代模板。',
-      '软门禁（不阻断）：先填写 docs/design/<MOD>/ui-check.md 的「实现前」对照表（页面/路由/蓝图/字段/列/操作/布局/差异），再写代码；实现后补「实现后」表。未填写不阻断，但完成汇报必须标记“流程未完成”。',
-      'MF remote 边界：生成物是独立 Module Federation remote（frontend/），pm-* 由宿主提供；token/PNG/蓝图只约束 Vue3 前端，EOS 后端不吃风格，不要为样式改后端结构。PNG 是模板风格截图（无显式契约的旧设计为线框），蓝图/预览是视觉事实；prototypes/_manifest.json 的 designHash 与当前 design.json 不一致视为过期，先说明再参考。',
+      '软门禁（不阻断）：先填写 docs/design/ui-check.md 的「实现前」对照表（按 Epic/页面集分节；页面/路由/蓝图/字段/列/操作/布局/差异），再写代码；实现后补「实现后」表。未填写不阻断，但完成汇报必须标记“流程未完成”。',
+      'MF remote 边界：生成物是独立 Module Federation remote（frontend/），pm-* 由宿主提供；token/PNG/蓝图只约束 Vue3 前端，EOS 后端不吃风格，不要为样式改后端结构。PNG 是模板风格截图（无显式契约的旧设计为线框），蓝图/预览是视觉事实；prototypes/_manifest.json 的 designHash 与当前设计产物不一致视为过期，先说明再参考。',
       '完成后汇报：实现摘要、改动文件、页面与蓝图/契约对照结果、偏离与原因、未实现项、如何运行/自测结果；没有证据不要声称“已还原”。'
     ]
   }
   const parts = [...framing[view]]
   if (view === 'development' && context?.digest) {
-    parts.push(`以下是工作台注入的设计摘要（只读；细节仍以 design.json、蓝图与现有代码为准）：\n${context.digest}`)
+    parts.push(`以下是工作台注入的设计摘要（只读；细节仍以 entities.json / pages.json、蓝图与现有代码为准）：\n${context.digest}`)
   }
-  return `${parts.join('\n')}\n${CHINESE_INSTRUCTION}\n\n用户消息：\n${text}`
+  // 需求章节上下文：必须在「用户消息：」之前（p2 harness 取最后一个标记之后的文本）
+  const focusLine = view === 'requirements' ? requirementFocusLine(context?.focus) : ''
+  return `${parts.join('\n')}\n${CHINESE_INSTRUCTION}\n${focusLine ? `\n${focusLine}\n\n` : '\n'}用户消息：\n${text}`
 }
 
 function sseWrite(res: Response, frame: unknown, closed: () => boolean): void {
@@ -357,14 +391,13 @@ export function viewLabel(view: SessionView): string {
   return '开发'
 }
 
-/** 应用三视图目标（与旧 `handleAppChat` 完全等价） */
+/** 应用三视图目标（应用 × 视图；无模块层级） */
 export function appChatTarget(app: ChatApp, view: AppView): ChatTarget {
   return {
     id: app.id,
     name: app.name,
     directory: appDirOf(app.id),
     view,
-    allowModule: true,
     beforeSession: () => {
       // 应用打开/会话启动做一次幂等对齐（覆盖式）；失败只记 warning，不阻塞对话
       const aligned = ensureWorkspaceAssets(app.id)
@@ -372,15 +405,14 @@ export function appChatTarget(app: ChatApp, view: AppView): ChatTarget {
     },
     expectedSkills: () => expectedSkillIds(app.id),
     expectedCommands: () => [...APP_EXPECTED_COMMANDS],
-    buildPrompt: (text, options) => buildViewPrompt(view, text, options.module, { digest: options.digest }),
-    digest: module => (view === 'development' ? developmentDigestForPrompt(app.id, module, appDirOf(app.id)) : undefined)
+    buildPrompt: (text, options) => buildViewPrompt(view, text, { digest: options.digest }),
+    digest: () => (view === 'development' ? developmentDigestForPrompt(app.id, appDirOf(app.id)) : undefined)
   }
 }
 
 interface ChatBody {
   view?: unknown
   text?: unknown
-  module?: unknown
   command?: unknown
   model?: unknown
 }
@@ -391,7 +423,6 @@ export async function handleChat(target: ChatTarget, req: Request, res: Response
   const view = target.view
   const text = typeof body.text === 'string' ? body.text : ''
   const command = typeof body.command === 'string' ? body.command.trim() : ''
-  const module = target.allowModule && typeof body.module === 'string' ? body.module.trim() : ''
   if (!text.trim() && !command) {
     res.status(400).json({ error: 'text 不能为空（command 模式可只给参数）' })
     return
@@ -413,7 +444,7 @@ export async function handleChat(target: ChatTarget, req: Request, res: Response
   const prepared = (await target.beforeSession?.()) ?? { warnings: [] }
   if (prepared.warnings.length) console.warn(`[chat] 工作区对齐提示（${target.id}）：`, prepared.warnings.join('；'))
   // 开发视图/工作室摘要（失败只降级，不阻断）
-  const digest = target.digest?.(module || undefined)
+  const digest = target.digest?.()
   const promptContext = digest ? { digest } : undefined
 
   const model = await resolveChatModel(target.id, view, target.directory, body.model)
@@ -487,7 +518,6 @@ export async function handleChat(target: ChatTarget, req: Request, res: Response
       sessionRowId: ensured.row.id,
       appId: target.id,
       view,
-      module: module || null,
       command: command || null,
       agent: agentForModelStage(view),
       model
@@ -596,7 +626,7 @@ export async function handleChat(target: ChatTarget, req: Request, res: Response
     if (command) {
       await opencode.runCommand(sessionID, command, text)
     } else {
-      await opencode.prompt(sessionID, target.buildPrompt(text, { module: module || undefined, digest: promptContext?.digest }))
+      await opencode.prompt(sessionID, target.buildPrompt(text, { digest: promptContext?.digest }))
     }
     await outcome
     touchSession(ensured.row.id)

@@ -5,7 +5,7 @@
  * - 错误码与设计稿 §8.2 / 附录 G 一致；
  * - warning：page-field-unknown / sample-sub-entity-missing / component-unknown / tree-parent-missing；
  * - synthetic design：entities = sampleEntity + sampleSubEntities，contract 展平为页面顶层字段，
- *   并符合 `templates/agent/skills/adw-design-artifacts/references/design.schema.json`。
+ *   并符合 `templates/agent/skills/adw-design-artifacts/references/pages.schema.json`。
  */
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
@@ -280,7 +280,7 @@ test('spec：未知顶层/页面字段 → spec-invalid（保留 errors[].path �
   assert.ok(result.errors.some(item => item.code === 'spec-invalid' && item.path === 'pages[1].foo'))
 })
 
-test('synthetic design：sampleEntity + sampleSubEntities、contract 展平、符合 design.schema.json', () => {
+test('synthetic design：sampleEntity + sampleSubEntities、contract 展平、符合 pages.schema.json', () => {
   const raw = baseSpec()
   const detail: Record<string, unknown> = {
     id: 'supplier-detail',
@@ -330,10 +330,13 @@ test('synthetic design：sampleEntity + sampleSubEntities、contract 展平、�
 
   const schemaFile = path.resolve(
     __dirname,
-    '../../../templates/agent/skills/adw-design-artifacts/references/design.schema.json'
+    '../../../templates/agent/skills/adw-design-artifacts/references/pages.schema.json'
   )
   const schema = JSON.parse(fs.readFileSync(schemaFile, 'utf8')) as Record<string, unknown>
-  const schemaErrors = validateJsonSchema(schema, design)
+  const schemaErrors = validateJsonSchema(schema, {
+    schemaVersion: 2,
+    pageSets: [{ id: 'synthetic', epic: 'EP-001', title: 'synthetic', pages: design.pages }]
+  })
   assert.deepEqual(schemaErrors, [], JSON.stringify(schemaErrors))
 })
 

@@ -3,7 +3,7 @@
  *
  * 挂载范围：
  * - /api/health                 工作台健康检查
- * - /api/apps                   应用 CRUD + 产物/事件/对话/模块文件 + 会话
+ * - /api/apps                   应用 CRUD + 产物/事件/对话 + 会话
  * - /api/requirement-templates  需求模板库（全局）
  * - /api/design-system          设计模板包（内置 + 自定义文件；资产/删除）
  * - /api/design-templates       模板工作室（catalog / 草稿 / 生成 / 发布）

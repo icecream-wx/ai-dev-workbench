@@ -4,95 +4,60 @@ import {
   CONTINUATION_TEXT,
   anchorId,
   applyHeadingAnchors,
+  askableSections,
   buildDocument,
   composerFixText,
   continuationText,
   mergeArtifactLines,
-  moduleMeta,
-  moveModuleOrder,
   needsContextBanner,
+  outlineKind,
   recentSessions,
-  sortModules
+  requirementSummary,
+  sectionAskFocus,
+  sectionAskPrompt
 } from './requirements-helpers.js'
 
-const modules = [
-  { key: 'MOD-002', order: 2, title: '订单管理', file: 'docs/requirements/MOD-002-订单管理.md', template: 'builtin-prd', sections: [{}], errors: [] },
-  { key: 'MOD-001', order: 1, title: '商品管理', file: 'docs/requirements/MOD-001-商品管理.md', template: 'builtin-prd-lite', sections: [{}, {}], errors: [{ path: 'title' }] },
-  { key: 'MOD-003', order: 0, title: '缺 order', file: 'docs/requirements/MOD-003-缺order.md', template: '', sections: [], warnings: ['order 不是正整数'] }
-]
+const requirement = {
+  exists: true,
+  title: '商品管理应用',
+  template: 'builtin-prd',
+  file: 'docs/requirements/requirements.md',
+  sections: [
+    { key: 'h2-1', title: '1. 背景与目标', level: 2, markdown: '卖货。' },
+    { key: 'h3-2', title: 'EP-001 商品管理', level: 3, markdown: '目标。' },
+    { key: 'h4-3', title: 'US-001 商品列表', level: 4, markdown: '' },
+    { key: 'h2-4', title: '2. 验收', level: 2, markdown: '- 能下单' }
+  ],
+  epics: [{ id: 'EP-001', title: '商品管理', stories: [{ id: 'US-001', title: '商品列表' }] }]
+}
 
-test('sortModules：order 升序，缺失/非法 order 置底；不改原数组', () => {
-  const sorted = sortModules(modules)
-  assert.deepEqual(
-    sorted.map(item => item.key),
-    ['MOD-001', 'MOD-002', 'MOD-003']
-  )
-  assert.equal(modules[0].key, 'MOD-002', '不应原地修改')
+test('outlineKind：Epic/Story 稳定 ID 识别', () => {
+  assert.deepEqual(outlineKind('EP-001 商品管理'), { id: 'EP-001', title: '商品管理', kind: 'epic' })
+  assert.deepEqual(outlineKind('US-012 商品列表'), { id: 'US-012', title: '商品列表', kind: 'story' })
+  assert.equal(outlineKind('1. 背景与目标'), null)
+  assert.equal(outlineKind(''), null)
 })
 
-test('moveModuleOrder：上/下移按新位置重排两模块 order；边界返回 null', () => {
-  const up = moveModuleOrder(modules, 'MOD-002', -1)
-  assert.deepEqual(up, {
-    updates: [
-      { key: 'MOD-002', order: 1 },
-      { key: 'MOD-001', order: 2 }
-    ]
-  })
-  const down = moveModuleOrder(modules, 'MOD-001', 1)
-  assert.deepEqual(down, {
-    updates: [
-      { key: 'MOD-001', order: 2 },
-      { key: 'MOD-002', order: 1 }
-    ]
-  })
-  assert.equal(moveModuleOrder(modules, 'MOD-001', -1), null)
-  assert.equal(moveModuleOrder(modules, 'MOD-003', 1), null)
-  assert.equal(moveModuleOrder(modules, 'MOD-999', 1), null)
-})
-
-test('moveModuleOrder：order 重复时按位置重排，结果确定', () => {
-  const duplicated = [
-    { key: 'A', order: 1, file: 'a.md' },
-    { key: 'B', order: 1, file: 'b.md' },
-    { key: 'C', order: 1, file: 'c.md' }
-  ]
-  const plan = moveModuleOrder(duplicated, 'B', -1)
-  assert.deepEqual(plan, {
-    updates: [
-      { key: 'B', order: 1 },
-      { key: 'A', order: 2 }
-    ]
-  })
-})
-
-test('buildDocument：H1 + 章节（##/###）+ 空章节不产生空段；TOC 锚点稳定', () => {
-  const module = {
-    key: 'MOD-001',
-    title: '商品管理',
-    sections: [
-      { key: 'a', title: '1. 背景与目标', level: 2, markdown: '卖货。' },
-      { key: 'b', title: '1.1 子节', level: 3, markdown: '' },
-      { key: 'c', title: '2. 验收', level: 2, markdown: '- 能下单' }
-    ]
-  }
-  const doc = buildDocument(module)
-  assert.match(doc.markdown, /^# 商品管理\n/)
+test('buildDocument：H1 + 章节（##/###/####）+ 空章节不产生空段；TOC 锚点稳定且标 Epic/Story', () => {
+  const doc = buildDocument(requirement)
+  assert.match(doc.markdown, /^# 商品管理应用\n/)
   assert.match(doc.markdown, /\n## 1\. 背景与目标\n\n卖货。\n/)
-  assert.match(doc.markdown, /\n### 1\.1 子节\n/)
-  assert.match(doc.markdown, /\n## 2\. 验收\n\n- 能下单\n/)
+  assert.match(doc.markdown, /\n### EP-001 商品管理\n/)
+  assert.match(doc.markdown, /\n#### US-001 商品列表\n/)
   assert.equal(doc.markdown.includes('\n\n\n'), false)
   assert.deepEqual(
     doc.toc.map(item => item.id),
-    [anchorId(0), anchorId(1), anchorId(2)]
+    [anchorId(0), anchorId(1), anchorId(2), anchorId(3)]
   )
-  assert.deepEqual(doc.toc.map(item => item.level), [2, 3, 2])
-  assert.equal(buildDocument({ key: 'MOD-009', sections: [] }).markdown.trim(), '# MOD-009')
+  assert.deepEqual(doc.toc.map(item => item.level), [2, 3, 4, 2])
+  assert.equal(doc.toc[1].kind, 'epic')
+  assert.equal(doc.toc[1].key, 'EP-001')
+  assert.equal(doc.toc[2].kind, 'story')
+  assert.equal(buildDocument({ title: '', sections: [] }).markdown.trim(), '# 需求文档')
 })
 
-test('applyHeadingAnchors：按渲染顺序给 h2/h3 补 id（TOC 定位）', () => {
-  const fake = elements => ({
-    querySelectorAll: () => elements
-  })
+test('applyHeadingAnchors：按渲染顺序给 h2/h3/h4 补 id（TOC 定位）', () => {
+  const fake = elements => ({ querySelectorAll: () => elements })
   const first = {}
   const second = {}
   applyHeadingAnchors(fake([first, second]), [{ id: 'sec-1' }, { id: 'sec-2' }])
@@ -101,19 +66,36 @@ test('applyHeadingAnchors：按渲染顺序给 h2/h3 补 id（TOC 定位）', ()
   assert.doesNotThrow(() => applyHeadingAnchors(null, [{ id: 'x' }]))
 })
 
+test('requirementSummary：文档标题/Epic/Story/章节数', () => {
+  assert.deepEqual(requirementSummary(requirement), {
+    exists: true,
+    title: '商品管理应用',
+    epicCount: 1,
+    storyCount: 1,
+    sectionCount: 4
+  })
+  assert.deepEqual(requirementSummary(null), {
+    exists: false,
+    title: '',
+    epicCount: 0,
+    storyCount: 0,
+    sectionCount: 0
+  })
+})
+
 test('mergeArtifactLines：errors + warnings 去重，含文件/字段/期望', () => {
   const lines = mergeArtifactLines(
     [
-      { file: 'docs/design/MOD-001/design.json', path: 'entities', message: '类型应为 array', expected: 'array' },
-      { file: 'docs/requirements/MOD-001-商品.md', path: 'module', message: '缺少 module' }
+      { file: 'docs/design/pages.json', path: 'pageSets', message: '类型应为 array', expected: 'array' },
+      { file: 'docs/requirements/requirements.md', path: 'title', message: '缺少 title' }
     ],
-    ['order 不是正整数'],
-    'docs/requirements/MOD-001-商品.md'
+    ['文档还没有 Epic'],
+    'docs/requirements/requirements.md'
   )
   assert.equal(lines.length, 3)
-  assert.match(lines[0], /design\.json · entities · 类型应为 array（期望：array）/)
-  assert.match(lines[1], /缺少 module/)
-  assert.match(lines[2], /警告 · order 不是正整数/)
+  assert.match(lines[0], /pages\.json · pageSets · 类型应为 array（期望：array）/)
+  assert.match(lines[1], /缺少 title/)
+  assert.match(lines[2], /警告 · 文档还没有 Epic/)
 
   const deduped = mergeArtifactLines([{ file: 'a.md', path: '$', message: 'x' }, { file: 'a.md', path: '$', message: 'x' }], [])
   assert.deepEqual(deduped, ['a.md · $ · x'])
@@ -147,19 +129,43 @@ test('recentSessions：最近 N 个（活跃时间优先），带 label/active',
   assert.equal(list[0].label, '较新')
 })
 
-test('85% 文案：仅 danger 显示横幅；衔接文案确定且带模块', () => {
+test('85% 文案：仅 danger 显示横幅；衔接文案确定（单文档）', () => {
   assert.equal(needsContextBanner('danger'), true)
   assert.equal(needsContextBanner('warn'), false)
   assert.equal(needsContextBanner(undefined), false)
-  assert.equal(continuationText(''), CONTINUATION_TEXT)
-  const text = continuationText('MOD-001')
+  const text = continuationText()
+  assert.equal(text, CONTINUATION_TEXT)
   assert.match(text, /已归档/)
-  assert.match(text, /docs\/requirements/)
-  assert.match(text, /当前模块：MOD-001/)
+  assert.match(text, /docs\/requirements\/requirements\.md/)
 })
 
-test('moduleMeta：章节数/模板/错误/警告', () => {
-  assert.deepEqual(moduleMeta(modules[1]), { sections: 2, errors: 1, warnings: 0, template: 'builtin-prd-lite' })
-  assert.deepEqual(moduleMeta(modules[2]), { sections: 0, errors: 0, warnings: 1, template: '' })
-  assert.deepEqual(moduleMeta(null), { sections: 0, errors: 0, warnings: 0, template: '' })
+test('askableSections：只取 h2/h3（h4 Story 不显示「问 AI」）', () => {
+  const doc = buildDocument(requirement)
+  const ids = askableSections(doc.toc).map(item => item.id)
+  assert.deepEqual(ids, [anchorId(0), anchorId(1), anchorId(3)])
+  assert.deepEqual(askableSections(null), [])
+  assert.deepEqual(askableSections([{ id: 'x', level: 4 }]), [])
+})
+
+test('sectionAskFocus：章节隐藏上下文（含 Epic key）与空值兜底', () => {
+  const epic = sectionAskFocus({ id: 'sec-2', title: 'EP-001 商品管理', level: 3, key: 'EP-001', kind: 'epic' })
+  assert.deepEqual(epic, {
+    kind: 'requirements-section',
+    anchor: 'sec-2',
+    title: 'EP-001 商品管理',
+    level: 3,
+    key: 'EP-001'
+  })
+  const plain = sectionAskFocus({ id: 'sec-1', title: '1. 目标', level: 2 })
+  assert.equal(plain.kind, 'requirements-section')
+  assert.equal('key' in plain, false)
+  assert.equal(sectionAskFocus(null), null)
+  assert.equal(sectionAskFocus({ title: '无锚点' }), null)
+})
+
+test('sectionAskPrompt：默认提问带章节标题；空标题用「本章节」', () => {
+  const text = sectionAskPrompt({ id: 'sec-1', title: '1. 目标', level: 2 })
+  assert.match(text, /请基于「1\. 目标」这一章节/)
+  assert.match(text, /验收标准/)
+  assert.match(sectionAskPrompt({ title: '' }), /请基于「本章节」/)
 })

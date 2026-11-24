@@ -63,61 +63,84 @@ function seedDesign(appDir: string): void {
   const requirements = path.join(appDir, 'docs', 'requirements')
   fs.mkdirSync(requirements, { recursive: true })
   fs.writeFileSync(
-    path.join(requirements, 'MOD-001-商品管理.md'),
-    '---\nmodule: MOD-001\ntitle: "商品管理"\norder: 1\ntemplate: builtin-prd-lite\n---\n\n# 商品管理\n\n## 1. 目标\n\n维护商品。\n',
+    path.join(requirements, 'requirements.md'),
+    '---\ntitle: "商品管理"\ntemplate: builtin-prd-lite\n---\n\n# 商品管理\n\n## 1. 目标\n\n维护商品。\n\n### EP-001 商品管理\n',
     'utf8'
   )
-  const designDir = path.join(appDir, 'docs', 'design', 'MOD-001')
+  const designDir = path.join(appDir, 'docs', 'design')
   fs.mkdirSync(designDir, { recursive: true })
   fs.writeFileSync(
-    path.join(designDir, 'design.json'),
+    path.join(designDir, 'entities.json'),
     `${JSON.stringify(
       {
-        module: 'MOD-001',
-        title: '商品管理',
-        designSystem: {
-          pack: 'afcenter-app-templates-v1',
-          applicationType: 'enterprise-application-platform',
-          style: 'platform-blue'
-        },
+        schemaVersion: 2,
         entities: [
           {
             id: 'product',
             name: '商品',
             fields: [
-              { name: '商品编码', type: 'string' },
-              { name: '商品名称', type: 'string' },
-              { name: '状态', type: 'enum', options: ['上架', '下架'] }
+              { code: 'productCode', name: '商品编码', type: 'string' },
+              { code: 'productName', name: '商品名称', type: 'string' },
+              {
+                code: 'status',
+                name: '状态',
+                type: 'enum',
+                options: [
+                  { value: 'ON', label: '上架' },
+                  { value: 'OFF', label: '下架' }
+                ]
+              }
             ]
           }
         ],
-        relations: [],
-        pages: [
+        relations: []
+      },
+      null,
+      2
+    )}\n`,
+    'utf8'
+  )
+  fs.writeFileSync(
+    path.join(designDir, 'pages.json'),
+    `${JSON.stringify(
+      {
+        schemaVersion: 2,
+        pageSets: [
           {
-            id: 'product-list',
-            name: '商品列表',
-            type: 'tree-list',
-            recipe: 'tree-list',
-            catalogRef: 'enterprise-application-platform/organization',
-            columns: ['商品编码', '商品名称', '状态'],
-            filters: ['商品名称', '状态'],
-            rowActions: ['detail', 'edit', 'delete'],
-            toolbarActions: ['create'],
-            selection: true,
-            pagination: { layout: 'three-part', pageSize: 20 }
-          },
-          {
-            id: 'product-form',
-            name: '商品编辑',
-            type: 'form',
-            recipe: 'dialog-form',
-            blueprint: 'application-types/enterprise-application-platform/pages/ApplicationForm.vue',
-            form: {
-              presentation: 'dialog',
-              columns: 2,
-              width: 800,
-              fields: ['商品编码', '商品名称', '状态']
-            }
+            id: 'product',
+            epic: 'EP-001',
+            title: '商品管理',
+            primaryEntity: 'product',
+            pages: [
+              {
+                id: 'product-list',
+                name: '商品列表',
+                type: 'list',
+                recipe: 'tree-list',
+                catalogRef: 'enterprise-application-platform/organization',
+                entity: 'product',
+                columns: ['productCode', 'productName', 'status'],
+                filters: ['productName', 'status'],
+                rowActions: ['detail', 'edit', 'delete'],
+                toolbarActions: ['create'],
+                selection: true,
+                pagination: { layout: 'three-part', pageSize: 20 }
+              },
+              {
+                id: 'product-form',
+                name: '商品编辑',
+                type: 'form',
+                recipe: 'dialog-form',
+                blueprint: 'application-types/enterprise-application-platform/pages/ApplicationForm.vue',
+                entity: 'product',
+                form: {
+                  presentation: 'dialog',
+                  columns: 2,
+                  width: 800,
+                  fields: ['productCode', 'productName', 'status']
+                }
+              }
+            ]
           }
         ]
       },
@@ -221,10 +244,7 @@ async function main(): Promise<void> {
     const pageAudit = audit(page)
     await gotoDev(page)
 
-    const moduleSelect = page.locator('[data-testid=dev-module-select]')
-    await moduleSelect.waitFor({ state: 'visible', timeout: 12000 })
-    await waitFor(async () => (await moduleSelect.inputValue()) === 'MOD-001', 10000, '模块自动选中 MOD-001')
-    check((await moduleSelect.inputValue()) === 'MOD-001', '1.1 设计模块自动选中 MOD-001')
+    check((await page.locator('[data-testid=dev-module-select]').count()) === 0, '1.1 无模块下拉')
 
     const button = page.locator('[data-testid=dev-fidelity-check]')
     await button.waitFor({ state: 'visible', timeout: 8000 })
@@ -240,7 +260,7 @@ async function main(): Promise<void> {
     const summaryText = await page.locator('[data-testid=dev-fidelity-summary]').innerText()
     check(summaryText.includes('通过') && summaryText.includes('警告'), `2.3 摘要含通过/警告（${summaryText}）`)
     const metaText = await page.locator('[data-testid=dev-fidelity-meta]').innerText()
-    check(metaText.includes('MOD-001'), `2.4 报告标明模块（${metaText}）`)
+    check(metaText.includes('应用级'), `2.4 报告标明应用级（${metaText}）`)
     check((await page.locator('[data-testid=dev-fidelity-empty]').count()) === 0, '2.5 有设计时不显示空态')
 
     const uiCheckItem = page.locator('[data-testid=dev-fidelity-check-ui-check]')
@@ -262,7 +282,13 @@ async function main(): Promise<void> {
     const templateContractText = await templateContractItem.innerText()
     check(templateContractText.includes('模板契约页'), `2.11 报告含模板契约页检查项（${templateContractText}）`)
     check(templateContractText.includes('通过'), `2.12 无契约页引用时模板契约检查通过（${templateContractText}）`)
-    check((await report.locator('.fidelity-item').count()) === 13, '2.13 一致性检查共 13 项')
+    check((await report.locator('.fidelity-item').count()) === 14, '2.13 一致性检查共 14 项')
+
+    const apiDesignItem = page.locator('[data-testid=dev-fidelity-check-api-design]')
+    await apiDesignItem.waitFor({ state: 'visible', timeout: 8000 })
+    const apiDesignText = await apiDesignItem.innerText()
+    check(apiDesignText.includes('接口设计'), `2.14 报告含接口设计检查项（${apiDesignText}）`)
+    check(apiDesignText.includes('警告') && apiDesignText.includes('未生成'), '2.15 无接口文档时 api-design 为警告')
 
     const reportText = await report.innerText()
     check(reportText.includes('只读报告'), '2.9 报告标注只读、不自动改代码')

@@ -24,7 +24,6 @@ const shotsDir = process.env.P7_4B_SHOTS_DIR || path.join(os.tmpdir(), 'workbenc
 const port = 3444
 const base = `http://127.0.0.1:${port}`
 const appId = 'p7-4b-e2e'
-const moduleKey = 'MOD-001'
 
 fs.mkdirSync(shotsDir, { recursive: true })
 
@@ -81,79 +80,107 @@ async function request(method: string, apiPath: string, body?: unknown): Promise
   return { status: res.status, data }
 }
 
-function designFixture(): Record<string, unknown> {
-  const orgFields = [
-    { name: '机构名称', label: '机构名称', type: 'string', required: true },
-    { name: '机构编码', label: '机构编码', type: 'string', unique: true },
-    { name: '上级机构', label: '上级机构', type: 'string' },
-    { name: '负责人', label: '负责人', type: 'string' },
-    { name: '状态', label: '状态', type: 'enum', options: ['启用', '停用'] },
-    { name: '排序号', label: '排序号', type: 'number' }
-  ]
-  const employeeFields = [
-    { name: '员工姓名', label: '员工姓名', type: 'string' },
-    { name: '所属机构', label: '所属机构', type: 'ref' },
-    { name: '在职状态', label: '在职状态', type: 'enum', options: ['在职', '离职'] }
-  ]
-  return {
-    module: moduleKey,
-    title: '组织与人员',
-    designSystem: {
-      pack: 'afcenter-app-templates-v1',
-      applicationType: 'enterprise-application-platform',
-      style: 'platform-blue'
-    },
+function designFixture(): { entities: Record<string, unknown>; pages: Record<string, unknown> } {
+  const entities = {
+    schemaVersion: 2,
     entities: [
-      { id: 'org', name: '机构', fields: orgFields },
-      { id: 'employee', name: '员工', fields: employeeFields }
+      {
+        id: 'org',
+        name: '机构',
+        fields: [
+          { code: 'orgName', name: '机构名称', type: 'string', required: true },
+          { code: 'orgCode', name: '机构编码', type: 'string', unique: true },
+          { code: 'parentName', name: '上级机构', type: 'string' },
+          { code: 'owner', name: '负责人', type: 'string' },
+          {
+            code: 'status',
+            name: '状态',
+            type: 'enum',
+            options: [
+              { value: 'ENABLED', label: '启用' },
+              { value: 'DISABLED', label: '停用' }
+            ]
+          },
+          { code: 'sortNo', name: '排序号', type: 'number' }
+        ]
+      },
+      {
+        id: 'employee',
+        name: '员工',
+        fields: [
+          { code: 'empName', name: '员工姓名', type: 'string' },
+          { code: 'orgId', name: '所属机构', type: 'ref', ref: 'org' },
+          {
+            code: 'employStatus',
+            name: '在职状态',
+            type: 'enum',
+            options: [
+              { value: 'ACTIVE', label: '在职' },
+              { value: 'LEFT', label: '离职' }
+            ]
+          }
+        ]
+      }
     ],
     relations: [
       { from: 'org', to: 'org', type: '1:N', label: '下级机构' },
       { from: 'employee', to: 'org', type: 'N:1', label: '所属机构' },
       { from: 'org', to: 'employee', type: '1:N', label: '员工' }
-    ],
-    pages: [
+    ]
+  }
+  const pages = {
+    schemaVersion: 2,
+    pageSets: [
       {
-        id: 'org-list',
-        name: '组织与人员',
-        type: 'list',
-        entity: 'org',
-        recipe: 'tree-list',
-        catalogRef: 'enterprise-application-platform/organization',
-        blueprint: 'application-types/enterprise-application-platform/pages/OrganizationUsers.vue',
-        filters: ['机构名称', '机构编码', '状态'],
-        columns: ['机构名称', '机构编码', '上级机构', '负责人', '状态'],
-        rowActions: ['detail', 'edit', 'disable'],
-        toolbarActions: ['create', 'import', 'batchDelete'],
-        selection: true,
-        pagination: { layout: 'three-part', pageSize: 5 },
-        tree: { titleField: '机构名称', parentField: '上级机构', actionStyle: 'header', selectionStyle: 'dot' },
-        components: { 状态: 'pm-select' }
-      },
-      {
-        id: 'org-form',
-        name: '新建/编辑机构',
-        type: 'form',
-        entity: 'org',
-        recipe: 'dialog-form',
-        form: {
-          presentation: 'dialog',
-          columns: 1,
-          width: 720,
-          fields: ['机构名称', '机构编码', '上级机构', '负责人', '状态', '排序号'],
-          groups: [
-            { title: '基本信息', fields: ['机构名称', '机构编码', '上级机构'] },
-            { title: '其他信息', fields: ['负责人', '状态', '排序号'] }
-          ]
-        },
-        subTables: [
-          { entity: 'employee', title: '员工', columns: ['员工姓名', '所属机构', '在职状态'], mode: 'tab' },
-          { entity: 'org', title: '下级机构', columns: ['机构名称', '机构编码', '状态'], mode: 'tab' }
-        ],
-        components: { 状态: 'pm-switch', 负责人: 'pm-select-user' }
+        id: 'org',
+        epic: 'EP-001',
+        title: '组织与人员',
+        primaryEntity: 'org',
+        pages: [
+          {
+            id: 'org-list',
+            name: '组织与人员',
+            type: 'list',
+            entity: 'org',
+            recipe: 'tree-list',
+            catalogRef: 'enterprise-application-platform/organization',
+            blueprint: 'application-types/enterprise-application-platform/pages/OrganizationUsers.vue',
+            filters: ['orgName', 'orgCode', 'status'],
+            columns: ['orgName', 'orgCode', 'parentName', 'owner', 'status'],
+            rowActions: ['detail', 'edit', 'disable'],
+            toolbarActions: ['create', 'import', 'batchDelete'],
+            selection: true,
+            pagination: { layout: 'three-part', pageSize: 5 },
+            tree: { titleField: 'orgName', parentField: 'parentName', actionStyle: 'header', selectionStyle: 'dot' },
+            components: { status: 'pm-select' }
+          },
+          {
+            id: 'org-form',
+            name: '新建/编辑机构',
+            type: 'form',
+            entity: 'org',
+            recipe: 'dialog-form',
+            form: {
+              presentation: 'dialog',
+              columns: 1,
+              width: 720,
+              fields: ['orgName', 'orgCode', 'parentName', 'owner', 'status', 'sortNo'],
+              groups: [
+                { title: '基本信息', fields: ['orgName', 'orgCode', 'parentName'] },
+                { title: '其他信息', fields: ['owner', 'status', 'sortNo'] }
+              ]
+            },
+            subTables: [
+              { entity: 'employee', title: '员工', columns: ['empName', 'orgId', 'employStatus'], mode: 'tab' },
+              { entity: 'org', title: '下级机构', columns: ['orgName', 'orgCode', 'status'], mode: 'tab' }
+            ],
+            components: { status: 'pm-switch', owner: 'pm-select-user' }
+          }
+        ]
       }
     ]
   }
+  return { entities, pages }
 }
 
 async function startHarness(): Promise<void> {
@@ -268,7 +295,7 @@ async function exportPng(
   filename: string,
   prototypesDir: string
 ): Promise<{ file: string; width: number; height: number }> {
-  const pageId = filename.startsWith(`${moduleKey}-`) ? filename.slice(moduleKey.length + 1).replace(/\.png$/, '') : filename.replace(/\.png$/, '')
+  const pageId = filename.replace(/\.png$/, '')
   const file = path.join(prototypesDir, `${pageId}.png`)
   const before = fs.existsSync(file) ? fs.statSync(file).mtimeMs : 0
   await page.locator('[data-testid=export-png-btn]').click()
@@ -291,16 +318,12 @@ async function main(): Promise<void> {
 
   await startHarness()
   const harnessState = await readState()
-  const designDir = path.join(harnessState.appDir, 'docs', 'design', moduleKey)
+  const designDir = path.join(harnessState.appDir, 'docs', 'design')
 
-  const created = await request('POST', `/apps/${appId}/requirements-modules`, { title: '组织与人员' })
-  check(created.status === 201, '准备需求模块 MOD-001')
+  const fixture = designFixture()
   fs.mkdirSync(designDir, { recursive: true })
-  fs.writeFileSync(
-    path.join(designDir, 'design.json'),
-    `${JSON.stringify(designFixture(), null, 2)}\n`,
-    'utf8'
-  )
+  fs.writeFileSync(path.join(designDir, 'entities.json'), `${JSON.stringify(fixture.entities, null, 2)}\n`, 'utf8')
+  fs.writeFileSync(path.join(designDir, 'pages.json'), `${JSON.stringify(fixture.pages, null, 2)}\n`, 'utf8')
 
   const browser: Browser = await chromium.launch()
   let context: BrowserContext | null = null
@@ -310,9 +333,9 @@ async function main(): Promise<void> {
     const pageAudit = audit(page)
 
     await gotoDesign(page)
-    await page.locator('[data-testid=design-module-MOD-001]').waitFor({ state: 'visible', timeout: 20000 })
-    await page.locator('[data-testid=design-module-MOD-001]').click()
     await page.locator('[data-testid=design-tab-prototype]').click()
+    await page.locator('[data-testid=design-pageset-org]').waitFor({ state: 'visible', timeout: 20000 })
+    await page.locator('[data-testid=design-pageset-org]').click()
     // P11：调试参数 `?prototype=wireframe` 持续强制结构草图，切页不再需要点「线框」
     await page.locator('[data-testid=prototype-paper]').waitFor({ state: 'visible', timeout: 15000 })
     await page.locator('[data-testid=prototype-pages] .page-chip').first().waitFor({ state: 'visible', timeout: 8000 })
@@ -380,7 +403,7 @@ async function main(): Promise<void> {
       '自动导出两页完成'
     )
     check(true, '6.1 自动导出两页完成')
-    const treePng = await exportPng(page, `${moduleKey}-org-list.png`, path.join(designDir, 'prototypes'))
+    const treePng = await exportPng(page, `org-list.png`, path.join(designDir, 'prototypes'))
     check(treePng.width > 500 && treePng.height > 200, `6.2 树页 PNG 尺寸 ${treePng.width}x${treePng.height}`)
 
     // ---------- 5. 弹窗表单 ----------
@@ -394,9 +417,9 @@ async function main(): Promise<void> {
     check((await dialog.locator('.wf-form-section-title').count()) === 2, '7.4 两个表单分组')
     const groupText = await dialog.locator('.wf-form-section-title').first().innerText()
     check(groupText.includes('基本信息'), '7.5 分组标题为基本信息')
-    check((await dialog.locator('[data-wf-anchor="field:状态"] .wf-switch').count()) === 1, '7.6 pm-switch 映射为开关')
+    check((await dialog.locator('[data-wf-anchor="field:status"] .wf-switch').count()) === 1, '7.6 pm-switch 映射为开关')
     check(
-      (await dialog.locator('[data-wf-anchor="field:负责人"] .wf-select .wf-ctl-icon').count()) === 1,
+      (await dialog.locator('[data-wf-anchor="field:owner"] .wf-select .wf-ctl-icon').count()) === 1,
       '7.7 pm-select-user 映射为人员选择控件'
     )
     const fieldStyles = await dialog.locator('.wf-field').evaluateAll(nodes =>
@@ -418,7 +441,7 @@ async function main(): Promise<void> {
     check(footerText.includes('取消') && footerText.includes('提交'), '8.6 弹窗底部取消/提交')
 
     // ---------- 6. 弹窗页 PNG 导出 ----------
-    const formPng = await exportPng(page, `${moduleKey}-org-form.png`, path.join(designDir, 'prototypes'))
+    const formPng = await exportPng(page, `org-form.png`, path.join(designDir, 'prototypes'))
     check(formPng.width > 500 && formPng.height > 200, `9.1 弹窗页 PNG 尺寸 ${formPng.width}x${formPng.height}`)
 
     // ---------- 7. 审计 ----------

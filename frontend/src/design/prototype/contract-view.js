@@ -34,6 +34,11 @@ function asArray(value) {
   return Array.isArray(value) ? value : []
 }
 
+/** 字段渲染键：新模型用 code（英文）；旧数据用 name */
+function fieldCode(field) {
+  return text(field?.code) || text(field?.name)
+}
+
 export function controlFromComponent(name) {
   return COMPONENT_CONTROLS[text(name)] ?? undefined
 }
@@ -76,9 +81,10 @@ export function inferControlType(field) {
 
 /** 控件优先级：fieldOverrides.control > components > 类型/命名推断 */
 export function resolveControl(field, layout) {
-  const override = layout?.fieldOverrides?.[field?.name]?.control
+  const key = fieldCode(field)
+  const override = layout?.fieldOverrides?.[key]?.control
   if (override) return override
-  const fromComponent = controlFromComponent(layout?.components?.[field?.name])
+  const fromComponent = controlFromComponent(layout?.components?.[key])
   if (fromComponent) return fromComponent
   return inferControlType(field)
 }
@@ -221,7 +227,7 @@ export function subTableView(layout) {
 /** form.columns=1 → 字段独占整行；否则沿用 fieldSpan（fieldOverrides.span > textarea 24 > 12） */
 export function computeFieldSpan(field, layout, respectColumns = true) {
   if (respectColumns && layout?.form?.columns === 1) return 24
-  const override = layout?.fieldOverrides?.[field?.name]?.span
+  const override = layout?.fieldOverrides?.[fieldCode(field)]?.span
   if (override) return override
   return resolveControl(field, layout) === 'textarea' ? 24 : 12
 }

@@ -120,7 +120,7 @@ test('targetForDraft：id/view/directory/prompt/expected/model key（template �
   const target = await studio.targetForDraft(PACK_ID)
   assert.equal(target.id, '__template__:studio-demo')
   assert.equal(target.view, 'template')
-  assert.equal(target.allowModule, false)
+  assert.equal('allowModule' in target, false)
   assert.equal(target.directory, path.join(root, 'data', 'design-system', '_workshop'))
   assert.equal(target.sessionTitle?.(), '工作室演示模板 · 模板工作室')
   assert.deepEqual(target.expectedSkills(), ['adw-design-template-authoring'])

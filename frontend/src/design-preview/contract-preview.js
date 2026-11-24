@@ -96,6 +96,11 @@ function asArray(value) {
   return Array.isArray(value) ? value : []
 }
 
+/** 字段渲染键：新模型用 code（英文）；旧数据（合成设计/旧设计）用 name */
+function fieldCode(field) {
+  return text(field?.code) || text(field?.name)
+}
+
 function pad(value, length = 2) {
   return String(value).padStart(length, '0')
 }
@@ -256,8 +261,8 @@ export function mockRowsForEntity(entity, count) {
   for (let i = 0; i < total; i += 1) {
     const row = { __id: `row-${i + 1}` }
     for (const field of fields) {
-      if (!text(field?.name)) continue
-      row[field.name] = mockFieldValue(field, i, enumOffsets.get(field) ?? 0)
+      if (!fieldCode(field)) continue
+      row[fieldCode(field)] = mockFieldValue(field, i, enumOffsets.get(field) ?? 0)
     }
     rows.push(row)
   }
@@ -282,7 +287,7 @@ export function formatCellValue(field, value) {
  * ------------------------------------------------------------------ */
 
 function columnOf(field) {
-  const base = { prop: field.name, label: field.label || field.name }
+  const base = { prop: fieldCode(field), label: fieldLabelOf(field) }
   const width = field.type === 'date' ? 120
     : field.type === 'datetime' ? 165
       : field.type === 'number' || field.type === 'decimal' ? 120
@@ -303,9 +308,9 @@ function columnOf(field) {
  */
 export function buildColumns(page, entity) {
   const requested = asArray(page?.layout?.table?.columns ?? page?.spec?.columns).map(String)
-  const fields = asArray(entity?.fields).filter(field => text(field?.name))
-  const byName = new Map(fields.map(field => [field.name, field]))
-  const names = requested.length ? requested : fields.slice(0, 6).map(field => field.name)
+  const fields = asArray(entity?.fields).filter(field => fieldCode(field))
+  const byName = new Map(fields.map(field => [fieldCode(field), field]))
+  const names = requested.length ? requested : fields.slice(0, 6).map(field => fieldCode(field))
   const columns = []
   const skipped = []
   for (const name of names) {
@@ -322,8 +327,8 @@ export function buildColumns(page, entity) {
 /** 查询字段：`layout.table.searchFields` / `spec.filters` → 字段对象 */
 export function buildFilters(page, entity, max = 4) {
   const requested = asArray(page?.layout?.table?.searchFields ?? page?.spec?.filters).map(String)
-  const fields = asArray(entity?.fields).filter(field => text(field?.name))
-  const byName = new Map(fields.map(field => [field.name, field]))
+  const fields = asArray(entity?.fields).filter(field => fieldCode(field))
+  const byName = new Map(fields.map(field => [fieldCode(field), field]))
   const result = []
   const skipped = []
   for (const name of requested) {
@@ -479,8 +484,8 @@ export function buildTreeRows(rows, tree) {
 export function buildForm(page, entity) {
   const layout = page?.layout ?? {}
   const view = formView(layout, page)
-  const fields = asArray(entity?.fields).filter(field => text(field?.name))
-  const byName = new Map(fields.map(field => [field.name, field]))
+  const fields = asArray(entity?.fields).filter(field => fieldCode(field))
+  const byName = new Map(fields.map(field => [fieldCode(field), field]))
   const skipped = []
   const resolveList = names => {
     const result = []
@@ -505,7 +510,7 @@ export function buildForm(page, entity) {
   if (!groups.length) {
     const names = asArray(layout?.form?.fields).length
       ? layout.form.fields
-      : fields.slice(0, 8).map(field => field.name)
+      : fields.slice(0, 8).map(field => fieldCode(field))
     groups.push({ title: '', fields: resolveList(names) })
   }
   return {
@@ -529,7 +534,9 @@ export function controlOf(field, page) {
 
 /** 下拉/单选/多选选项：枚举 options 优先，缺失时给确定性示意选项 */
 export function selectOptionsOf(field) {
-  const options = asArray(field?.options).map(String).filter(Boolean)
+  const options = asArray(field?.options)
+    .map(item => (item && typeof item === 'object' ? text(item.label) || text(item.value) : String(item)))
+    .filter(Boolean)
   const list = options.length ? options : FALLBACK_OPTIONS
   return list.map(value => ({ label: value, value }))
 }
@@ -546,7 +553,9 @@ export function initialFormValue(field, index = 0) {
 
 /** 枚举值 → 模板状态标签类（与 P9 列表行一致：首项成功、次项警告/危险、其余中性） */
 export function statusClassOfValue(field, value) {
-  const options = asArray(field?.options).map(String)
+  const options = asArray(field?.options).map(item =>
+    item && typeof item === 'object' ? text(item.label) || text(item.value) : String(item)
+  )
   const index = options.indexOf(String(value))
   if (index === 0) return 'status-success'
   if (index === 1 && options.length > 2) return 'status-warning'
@@ -591,7 +600,7 @@ function distinctCounts(rows, fieldName, limit = 5) {
  */
 export function buildDashboardModel({ page, entity, rows, primary = '#145fba', rowLimit = 5 } = {}) {
   const list = Array.isArray(rows) ? rows : mockRowsForEntity(entity, mockRowCountOf(page))
-  const fields = asArray(entity?.fields).filter(field => text(field?.name))
+  const fields = asArray(entity?.fields).filter(field => fieldCode(field))
   const entityName = text(entity?.name) || text(page?.title) || '页面'
   const hasEntity = Boolean(entity) && fields.length > 0
   const numericFields = fields.filter(isNumericField)
@@ -604,7 +613,7 @@ export function buildDashboardModel({ page, entity, rows, primary = '#145fba', r
     note: hasEntity ? `${entityName} · 本地 mock` : '页面未绑定实体'
   })
   for (const field of numericFields.slice(0, 2)) {
-    const sum = list.reduce((total, row) => total + (Number(row?.[field.name]) || 0), 0)
+    const sum = list.reduce((total, row) => total + (Number(row?.[fieldCode(field)]) || 0), 0)
     metrics.push({
       label: `${fieldLabelOf(field)}合计`,
       value: hasEntity ? formatCellValue(field, sum) : '—',
@@ -615,7 +624,7 @@ export function buildDashboardModel({ page, entity, rows, primary = '#145fba', r
     const field = enumFields[0]
     metrics.push({
       label: `${fieldLabelOf(field)}种类`,
-      value: String(distinctCounts(list, field.name, 50).length),
+      value: String(distinctCounts(list, fieldCode(field), 50).length),
       note: '按枚举值去重'
     })
   }
@@ -627,7 +636,7 @@ export function buildDashboardModel({ page, entity, rows, primary = '#145fba', r
   if (hasEntity && list.length) {
     if (enumFields.length) {
       const field = enumFields[0]
-      const data = distinctCounts(list, field.name)
+      const data = distinctCounts(list, fieldCode(field))
       if (data.length) {
         chartOption = {
           chartView: {
@@ -648,9 +657,9 @@ export function buildDashboardModel({ page, entity, rows, primary = '#145fba', r
       }
     } else if (numericFields.length) {
       const numericField = numericFields[0]
-      const dimension = fields.find(field => field.name !== numericField.name && field.type !== 'number' && field.type !== 'decimal')
+      const dimension = fields.find(field => fieldCode(field) !== fieldCode(numericField) && field.type !== 'number' && field.type !== 'decimal')
       const slice = list.slice(0, 6)
-      const labels = slice.map((row, index) => text(String(row?.[dimension?.name] ?? '')) || `记录 ${index + 1}`)
+      const labels = slice.map((row, index) => text(String(row?.[fieldCode(dimension)] ?? '')) || `记录 ${index + 1}`)
       chartOption = {
         chartView: {
           animation: false,
@@ -668,7 +677,7 @@ export function buildDashboardModel({ page, entity, rows, primary = '#145fba', r
               name: fieldLabelOf(numericField),
               type: 'bar',
               barMaxWidth: 36,
-              data: slice.map(row => Number(row?.[numericField.name]) || 0)
+              data: slice.map(row => Number(row?.[fieldCode(numericField)]) || 0)
             }
           ]
         }
@@ -700,28 +709,28 @@ function isDateField(field) {
  *
  * - 字段/值来自实体字段 + 第一行确定性 mock（没有实体只给空态）；
  * - 时间线只用实体自带的创建/更新时间，缺失时显示「暂无动态」，不伪造业务事件；
- * - 子表按页面 subTables（target）在本模块实体池中解析，最多 3 行。
+ * - 子表按页面 subTables（target）在应用实体池中解析，最多 3 行。
  */
 export function buildDetailModel({ page, entity, row, subTables, entities = [], rowLimit = 3 } = {}) {
-  const fields = asArray(entity?.fields).filter(field => text(field?.name))
+  const fields = asArray(entity?.fields).filter(field => fieldCode(field))
   const source = row && typeof row === 'object' ? row : mockRowsForEntity(entity, 1)[0] ?? {}
   const entityName = text(entity?.name) || text(page?.title) || '页面'
 
   const infoFields = fields.map(field => ({
-    name: field.name,
+    name: fieldCode(field),
     label: fieldLabelOf(field),
     type: field.type,
-    value: formatCellValue(field, source[field.name])
+    value: formatCellValue(field, source[fieldCode(field)])
   }))
 
   const statusField =
     fields.find(field => field.type === 'enum' && /状态|status/i.test(fieldKey(field))) ||
     fields.find(field => field.type === 'enum') ||
     null
-  const statusValue = statusField ? source[statusField.name] : ''
+  const statusValue = statusField ? source[fieldCode(statusField)] : ''
   const status = statusField
     ? {
-        field: statusField.name,
+        field: fieldCode(statusField),
         label: fieldLabelOf(statusField),
         value: statusValue === undefined || statusValue === null || statusValue === '' ? '' : String(statusValue),
         className: statusValue === undefined || statusValue === null || statusValue === ''
@@ -734,9 +743,9 @@ export function buildDetailModel({ page, entity, row, subTables, entities = [], 
   const heroNumberField = fields.find(field => /编码|编号|code|单号/i.test(fieldKey(field)))
   const heroOwnerField = fields.find(field => /负责人|经办人|处理人|人员|owner|assignee|handler/i.test(fieldKey(field)))
   const hero = {
-    title: heroTitleField ? formatCellValue(heroTitleField, source[heroTitleField.name]) : entityName,
-    number: heroNumberField ? formatCellValue(heroNumberField, source[heroNumberField.name]) : '',
-    owner: heroOwnerField ? formatCellValue(heroOwnerField, source[heroOwnerField.name]) : ''
+    title: heroTitleField ? formatCellValue(heroTitleField, source[fieldCode(heroTitleField)]) : entityName,
+    number: heroNumberField ? formatCellValue(heroNumberField, source[fieldCode(heroNumberField)]) : '',
+    owner: heroOwnerField ? formatCellValue(heroOwnerField, source[fieldCode(heroOwnerField)]) : ''
   }
 
   const createdField = fields.find(field => isDateField(field) && /创建|create|建档/i.test(fieldKey(field)))

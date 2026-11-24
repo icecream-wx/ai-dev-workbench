@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 会话服务：无交接包门禁、按 view 过滤、创建/切换/归档、compact
  * opencode 运行时用内存 stub（不启动 serve、不调用模型）。
  */
@@ -170,47 +170,48 @@ test('发送消息/压缩：按视图取活跃会话；其它视图无会话 →
   )
 })
 
-test('三个视图都用 buildViewPrompt：requirements/design/development 均带视图、产物路径与模块', async () => {
+test('三个视图都用 buildViewPrompt：requirements/design/development 均带视图与产物路径（无模块）', async () => {
   const { service } = await setup()
   await seedApp('dev-prompt-view')
   await service.createDevSession('dev-prompt-view', { view: 'requirements' })
 
-  await service.promptDevSession('dev-prompt-view', '加一个字段', { view: 'requirements', module: 'MOD-001' })
+  await service.promptDevSession('dev-prompt-view', '加一个字段', { view: 'requirements' })
   assert.equal(runtimeState.prompts.length, 1)
   const requirementsPrompt = runtimeState.prompts[0].text
   assert.match(requirementsPrompt, /当前视图：需求/)
-  assert.match(requirementsPrompt, /MOD-001/)
-  assert.match(requirementsPrompt, /docs\/requirements\/MOD-xxx-/)
+  assert.match(requirementsPrompt, /docs\/requirements\/requirements\.md/)
+  assert.match(requirementsPrompt, /EP-001/)
   assert.match(requirementsPrompt, /adw-requirements-document/)
   assert.match(requirementsPrompt, /用户消息：\n加一个字段/)
+  assert.equal(requirementsPrompt.includes('本轮目标模块'), false)
 
   await service.createDevSession('dev-prompt-view', { view: 'design' })
   await service.promptDevSession('dev-prompt-view', '补一个页面', { view: 'design' })
   const designPrompt = runtimeState.prompts[1].text
   assert.match(designPrompt, /当前视图：设计/)
-  assert.match(designPrompt, /docs\/design\/<MOD>\/design\.json/)
+  assert.match(designPrompt, /docs\/design\/entities\.json/)
+  assert.match(designPrompt, /docs\/design\/pages\.json/)
   assert.match(designPrompt, /adw-design-artifacts/)
 
   await service.createDevSession('dev-prompt-view', { view: 'development' })
-  await service.promptDevSession('dev-prompt-view', '请实现列表页', { view: 'development', module: 'MOD-001' })
+  await service.promptDevSession('dev-prompt-view', '请实现列表页', { view: 'development' })
   const developmentPrompt = runtimeState.prompts[2].text
   assert.match(developmentPrompt, /当前视图：开发/)
   assert.match(developmentPrompt, /AGENTS\.md/)
   assert.match(developmentPrompt, /docs\/requirements\//)
   assert.match(developmentPrompt, /docs\/design\//)
-  assert.match(developmentPrompt, /MOD-001/)
   assert.match(developmentPrompt, /用户消息：\n请实现列表页/)
   assert.notEqual(developmentPrompt, '请实现列表页', 'development 不再原文直发')
 })
 
-test('开发视图：传 module → 首条提示带模块、prompt 注入设计摘要并生成 ui-check 骨架', async () => {
+test('开发视图：prompt 注入应用级设计摘要并生成 ui-check 骨架', async () => {
   const { service } = await setup()
   await seedApp('dev-linkage')
   const appDir = path.join(projects, 'dev-linkage')
-  const designDir = path.join(appDir, 'docs', 'design', 'MOD-001')
+  const designDir = path.join(appDir, 'docs', 'design')
   fs.mkdirSync(designDir, { recursive: true })
   fs.writeFileSync(
-    path.join(appDir, 'docs', 'design', 'design-system.json'),
+    path.join(designDir, 'design-system.json'),
     JSON.stringify({
       schemaVersion: 1,
       pack: 'afcenter-app-templates-v1',
@@ -232,39 +233,56 @@ test('开发视图：传 module → 首条提示带模块、prompt 注入设计�
     'utf8'
   )
   fs.writeFileSync(
-    path.join(designDir, 'design.json'),
+    path.join(designDir, 'entities.json'),
     JSON.stringify({
-      module: 'MOD-001',
-      title: '商品管理',
-      entities: [{ id: 'product', name: '商品', fields: [{ name: '商品名称', type: 'string' }] }],
-      relations: [],
-      pages: [
+      schemaVersion: 2,
+      entities: [{ id: 'product', name: '商品', fields: [{ code: 'productName', name: '商品名称', type: 'string' }] }],
+      relations: []
+    }),
+    'utf8'
+  )
+  fs.writeFileSync(
+    path.join(designDir, 'pages.json'),
+    JSON.stringify({
+      schemaVersion: 2,
+      pageSets: [
         {
-          id: 'product-list',
-          name: '商品列表',
-          type: 'list',
-          recipe: 'tree-list',
-          columns: ['商品名称', '状态'],
-          rowActions: ['edit', 'delete'],
-          blueprint: 'application-types/enterprise-application-platform/pages/OrganizationUsers.vue'
+          id: 'product',
+          epic: 'EP-001',
+          title: '商品管理',
+          pages: [
+            {
+              id: 'product-list',
+              name: '商品列表',
+              type: 'list',
+              recipe: 'tree-list',
+              entity: 'product',
+              columns: ['productName', 'status'],
+              rowActions: ['edit', 'delete'],
+              blueprint: 'application-types/enterprise-application-platform/pages/OrganizationUsers.vue'
+            }
+          ]
         }
       ]
     }),
     'utf8'
   )
 
-  const created = await service.createDevSession('dev-linkage', { view: 'development', module: 'MOD-001' })
+  const created = await service.createDevSession('dev-linkage', { view: 'development' })
   assert.equal(created.view, 'development')
-  assert.match(created.defaultPrompt, /本轮目标模块：MOD-001/)
   assert.match(created.defaultPrompt, /docs\/design\/design-system\.json/)
+  assert.match(created.defaultPrompt, /docs\/design\/entities\.json/)
+  assert.match(created.defaultPrompt, /docs\/design\/pages\.json/)
   assert.match(created.defaultPrompt, /ui-check\.md/)
+  assert.doesNotMatch(created.defaultPrompt, /本轮目标模块/)
 
-  await service.promptDevSession('dev-linkage', '实现列表页', { view: 'development', module: 'MOD-001' })
+  await service.promptDevSession('dev-linkage', '实现列表页', { view: 'development' })
   const prompt = runtimeState.prompts[0].text
   assert.match(prompt, /设计摘要/)
   assert.match(prompt, /afcenter-app-templates-v1/)
+  assert.match(prompt, /EP-001 商品管理/)
   assert.match(prompt, /product-list 商品列表/)
-  assert.match(prompt, /列=商品名称\/状态/)
+  assert.match(prompt, /列=productName\/status/)
   assert.match(prompt, /ui-check：已生成未填/)
   assert.match(prompt, /用户消息：\n实现列表页/)
 
@@ -274,7 +292,7 @@ test('开发视图：传 module → 首条提示带模块、prompt 注入设计�
 
   // 已存在不覆盖
   fs.appendFileSync(uiCheckFile, '\n- 人工补充\n', 'utf8')
-  await service.promptDevSession('dev-linkage', '继续', { view: 'development', module: 'MOD-001' })
+  await service.promptDevSession('dev-linkage', '继续', { view: 'development' })
   assert.match(fs.readFileSync(uiCheckFile, 'utf8'), /人工补充/)
   assert.match(runtimeState.prompts[1].text, /ui-check：已填/)
 })
@@ -284,7 +302,7 @@ test('command 分支：走 runCommand（text 作为参数），不发普通 prom
   await seedApp('dev-command')
   await service.createDevSession('dev-command', { view: 'requirements' })
 
-  const result = await service.promptDevSession('dev-command', 'MOD-001', {
+  const result = await service.promptDevSession('dev-command', 'EP-001', {
     view: 'requirements',
     command: 'update-requirements'
   })
@@ -293,7 +311,7 @@ test('command 分支：走 runCommand（text 作为参数），不发普通 prom
   assert.equal(runtimeState.prompts.length, 0)
   assert.equal(runtimeState.commands.length, 1)
   assert.equal(runtimeState.commands[0].name, 'update-requirements')
-  assert.equal(runtimeState.commands[0].text, 'MOD-001')
+  assert.equal(runtimeState.commands[0].text, 'EP-001')
   assert.equal(runtimeState.commands[0].sessionID, 'oc-1')
 
   // 空文本 + command 允许（例如无参命令）

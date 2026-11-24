@@ -200,10 +200,9 @@ test('buildPreviewUrl：embed 可选（默认不带，true 时追加 embed=1）'
   )
 })
 
-test('buildDesignPreviewUrl：设计产物模板风格入口（app/module/page/type/style/v/embed）', () => {
+test('buildDesignPreviewUrl：设计产物模板风格入口（app/page/type/style/v/embed）', () => {
   const url = buildDesignPreviewUrl({
     appId: 'app1',
-    moduleKey: 'MOD-001',
     pageId: 'product-list',
     applicationType: 'operations-management',
     style: 'data-cyan',
@@ -211,23 +210,22 @@ test('buildDesignPreviewUrl：设计产物模板风格入口（app/module/page/t
   })
   assert.equal(
     url,
-    '/design-preview.html?app=app1&module=MOD-001&page=product-list&type=operations-management&style=data-cyan&v=hash-123&embed=1'
+    '/design-preview.html?app=app1&page=product-list&type=operations-management&style=data-cyan&v=hash-123&embed=1'
   )
 })
 
 test('buildDesignPreviewUrl：可选参数与缺参回退', () => {
   const base = buildDesignPreviewUrl({
     appId: 'a',
-    moduleKey: 'MOD-002',
     pageId: 'p1',
     applicationType: 'operations-management',
     embed: false
   })
-  assert.equal(base, '/design-preview.html?app=a&module=MOD-002&page=p1&type=operations-management')
-  // 缺 app/module/page/type 任一 → 空串（父面板回退线框）
-  assert.equal(buildDesignPreviewUrl({ appId: 'a', moduleKey: 'MOD-001', pageId: 'p1' }), '')
-  assert.equal(buildDesignPreviewUrl({ appId: 'a', moduleKey: 'MOD-001', applicationType: 'operations-management' }), '')
-  assert.equal(buildDesignPreviewUrl({ moduleKey: 'MOD-001', pageId: 'p1', applicationType: 'operations-management' }), '')
+  assert.equal(base, '/design-preview.html?app=a&page=p1&type=operations-management')
+  // 缺 app/page/type 任一 → 空串（父面板回退结构草图）
+  assert.equal(buildDesignPreviewUrl({ appId: 'a', pageId: 'p1' }), '')
+  assert.equal(buildDesignPreviewUrl({ appId: 'a', applicationType: 'operations-management' }), '')
+  assert.equal(buildDesignPreviewUrl({ pageId: 'p1', applicationType: 'operations-management' }), '')
 })
 
 test('自定义模板：合并草稿 + 已发布 pack 去重（草稿优先、状态/预览/引用合并）', () => {

@@ -6,24 +6,25 @@
         <span class="er-sep">·</span>
         <span>关系 <strong>{{ layout.edges.length }}</strong></span>
       </div>
-      <div class="er-legend" aria-label="图例">
+      <button
+        type="button"
+        class="er-legend-toggle"
+        data-testid="er-legend-toggle"
+        :aria-expanded="legendOpen"
+        @click="legendOpen = !legendOpen"
+      >
+        图例
+      </button>
+      <div v-if="legendOpen" class="er-legend" aria-label="图例">
         <span class="er-legend-item"><i class="er-legend-badge pk">PK</i>主键</span>
         <span class="er-legend-item"><i class="er-legend-badge fk">FK</i>外键</span>
         <span class="er-legend-item"><i class="er-legend-flag star">*</i>必填</span>
         <span class="er-legend-item"><i class="er-legend-flag unique">U</i>唯一</span>
       </div>
-      <label class="er-zoom">
-        <span>缩放</span>
-        <select v-model.number="zoom" aria-label="缩放比例">
-          <option :value="75">75%</option>
-          <option :value="100">100%</option>
-          <option :value="125">125%</option>
-        </select>
-      </label>
-      <span class="er-hint">关系在实体编辑里维护</span>
     </div>
 
-    <div :class="['er-canvas', { empty: !entities.length }]">
+    <div class="er-body">
+      <div ref="canvasRef" :class="['er-canvas', { empty: !entities.length }]" @click="onCanvasClick">
       <svg
         v-if="entities.length"
         class="er-svg"
@@ -157,24 +158,99 @@
         </g>
       </svg>
       <div v-else class="er-empty">还没有实体；先在左侧新增或让 AI 生成实体设计。</div>
+      </div>
+      <div class="er-zoom" role="group" aria-label="缩放">
+        <button type="button" class="er-zoom-btn" data-testid="er-zoom-out" title="缩小（Ctrl/⌘ + 滚轮）" @click="stepZoom(-10)">−</button>
+        <span class="er-zoom-value" data-testid="er-zoom-value">{{ zoom }}%</span>
+        <button type="button" class="er-zoom-btn" data-testid="er-zoom-in" title="放大（Ctrl/⌘ + 滚轮）" @click="stepZoom(10)">+</button>
+        <button type="button" class="er-zoom-btn fit" data-testid="er-zoom-fit" @click="fitToWindow">适应窗口</button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { buildErLayout, ROW_H } from './er-layout.js'
+import { anchorScroll, applyErWheel, clampErZoom } from './er-zoom.js'
 import type { DesignEntity } from './types'
 
 const props = defineProps<{ entities: DesignEntity[]; selectedId?: string }>()
-const emit = defineEmits<{ select: [string] }>()
+const emit = defineEmits<{ select: [string]; background: [] }>()
 
 const zoom = ref(100)
+const legendOpen = ref(false)
+const canvasRef = ref<HTMLElement | null>(null)
+/** 首次进入自动适应窗口只做一次 */
+let autoFitApplied = false
 const layout = computed(() => buildErLayout(props.entities))
 const canvasStyle = computed(() => ({
   width: `${(layout.value.width * zoom.value) / 100}px`,
   height: `${(layout.value.height * zoom.value) / 100}px`
 }))
+
+function stepZoom(delta: number): void {
+  zoom.value = clampErZoom(zoom.value + delta)
+}
+
+/** 适应窗口：按容器与图尺寸计算缩放（最低 20），并复位滚动 */
+function fitToWindow(): void {
+  const element = canvasRef.value
+  if (!element || !layout.value.width || !layout.value.height) {
+    zoom.value = 100
+    return
+  }
+  const padding = 24
+  const scale = Math.min(
+    (element.clientWidth - padding) / layout.value.width,
+    (element.clientHeight - padding) / layout.value.height
+  )
+  zoom.value = clampErZoom(scale * 100)
+  void nextTick(() => {
+    element.scrollLeft = 0
+    element.scrollTop = 0
+  })
+}
+
+/** 滚轮：仅 Ctrl/⌘ 缩放（以光标为锚点修正滚动）；普通滚轮交给容器滚动 */
+function onWheel(event: WheelEvent): void {
+  const element = canvasRef.value
+  if (!element) return
+  const next = applyErWheel({ current: zoom.value, ctrl: event.ctrlKey, meta: event.metaKey, deltaY: event.deltaY })
+  if (next === null) return
+  event.preventDefault()
+  if (next === zoom.value) return
+  const rect = element.getBoundingClientRect()
+  const anchor = anchorScroll({
+    scrollLeft: element.scrollLeft,
+    scrollTop: element.scrollTop,
+    offsetX: event.clientX - rect.left,
+    offsetY: event.clientY - rect.top,
+    from: zoom.value,
+    to: next
+  })
+  zoom.value = next
+  void nextTick(() => {
+    element.scrollLeft = anchor.scrollLeft
+    element.scrollTop = anchor.scrollTop
+  })
+}
+
+onMounted(() => {
+  canvasRef.value?.addEventListener('wheel', onWheel, { passive: false })
+  // 首次进入：图超出可视区时自动适应窗口一次（之后由用户 Ctrl/⌘+滚轮或按钮缩放）
+  void nextTick(() => {
+    const element = canvasRef.value
+    if (autoFitApplied || !element) return
+    autoFitApplied = true
+    if (!layout.value.width || !layout.value.height) return
+    if (layout.value.width > element.clientWidth || layout.value.height > element.clientHeight) fitToWindow()
+  })
+})
+
+onUnmounted(() => {
+  canvasRef.value?.removeEventListener('wheel', onWheel)
+})
 
 interface LayoutNode {
   x: number
@@ -216,14 +292,22 @@ function onNodeKeydown(event: KeyboardEvent, id: string): void {
   event.preventDefault()
   emit('select', id)
 }
+
+/** 点画布背景（非实体节点）→ 通知父层收起字段浮层 */
+function onCanvasClick(event: MouseEvent): void {
+  const target = event.target as Element | null
+  if (!target || typeof target.closest !== 'function') return
+  if (target.closest('.er-node')) return
+  emit('background')
+}
 </script>
 
 <style scoped>
 .er-wrap {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 340px);
-  min-height: 400px;
+  height: 100%;
+  min-height: 0;
   border: 1px solid var(--rg-border);
   border-radius: 10px;
   background: var(--rg-surface);
@@ -253,6 +337,23 @@ function onNodeKeydown(event: KeyboardEvent, id: string): void {
 }
 .er-sep {
   color: var(--rg-text-3);
+}
+.er-legend-toggle {
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--rg-border-strong);
+  border-radius: 6px;
+  background: var(--rg-surface);
+  color: var(--rg-text-3);
+  font-size: 10.5px;
+  line-height: 1;
+  cursor: pointer;
+}
+.er-legend-toggle:hover,
+.er-legend-toggle:focus-visible {
+  border-color: var(--rg-ai);
+  color: var(--rg-ai);
+  background: var(--rg-ai-soft);
 }
 .er-legend {
   display: flex;
@@ -305,27 +406,59 @@ function onNodeKeydown(event: KeyboardEvent, id: string): void {
 .er-legend-flag.unique {
   color: var(--rg-ok);
 }
+.er-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
 .er-zoom {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 4;
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  padding: 4px 6px;
+  border: 1px solid var(--rg-border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--rg-surface) 92%, transparent);
+  box-shadow: var(--rg-shadow-1);
   font-size: 10.5px;
   color: var(--rg-text-3);
   white-space: nowrap;
 }
-.er-zoom select {
+.er-zoom-btn {
   height: 24px;
-  padding: 0 4px;
+  min-width: 24px;
+  padding: 0 6px;
   border: 1px solid var(--rg-border-strong);
   border-radius: 6px;
   background: var(--rg-surface);
   color: var(--rg-text-2);
-  font-size: 10.5px;
-  outline: none;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
 }
-.er-zoom select:focus-visible {
+.er-zoom-btn.fit {
+  padding: 0 8px;
+}
+.er-zoom-btn:hover,
+.er-zoom-btn:focus-visible {
   border-color: var(--rg-ai);
+  color: var(--rg-ai);
+  background: var(--rg-ai-soft);
+}
+.er-zoom-btn:focus-visible {
+  outline: none;
   box-shadow: 0 0 0 2px var(--rg-focus-ring);
+}
+.er-zoom-value {
+  min-width: 40px;
+  text-align: center;
+  color: var(--rg-text-2);
+  font-variant-numeric: tabular-nums;
 }
 .er-hint {
   margin-left: auto;
@@ -336,6 +469,7 @@ function onNodeKeydown(event: KeyboardEvent, id: string): void {
 .er-canvas {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   overflow: auto;
   background-color: var(--rg-canvas);
   background-image: radial-gradient(var(--rg-canvas-dot) 1px, transparent 1px);
@@ -529,8 +663,7 @@ function onNodeKeydown(event: KeyboardEvent, id: string): void {
     padding: 8px 10px;
   }
   .er-wrap {
-    height: calc(100vh - 380px);
-    min-height: 340px;
+    min-height: 0;
   }
 }
 </style>

@@ -207,6 +207,19 @@
     </div>
 
     <div v-else class="composer-wrap" data-testid="chat-composer">
+      <div v-if="sectionFocus" class="section-focus" data-testid="chat-section-focus">
+        <span class="section-focus-label">定位章节：{{ sectionFocus.title || '本章节' }}</span>
+        <button
+          type="button"
+          class="section-focus-clear"
+          data-testid="chat-section-focus-clear"
+          aria-label="移除定位章节"
+          title="移除定位章节"
+          @click="clearSectionFocus"
+        >
+          ×
+        </button>
+      </div>
       <div v-if="showCommandsRow" class="commands">
         <RgButton
           v-for="item in viewCommands"
@@ -272,6 +285,7 @@ import type {
   FormInfo,
   FormValue,
   PermissionRequest,
+  RequirementSectionFocus,
   SessionView
 } from '../dev/types'
 
@@ -286,7 +300,6 @@ export interface ChatPanelCommand {
 const props = defineProps<{
   appId: string
   view: SessionView
-  moduleKey?: string | null
   /** 会话 API 适配器；默认应用三视图 `dev/api.ts`（工作室传 studio 适配器） */
   api?: ChatPanelApi
   /** 命令按钮；默认按视图取 `commandsForView(view)`（工作室传 [] 隐藏命令行） */
@@ -324,6 +337,8 @@ const actionBusy = ref<'' | 'send' | 'stop' | 'compact' | 'switch' | 'permission
 const connectionState = ref<ConnectionState>('closed')
 const composerRef = ref<InstanceType<typeof Composer> | null>(null)
 const scroller = ref<HTMLElement | null>(null)
+/** 需求文档章节「问 AI」的定位上下文（同一会话内保留，用户移除或切换/新建会话后清空） */
+const sectionFocus = ref<RequirementSectionFocus | null>(null)
 /** P6-1：发送后的本地占位（awaiting / failed / interrupted） */
 const pending = ref<ReturnType<typeof nextPending>>(null)
 /** 发送时的 assistant 消息基线：用于“首个 assistant 消息到达即替换占位” */
@@ -341,7 +356,7 @@ const pendingPermissions = computed(() => (state.value?.pending.permissions ?? [
 const pendingForms = computed(() => (state.value?.pending.forms ?? []) as unknown as FormInfo[])
 const activeSessionId = computed(() => session.value?.id ?? null)
 const sessionOptions = computed(() => recentSessions(sessions.value, 5))
-const continuationComposerText = computed(() => continuationText(props.moduleKey))
+const continuationComposerText = computed(() => continuationText())
 
 const contextInfo = computed(() => {
   const context = state.value?.context ?? null
@@ -383,13 +398,13 @@ const commandDisabled = computed(() => actionBusy.value !== '' || running.value 
 const viewCommands = computed<ChatPanelCommand[]>(() => props.commands ?? commandsForView(props.view))
 /** 工作室传 commands=[] 时隐藏整行（应用三视图保持原样，含 development 的提示行） */
 const showCommandsRow = computed(() => viewCommands.value.length > 0 || props.commands === undefined)
-const commandHint = computed(() => (running.value ? '生成中，命令暂不可用' : '命令会带上当前模块'))
+const commandHint = computed(() => (running.value ? '生成中，命令暂不可用' : '命令会作用于当前应用上下文'))
 const emptyHintText = computed(() => props.emptyHint ?? emptyHintFor(props.view))
 const emptyExamples = computed(() => props.emptyExamples ?? emptyExamplesFor(props.view))
 const emptyCopy = computed(() => emptyCopyFor({ hasSession: Boolean(session.value) }))
 const emptyTitleText = computed(() => props.emptyTitle ?? emptyCopy.value.title)
 const emptyPills = computed(() =>
-  contextPillsFor({ view: props.view, moduleKey: props.moduleKey, packId: props.packId })
+  contextPillsFor({ view: props.view, packId: props.packId })
 )
 const showEmptyState = computed(
   () => !entries.value.length && !pending.value && !pendingPermissions.value.length && !pendingForms.value.length
@@ -556,26 +571,40 @@ async function ensureSession(): Promise<void> {
   }
 }
 
-async function send(): Promise<void> {
+async function send(): Promise<boolean> {
   const text = composer.value.trim()
-  if (!text || actionBusy.value || running.value || readOnly.value) return
+  if (!text || actionBusy.value || running.value || readOnly.value) return false
   actionBusy.value = 'send'
   errorText.value = ''
   beginPending()
   try {
     await ensureSession()
-    await chatApi.value.prompt(props.appId, text, props.view, { module: props.moduleKey ?? undefined })
+    await chatApi.value.prompt(props.appId, text, props.view, {
+      ...(sectionFocus.value ? { focus: sectionFocus.value } : {})
+    })
     composer.value = ''
     scheduleRefresh(120)
     await nextTick()
     scrollToBottom(true)
+    return true
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     errorText.value = message
     applyPending({ type: 'failed', message })
+    return false
   } finally {
     actionBusy.value = ''
   }
+}
+
+/**
+ * 外部视图按钮（如接口设计「让 AI 修」）一键填入并发送（B7）。
+ * 进程内检查与 `send` 一致；被阻止（空文本/忙/只读）返回 false。
+ */
+async function sendComposer(text?: string): Promise<boolean> {
+  if (text !== undefined) composer.value = text
+  if (!composer.value.trim() || actionBusy.value || running.value || readOnly.value) return false
+  return send()
 }
 
 async function sendCommand(name: string): Promise<boolean> {
@@ -586,8 +615,8 @@ async function sendCommand(name: string): Promise<boolean> {
   beginPending()
   try {
     await ensureSession()
-    const args = commandArgs(command, props.moduleKey)
-    await chatApi.value.prompt(props.appId, args, props.view, { module: props.moduleKey ?? undefined, command: name })
+    const args = commandArgs(command)
+    await chatApi.value.prompt(props.appId, args, props.view, { command: name })
     ElMessage.success(`已发送 /${name}`)
     scheduleRefresh(150)
     return true
@@ -637,6 +666,7 @@ async function newSession(fillText = ''): Promise<void> {
     await chatApi.value.create(props.appId, { view: props.view, new: true })
     await loadState(false)
     await loadSessions()
+    sectionFocus.value = null
     emit('session-changed')
     if (fillText) {
       composer.value = fillText
@@ -659,6 +689,7 @@ async function onHistoryChange(event: Event): Promise<void> {
   try {
     await chatApi.value.activate(props.appId, id, props.view)
     await loadState(false)
+    sectionFocus.value = null
     emit('session-changed')
   } catch (error) {
     errorText.value = error instanceof Error ? error.message : String(error)
@@ -728,6 +759,15 @@ function setComposer(text: string): void {
   void nextTick().then(() => composerRef.value?.focus())
 }
 
+/** 章节定位上下文：需求视图「问 AI」时由父视图设置（null 清空） */
+function setSectionFocus(focus: RequirementSectionFocus | null): void {
+  sectionFocus.value = focus ? { ...focus } : null
+}
+
+function clearSectionFocus(): void {
+  sectionFocus.value = null
+}
+
 function focusComposer(): void {
   composerRef.value?.focus()
 }
@@ -749,7 +789,7 @@ function runCommand(name: string): Promise<boolean> {
   return sendCommand(name)
 }
 
-defineExpose({ setComposer, focusComposer, runCommand })
+defineExpose({ setComposer, focusComposer, runCommand, sendComposer, setSectionFocus })
 
 watch(
   () => [state.value?.messages.length, state.value?.steps.length, state.value?.status],
@@ -789,6 +829,7 @@ watch(
     data.value = null
     sessions.value = []
     composer.value = ''
+    sectionFocus.value = null
     void loadState(false)
   }
 )
@@ -1043,6 +1084,45 @@ onUnmounted(() => {
   gap: 6px;
   flex-wrap: wrap;
   padding: 9px 14px 0;
+}
+.section-focus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 9px 14px 0;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid var(--rg-ai-border);
+  background: var(--rg-ai-soft);
+  border-radius: 999px;
+  max-width: calc(100% - 28px);
+  width: fit-content;
+}
+.section-focus-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--rg-ai);
+}
+.section-focus-clear {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--rg-ai);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.section-focus-clear:hover,
+.section-focus-clear:focus-visible {
+  background: var(--rg-surface);
 }
 .hint {
   font-size: 11px;

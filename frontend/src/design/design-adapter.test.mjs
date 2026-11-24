@@ -1,381 +1,248 @@
+/**
+ * design-adapter（D1）：entities.json + pages.json → 全局实体/页面集/页面契约；字段 code/label。
+ */
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import {
-  PAGE_TYPES,
-  adaptDesign,
-  designSummaryOf,
-  designWarningsOf,
-  mergeModuleEntries
-} from './design-adapter.js'
+import { adaptDesign, designLikeOf, designSummaryOf, designWarningsOf } from './design-adapter.js'
 
-const modules = [
-  { key: 'MOD-001', title: '商品管理' },
-  { key: 'MOD-002', title: '订单管理' }
-]
-
-const design = {
-  module: 'MOD-001',
-  title: '商品管理',
-  file: 'docs/design/MOD-001/design.json',
-  errors: [],
+const ENTITIES = {
   entities: [
     {
-      id: 'product',
+      id: 'goods',
       name: '商品',
-      table: 'biz_product',
+      table: 'biz_goods',
       fields: [
-        { name: '编码', type: 'string', required: true, unique: true },
-        { name: '状态', type: 'enum', options: ['上架', '下架'] },
-        { name: '分类', type: 'ref', ref: 'category' }
+        { code: 'goodsCode', name: '商品编码', type: 'string', required: true, unique: true },
+        {
+          code: 'status',
+          name: '状态',
+          type: 'enum',
+          options: [
+            { value: 'ON_SALE', label: '上架' },
+            { value: 'OFF_SALE', label: '下架' }
+          ]
+        },
+        { code: 'categoryId', name: '分类', type: 'ref', ref: 'category' }
       ]
     },
-    { id: 'category', name: '分类', fields: [{ name: '名称', type: 'string' }] }
+    { id: 'category', name: '分类', fields: [{ code: 'name', name: '分类名称', type: 'string' }] }
   ],
-  relations: [{ from: 'product', to: 'category', type: 'N:1', label: '所属分类' }],
-  pages: [
+  relations: [{ from: 'goods', to: 'category', type: 'N:1', label: '所属分类' }]
+}
+
+const PAGES = {
+  pageSets: [
     {
-      id: 'product-list',
-      name: '商品列表',
-      type: 'list',
-      entity: 'product',
-      columns: ['编码', '状态'],
-      actions: ['新增', '删除']
+      id: 'goods',
+      epic: 'EP-001',
+      title: '商品管理',
+      primaryEntity: 'goods',
+      pages: [
+        {
+          id: 'goods-list',
+          name: '商品列表',
+          type: 'list',
+          recipe: 'list',
+          entity: 'goods',
+          columns: ['goodsCode', 'name', 'status'],
+          filters: ['goodsCode', 'status'],
+          rowActions: ['detail', 'edit', 'delete'],
+          toolbarActions: ['create', 'batchDelete'],
+          selection: true,
+          pagination: { layout: 'three-part', pageSize: 20 },
+          form: { presentation: 'dialog', columns: 2, width: 800, fields: ['goodsCode', 'status'] },
+          components: { status: 'pm-select' }
+        },
+        { id: 'goods-form', name: '商品编辑', type: 'form', recipe: 'dialog-form', entity: 'goods' }
+      ]
     }
   ]
 }
 
-test('基本映射：实体/字段/关系/页面集/渲染页面', () => {
-  const result = adaptDesign(design, { modules })
-  assert.equal(result.module, 'MOD-001')
-  assert.equal(result.title, '商品管理')
-  assert.equal(result.file, 'docs/design/MOD-001/design.json')
+function designLike() {
+  return { ...ENTITIES, ...PAGES }
+}test('全局实体/关系 + 页面集 = Epic；字段 code 作渲染键、label 作显示名', () => {
+  const result = adaptDesign(designLike())
   assert.equal(result.entities.length, 2)
-  assert.deepEqual(result.entities[0].fields.map(field => field.name), ['编码', '状态', '分类'])
-  assert.equal(result.entities[0].fields[0].label, '编码', '缺少 label 时回退字段名')
-  assert.equal(result.entities[0].fields[1].options[0], '上架')
-  assert.deepEqual(result.relations, [{ from: 'product', to: 'category', type: 'N:1', label: '所属分类' }])
-  assert.equal(result.pageSet.id, 'MOD-001-main')
-  assert.equal(result.pageSet.title, '商品管理')
-  assert.equal(result.pageSet.pages[0].entity, 'product')
-  const page = result.pages[0]
-  assert.equal(page.title, '商品列表')
-  assert.equal(page.pageSetId, 'MOD-001-main')
-  assert.equal(page.entityId, 'product')
-  assert.deepEqual(page.spec.columns, ['编码', '状态'])
-  assert.deepEqual(page.spec.actions, ['新增', '删除'])
-  assert.deepEqual(page.layout.table.columns, ['编码', '状态'])
-  assert.deepEqual(page.layout.toolbar.actions, ['新增', '删除'])
+  assert.equal(result.relations.length, 1)
+  assert.equal(result.entities[0].relations[0].target, 'category')
+  assert.equal(result.pageSets.length, 1)
+  assert.equal(result.pageSets[0].epic, 'EP-001')
+  assert.equal(result.pages.length, 2)
+  assert.equal(result.pages[0].pageSetId, 'goods')
+  assert.equal(result.pages[0].entityId, 'goods')
+
+  const fields = result.entities[0].fields
+  assert.equal(fields[0].code, 'goodsCode')
+  assert.equal(fields[0].name, 'goodsCode')
+  assert.equal(fields[0].label, '商品编码')
+  assert.equal(fields[0].required, true)
+  assert.deepEqual(fields[1].options, ['上架', '下架'])
+  assert.deepEqual(fields[1].optionValues, ['ON_SALE', 'OFF_SALE'])
+  assert.equal(fields[2].ref, 'category')
   assert.deepEqual(result.warnings, [])
 })
 
-test('关系挂到实体上供 er-layout 使用（旧类型名 + target/name）', () => {
-  const result = adaptDesign(design, { modules })
-  assert.deepEqual(result.entities[0].relations, [{ target: 'category', type: 'many-to-one', name: '所属分类' }])
-  assert.deepEqual(result.entities[1].relations, [])
+test('页面契约映射：列/查询/操作/选择/分页/表单/组件', () => {
+  const page = adaptDesign(designLike()).pages[0]
+  assert.deepEqual(page.layout.table.columns, ['goodsCode', 'name', 'status'])
+  assert.deepEqual(page.layout.table.searchFields, ['goodsCode', 'status'])
+  assert.equal(page.layout.table.pageSize, 20)
+  assert.equal(page.layout.pagination.layout, 'three-part')
+  assert.equal(page.layout.selection, true)
+  assert.deepEqual(page.layout.rowActions, ['detail', 'edit', 'delete'])
+  assert.deepEqual(page.layout.toolbarActions, ['create', 'batchDelete'])
+  assert.deepEqual(page.spec.actions, ['create', 'batchDelete', 'detail', 'edit', 'delete'])
+  assert.equal(page.layout.form.presentation, 'dialog')
+  assert.deepEqual(page.layout.form.fields, ['goodsCode', 'status'])
+  assert.deepEqual(page.layout.components, { status: 'pm-select' })
 })
 
-test('页面引用其它模块实体 → entityId=null + warning', () => {
-  const result = adaptDesign(
-    { ...design, pages: [{ id: 'order-list', name: '订单列表', type: 'list', entity: 'MOD-002/order' }] },
-    { modules }
-  )
-  assert.equal(result.pages[0].entityId, null)
-  assert.ok(result.warnings.some(item => item.includes('MOD-002/order') && item.includes('其它模块')))
+test('缺 pageSets 时把 pages 当作一个匿名页面集（兼容 synthetic design）', () => {
+  const result = adaptDesign({
+    entities: [{ id: 'x', name: 'X', fields: [{ code: 'a', name: 'A', type: 'string' }] }],
+    pages: [{ id: 'x-list', name: 'X 列表', type: 'list', entity: 'x', columns: ['a'] }]
+  })
+  assert.equal(result.pageSets.length, 1)
+  assert.equal(result.pageSets[0].id, 'app')
+  assert.equal(result.pages[0].pageSetId, 'app')
 })
 
-test('页面引用未知实体 → entityId=null + warning', () => {
-  const result = adaptDesign({ ...design, pages: [{ id: 'x', name: 'X', type: 'detail', entity: 'nope' }] }, { modules })
-  assert.equal(result.pages[0].entityId, null)
-  assert.ok(result.warnings.some(item => item.includes('实体不存在：nope')))
-})
-
-test('重复实体/页面 id → 保留第一个 + warning', () => {
-  const result = adaptDesign(
-    {
-      ...design,
-      entities: [design.entities[0], { ...design.entities[1], id: 'product' }],
-      pages: [design.pages[0], { ...design.pages[0] }]
-    },
-    { modules }
-  )
+test('未知实体/未知页面类型/重复 id → warning，不抛错', () => {
+  const result = adaptDesign({
+    entities: [
+      { id: 'goods', name: '商品', fields: [] },
+      { id: 'goods', name: '重复', fields: [] }
+    ],
+    relations: [{ from: 'goods', to: 'nope', type: 'N:1' }],
+    pageSets: [
+      {
+        id: 'set',
+        epic: 'EP-001',
+        title: 'S',
+        pages: [
+          { id: 'p1', name: 'P1', type: 'unknown', entity: 'missing' },
+          { id: 'p1', name: 'P2', type: 'list' }
+        ]
+      }
+    ]
+  })
   assert.equal(result.entities.length, 1)
-  assert.equal(result.pages.length, 1)
-  assert.ok(result.warnings.some(item => item.includes('实体 id 重复：product')))
-  assert.ok(result.warnings.some(item => item.includes('页面 id 重复：product-list')))
-})
-
-test('未知页面类型降级 list + warning；缺失 id 自动生成', () => {
-  const result = adaptDesign(
-    { ...design, pages: [{ name: '奇怪页面', type: 'timeline' }, { id: 'ok', name: 'OK', type: 'form' }] },
-    { modules }
-  )
+  assert.ok(result.warnings.some(item => /实体 id 重复/.test(item)))
+  assert.ok(result.warnings.some(item => /引用不存在的实体/.test(item)))
+  assert.ok(result.warnings.some(item => /类型 unknown 不受支持/.test(item)))
+  assert.ok(result.warnings.some(item => /页面 id 重复/.test(item)))
   assert.equal(result.pages[0].type, 'list')
-  assert.match(result.pages[0].id, /^page-/)
-  assert.equal(result.pages[1].type, 'form')
-  assert.ok(result.warnings.some(item => item.includes('timeline') && item.includes('降级为 list')))
-  assert.equal(PAGE_TYPES.includes('timeline'), false)
 })
 
-test('空设计/无页面/无实体不抛错', () => {
-  const empty = adaptDesign({ module: 'MOD-002', title: '', entities: [], pages: [] }, { modules })
-  assert.equal(empty.title, '订单管理', '标题为空时回退需求模块标题')
+test('actions 字段 → warning，并从 row/toolbar 派生（旧字段不参与渲染）', () => {
+  const result = adaptDesign({
+    entities: [{ id: 'x', name: 'X', fields: [] }],
+    pageSets: [
+      {
+        id: 's',
+        epic: 'EP-001',
+        title: 'S',
+        pages: [{ id: 'p', name: 'P', type: 'list', entity: 'x', actions: ['新增'], toolbarActions: ['create'], rowActions: ['edit'] }]
+      }
+    ]
+  })
+  assert.ok(result.warnings.some(item => /不再使用 actions/.test(item)))
+  assert.deepEqual(result.pages[0].spec.actions, ['create', 'edit'])
+})
+
+test('design-like 输入为空/null 不抛错', () => {
+  const empty = adaptDesign(null)
   assert.deepEqual(empty.entities, [])
   assert.deepEqual(empty.pages, [])
-  assert.equal(empty.pageSet.pages.length, 0)
-
-  const missing = adaptDesign(null, { modules })
-  assert.equal(missing.entities.length, 0)
-  assert.equal(missing.module, '')
-  assert.equal(missing.title, '未命名设计')
+  assert.equal(empty.pageSets.length, 1)
+  assert.equal(empty.pageSets[0].pages.length, 0)
 })
 
-test('跨模块/未知关系不画；未知关系类型按 N:1', () => {
-  const result = adaptDesign(
-    {
-      ...design,
-      relations: [
-        { from: 'product', to: 'MOD-002/order', type: 'N:1', label: '所属订单' },
-        { from: 'product', to: 'category', type: 'one-many', label: '' }
-      ]
+test('designLikeOf / designSummaryOf / designWarningsOf（artifacts 形态）', () => {
+  const artifacts = {
+    requirement: { warnings: ['缺少 template'] },
+    entities: {
+      entities: ENTITIES.entities,
+      relations: ENTITIES.relations,
+      warnings: ['实体 id 重复：x'],
+      errors: []
     },
-    { modules }
-  )
-  assert.equal(result.relations.length, 1)
-  assert.equal(result.relations[0].type, 'N:1')
-  assert.ok(result.warnings.some(item => item.includes('引用外部/未知实体')))
-  assert.ok(result.warnings.some(item => item.includes('one-many')))
+    pages: { pageSets: PAGES.pageSets, pages: PAGES.pageSets[0].pages, warnings: ['页面 id 重复：p'], errors: [] },
+    errors: [{ file: 'pages.json', path: '$', message: '坏 JSON' }]
+  }
+  const like = designLikeOf(artifacts)
+  assert.equal(like.entities.length, 2)
+  assert.equal(like.pageSets.length, 1)
+  const summary = designSummaryOf(artifacts)
+  assert.equal(summary.hasDesign, true)
+  assert.equal(summary.entityCount, 2)
+  assert.equal(summary.pageSetCount, 1)
+  assert.equal(summary.pageCount, 2)
+  assert.equal(summary.errorCount, 1)
+  const lines = designWarningsOf(artifacts)
+  assert.ok(lines.some(line => line.includes('entities.json')))
+  assert.ok(lines.some(line => line.includes('pages.json')))
+  assert.ok(lines.some(line => line.includes('requirements.md')))
 })
 
-test('designSummaryOf：未生成/有设计/错误数', () => {
-  assert.deepEqual(designSummaryOf(null), { hasDesign: false, entityCount: 0, pageCount: 0, errorCount: 0 })
-  assert.deepEqual(designSummaryOf(design), { hasDesign: true, entityCount: 2, pageCount: 1, errorCount: 0 })
-  assert.equal(designSummaryOf({ ...design, errors: [{}, {}] }).errorCount, 2)
-})
-
-test('mergeModuleEntries：需求模块 + 孤儿设计（末尾、只读标记）', () => {
-  const entries = mergeModuleEntries(modules, [
-    { module: 'MOD-001', title: '商品管理', entities: [], pages: [] },
-    { module: 'MOD-900', title: '历史设计', entities: [{ id: 'x' }], pages: [] }
-  ])
-  assert.deepEqual(
-    entries.map(entry => entry.key),
-    ['MOD-001', 'MOD-002', 'MOD-900']
-  )
-  assert.equal(entries[0].orphan, false)
-  assert.equal(entries[2].orphan, true)
-  assert.equal(entries[2].title, '历史设计')
-  assert.equal(entries[2].order, Number.MAX_SAFE_INTEGER)
-  // 没有孤儿时不追加
-  assert.equal(mergeModuleEntries(modules, []).length, 2)
-})
-
-test('designWarningsOf：设计文件级 warnings → 错误条行（带文件/模块）', () => {
-  const lines = designWarningsOf([
-    { module: 'MOD-900', file: 'docs/design/MOD-900/design.json', warnings: ['设计模块 MOD-900 没有对应需求模块文件'] },
-    { module: 'MOD-001', file: '', warnings: [] }
-  ])
-  assert.equal(lines.length, 1)
-  assert.match(lines[0], /MOD-900\/design\.json · 警告 ·/)
-  assert.match(lines[0], /没有对应需求模块/)
-})
-
-test('P7 页面契约：designSystem + filters/columns/pagination/selection/行与工具栏操作/树/子表/组件', () => {
-  const contract = {
-    ...design,
-    designSystem: {
-      pack: 'afcenter-app-templates-v1',
-      applicationType: 'enterprise-application-platform',
-      style: 'platform-blue'
-    },
-    pages: [
+test('B6-1 actionTargets：保留对象与未知动作键，写入 page/original', () => {
+  const pages = {
+    pageSets: [
       {
-        id: 'org-list',
-        name: '组织架构',
-        type: 'list',
-        entity: 'product',
-        recipe: 'tree-list',
-        catalogRef: 'enterprise-application-platform/organization',
-        blueprint: 'application-types/enterprise-application-platform/pages/OrganizationUsers.vue',
-        filters: ['编码', '状态'],
-        columns: ['编码', '状态'],
-        rowActions: ['detail', 'edit', 'delete'],
-        toolbarActions: ['create', 'batchAssignRole'],
-        selection: true,
-        pagination: { layout: 'three-part', pageSize: 20 },
-        tree: { titleField: '编码', parentField: '状态', actionStyle: 'header', selectionStyle: 'dot' },
-        subTables: [{ entity: 'category', title: '子分类', columns: ['名称'], mode: 'tab' }],
-        components: { 状态: 'pm-select' }
-      },
-      {
-        id: 'org-form',
-        name: '组织编辑',
-        type: 'form',
-        entity: 'product',
-        recipe: 'dialog-form',
-        form: {
-          presentation: 'dialog',
-          columns: 2,
-          width: 800,
-          fields: ['编码', '状态'],
-          groups: [{ title: '基本信息', fields: ['编码'] }]
-        }
+        ...PAGES.pageSets[0],
+        pages: [
+          {
+            ...PAGES.pageSets[0].pages[0],
+            actionTargets: { create: 'goods-form', edit: 'goods-form', detail: 'goods-detail', custom: 'goods-form' }
+          },
+          PAGES.pageSets[0].pages[1]
+        ]
       }
     ]
   }
-  const result = adaptDesign(contract, { modules })
-  assert.deepEqual(result.designSystem, {
-    pack: 'afcenter-app-templates-v1',
-    applicationType: 'enterprise-application-platform',
-    style: 'platform-blue'
+  const result = adaptDesign({ ...ENTITIES, ...pages })
+  assert.deepEqual(result.pages[0].actionTargets, {
+    create: 'goods-form',
+    edit: 'goods-form',
+    detail: 'goods-detail',
+    custom: 'goods-form'
+  })
+  assert.deepEqual(result.pageSets[0].pages[0].actionTargets, {
+    create: 'goods-form',
+    edit: 'goods-form',
+    detail: 'goods-detail',
+    custom: 'goods-form'
   })
   assert.deepEqual(result.warnings, [])
+})
 
-  const list = result.pages[0]
-  assert.equal(list.recipe, 'tree-list')
-  assert.equal(list.catalogRef, 'enterprise-application-platform/organization')
-  assert.match(list.blueprint, /OrganizationUsers\.vue$/)
-  assert.deepEqual(list.spec.columns, ['编码', '状态'])
-  assert.deepEqual(list.spec.filters, ['编码', '状态'])
-  assert.equal(list.spec.selection, true)
-  // 未提供 actions 时合并 toolbarActions + rowActions（去重保序）
-  assert.deepEqual(list.spec.actions, ['create', 'batchAssignRole', 'detail', 'edit', 'delete'])
-  assert.deepEqual(list.layout.table, { columns: ['编码', '状态'], searchFields: ['编码', '状态'], pageSize: 20 })
-  assert.deepEqual(list.layout.pagination, { layout: 'three-part', pageSize: 20 })
-  assert.equal(list.layout.selection, true)
-  assert.deepEqual(list.layout.rowActions, ['detail', 'edit', 'delete'])
-  assert.deepEqual(list.layout.toolbarActions, ['create', 'batchAssignRole'])
-  assert.deepEqual(list.layout.toolbar.actions, list.spec.actions)
-  assert.deepEqual(list.layout.tree, {
-    titleField: '编码',
-    parentField: '状态',
-    actionStyle: 'header',
-    selectionStyle: 'dot'
+test('B6-1 actionTargets：非对象/空值 → warning 后忽略/跳过', () => {
+  const broken = adaptDesign({
+    ...ENTITIES,
+    pageSets: [
+      {
+        ...PAGES.pageSets[0],
+        pages: [{ ...PAGES.pageSets[0].pages[0], actionTargets: ['goods-form'] }, PAGES.pageSets[0].pages[1]]
+      }
+    ]
   })
-  assert.deepEqual(list.layout.subTables, [{ target: 'category', title: '子分类', columns: ['名称'], mode: 'tab' }])
-  assert.deepEqual(list.layout.components, { 状态: 'pm-select' })
-  assert.deepEqual(result.pageSet.pages[0].recipe, 'tree-list')
-  assert.equal(result.pageSet.pages[0].catalogRef, 'enterprise-application-platform/organization')
+  assert.equal(broken.pages[0].actionTargets, undefined)
+  assert.ok(broken.warnings.some(line => line.includes('actionTargets 不是对象')))
 
-  const form = result.pages[1]
-  assert.equal(form.recipe, 'dialog-form')
-  assert.deepEqual(form.spec.fields, ['编码', '状态'])
-  assert.deepEqual(form.layout.form, {
-    presentation: 'dialog',
-    columns: 2,
-    width: 800,
-    fields: ['编码', '状态'],
-    groups: [{ title: '基本信息', fields: ['编码'] }]
+  const partial = adaptDesign({
+    ...ENTITIES,
+    pageSets: [
+      {
+        ...PAGES.pageSets[0],
+        pages: [
+          { ...PAGES.pageSets[0].pages[0], actionTargets: { create: 'goods-form', edit: '', detail: 42 } },
+          PAGES.pageSets[0].pages[1]
+        ]
+      }
+    ]
   })
+  assert.deepEqual(partial.pages[0].actionTargets, { create: 'goods-form' })
+  assert.ok(partial.warnings.some(line => line.includes('actionTargets.edit')))
+  assert.ok(partial.warnings.some(line => line.includes('actionTargets.detail')))
 })
-
-test('P7 页面契约：旧页面无新字段时行为不变、designSystem 为 null', () => {
-  const result = adaptDesign(design, { modules })
-  assert.equal(result.designSystem, null)
-  const page = result.pages[0]
-  assert.deepEqual(Object.keys(page).sort(), ['entityId', 'id', 'layout', 'pageSetId', 'spec', 'title', 'type'])
-  assert.deepEqual(page.spec, { columns: ['编码', '状态'], actions: ['新增', '删除'] })
-  assert.deepEqual(page.layout, {
-    table: { columns: ['编码', '状态'] },
-    toolbar: { actions: ['新增', '删除'] }
-  })
-  assert.deepEqual(Object.keys(page.spec).sort(), ['actions', 'columns'])
-  assert.deepEqual(Object.keys(page.layout).sort(), ['table', 'toolbar'])
-})
-
-test('P7 页面契约：非法枚举/类型只 warning，旧页面不抛错', () => {
-  const result = adaptDesign(
-    {
-      ...design,
-      designSystem: { pack: '  ', applicationType: 'x' },
-      pages: [
-        {
-          id: 'bad',
-          name: '坏契约',
-          type: 'list',
-          recipe: 'timeline',
-          pagination: { layout: 'grid', pageSize: 0 },
-          form: { presentation: 'modal', columns: 3, width: -1 },
-          tree: 'oops',
-          subTables: [{ title: '无实体' }, { entity: 'category', mode: 'grid' }],
-          components: { 状态: 123 }
-        }
-      ]
-    },
-    { modules }
-  )
-  assert.deepEqual(result.designSystem, { applicationType: 'x' })
-  const page = result.pages[0]
-  assert.equal(page.recipe, undefined)
-  assert.equal(page.layout.pagination, undefined)
-  assert.equal(page.layout.form, undefined)
-  assert.equal(page.layout.tree, undefined)
-  assert.deepEqual(page.layout.subTables, [{ target: 'category' }])
-  assert.equal(page.layout.components, undefined)
-  assert.ok(result.warnings.some(item => item.includes('timeline')))
-  assert.ok(result.warnings.some(item => item.includes('分页形态 grid')))
-  assert.ok(result.warnings.some(item => item.includes('表单形态 modal')))
-  assert.ok(result.warnings.some(item => item.includes('form.columns')))
-  assert.ok(result.warnings.some(item => item.includes('tree 不是对象')))
-  assert.ok(result.warnings.some(item => item.includes('缺少 entity')))
-  assert.ok(result.warnings.some(item => item.includes('mode grid')))
-  assert.ok(result.warnings.some(item => item.includes('components.状态')))
-})
-
-test('P7 页面契约：form.groups 映射为 layout.groups（供 fieldGroups 消费）', () => {
-  const result = adaptDesign(
-    {
-      ...design,
-      pages: [
-        {
-          id: 'org-form',
-          name: '机构编辑',
-          type: 'form',
-          entity: 'product',
-          recipe: 'dialog-form',
-          form: {
-            presentation: 'dialog',
-            columns: 1,
-            width: 720,
-            fields: ['编码', '状态'],
-            groups: [
-              { title: '基本信息', fields: ['编码'] },
-              { title: '其他信息', fields: ['状态'] }
-            ]
-          }
-        }
-      ]
-    },
-    { modules }
-  )
-  const formPage = result.pages[0]
-  assert.deepEqual(formPage.layout.groups, [
-    { title: '基本信息', fields: ['编码'] },
-    { title: '其他信息', fields: ['状态'] }
-  ])
-  assert.deepEqual(formPage.layout.form.groups, [
-    { title: '基本信息', fields: ['编码'] },
-    { title: '其他信息', fields: ['状态'] }
-  ])
-})
-
-test('P7 页面契约：无 form.groups 时不产生 layout.groups（旧输出不变）', () => {
-  const result = adaptDesign(
-    {
-      ...design,
-      pages: [
-        {
-          id: 'org-form',
-          name: '机构编辑',
-          type: 'form',
-          entity: 'product',
-          form: { presentation: 'page', columns: 2, fields: ['编码', '状态'] }
-        }
-      ]
-    },
-    { modules }
-  )
-  const formPage = result.pages[0]
-  assert.equal('groups' in formPage.layout, false)
-  assert.deepEqual(formPage.layout.form, { presentation: 'page', columns: 2, fields: ['编码', '状态'] })
-})
-
